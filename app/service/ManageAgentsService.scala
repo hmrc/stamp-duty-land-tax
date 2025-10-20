@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.stampdutylandtax.config
+package service
+
+import connectors.FormpProxyConnector
+import models.AgentDetails
+import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import scala.concurrent.Future
 
 @Singleton
-class AppConfig @Inject()(config: Configuration):
+class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
 
-  val appName: String = config.get[String]("appName")
+  def getAgentDetails(storn: String)
+                     (implicit hc: HeaderCarrier): Future[Option[AgentDetails]] =
+    formp.getAgentDetails(storn)
+}
