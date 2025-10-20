@@ -33,7 +33,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   private val base = config.baseUrl("formp-proxy") + "/formp-proxy"
 
   def getAgentDetails(storn: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetails]] = {
-    http.get(url"$base/manage-agents/agent-details")
+    http.get(url"$base/manage-agents/agent-details?storn=$storn")
       .execute[Option[AgentDetails]]
       .recover {
         case e: Throwable =>
