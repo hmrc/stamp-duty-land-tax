@@ -23,8 +23,8 @@ import javax.inject.{Inject, Singleton}
 
 @Singleton()
 class MicroserviceHelloWorldController @Inject()(
-                                                  cc: ControllerComponents
-                                                ) extends BackendController(cc):
+  cc: ControllerComponents
+) extends BackendController(cc):
 
   val hello: Action[AnyContent] =
     Action:
