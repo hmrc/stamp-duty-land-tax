@@ -36,7 +36,7 @@ class ManageAgentsController @Inject()(
   def getAgentDetails(agentId: String): Action[AnyContent] = Action.async { implicit request =>
     service.getAgentDetails(agentId) map {
       case Some(agentDetails: AgentDetails) => Ok(Json.toJson(agentDetails))
-      case None                             => NotFound(s"No Agent details found for storn: $agentId")
+      case None                             => NotFound(Json.obj("message" -> "Agent details not found"))
     } recover {
       case u: UpstreamErrorResponse =>
         Status(u.statusCode)(Json.obj("message" -> u.message))

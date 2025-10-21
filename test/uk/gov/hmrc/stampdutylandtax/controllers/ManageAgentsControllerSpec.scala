@@ -1,0 +1,89 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.stampdutylandtax.controllers
+
+import base.SpecBase
+import models.AgentDetails
+import org.mockito.ArgumentMatchers.any
+import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
+import play.api.test.Helpers.{contentAsJson, status}
+import org.mockito.Mockito.{verify, when}
+import play.api.libs.json.Json
+import play.api.mvc.Result
+import service.ManageAgentsService
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+
+import scala.concurrent.{ExecutionContext, Future}
+
+class ManageAgentsControllerSpec extends SpecBase {
+
+  "ManageAgentsController" - {
+
+    "GET agent-details/agentId/:agentId/get (getAgentDetails)" - {
+
+      "return OK with agent details when service returns agent details" in new BaseSetup {
+        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(Some(testAgentDetails)))
+
+        val result: Future[Result] = controller.getAgentDetails("A-123")(fakeRequest)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(testAgentDetails)
+        verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"))(any[HeaderCarrier])
+      }
+
+      "return 404 with message when service returns None" in new BaseSetup {
+        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(None))
+
+        val result: Future[Result] = controller.getAgentDetails("A-123")(fakeRequest)
+
+        status(result) mustBe NOT_FOUND
+        (contentAsJson(result) \ "message").as[String] mustBe "Agent details not found"
+        verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"))(any[HeaderCarrier])
+      }
+
+      "propagate UpstreamErrorResponse status & message" in new BaseSetup {
+        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+
+        val result: Future[Result] = controller.getAgentDetails("A-123")(fakeRequest)
+
+        status(result) mustBe BAD_GATEWAY
+        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+      }
+
+      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("unexpected")))
+
+        val result: Future[Result] = controller.getAgentDetails("A-123")(fakeRequest)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+      }
+    }
+  }
+
+  private trait BaseSetup {
+    val mockManageAgentsService: ManageAgentsService = mock[ManageAgentsService]
+    implicit val ec: ExecutionContext = cc.executionContext
+    implicit val hc: HeaderCarrier = HeaderCarrier()
+    val controller = new ManageAgentsController(cc, mockManageAgentsService)
+  }
+}
