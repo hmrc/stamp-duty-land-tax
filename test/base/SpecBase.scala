@@ -17,6 +17,7 @@
 package base
 
 import models.AgentDetails
+import models.response.SubmitAgentDetailsResponse
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -98,6 +99,9 @@ trait SpecBase
     )
   )
 
+  val testAgentDetailsSuccessResponse: SubmitAgentDetailsResponse = SubmitAgentDetailsResponse(
+    agentResourceRef = "some-id"
+  )
 
   val cc: ControllerComponents = stubControllerComponents()
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
