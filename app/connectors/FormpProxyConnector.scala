@@ -54,7 +54,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       .execute[List[AgentDetails]]
       .recover {
         case e: Throwable =>
-          logger.error(s"[getAgentDetails]: ${e.getMessage}")
+          logger.error(s"[getAllAgents]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
   }
