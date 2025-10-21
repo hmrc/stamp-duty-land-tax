@@ -1,7 +1,15 @@
 
 # stamp-duty-land-tax
 
-This is a placeholder README.md for a new repository
+This is the new stamp-duty-land-tax repository
+
+## Running the service
+
+Service Manager: `sm2 --start SDLT_ALL`
+
+To run all tests and coverage: `sbt clean compile coverage test coverageOff coverageReport`
+
+To start the server locally on `port 10913`: `sbt 'run 10913'`
 
 ### License
 
