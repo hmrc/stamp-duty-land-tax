@@ -16,8 +16,7 @@
 
 package models
 
-import play.api.libs.functional.syntax._
-import play.api.libs.json.{Json, OWrites, Reads, Writes, __}
+import play.api.libs.json.{Json, OFormat, OWrites, Reads, Writes, __}
 
 case class AgentDetails(
                          storn        : String,
@@ -35,33 +34,5 @@ case class AgentDetails(
                        )
 
 object AgentDetails {
-  implicit val reads: Reads[AgentDetails] = Json.reads[AgentDetails]
-  implicit val writes: OWrites[AgentDetails] = (
-      (__ \ "p_storn")          .write[String]         and
-      (__ \ "p_name")           .write[String]         and
-      (__ \ "p_house_number")   .write[String]         and
-      (__ \ "p_address_1")      .write[String]         and
-      (__ \ "p_address_2")      .writeNullable[String] and
-      (__ \ "p_address_3")      .write[String]         and
-      (__ \ "p_address_4")      .writeNullable[String] and
-      (__ \ "p_postcode")       .writeNullable[String] and
-      (__ \ "p_phone")          .write[String]         and
-      (__ \ "p_email")          .write[String]         and
-      (__ \ "p_reference")      .write[String]         and
-      (__ \ "p_is_authorised")  .write[BigInt]
-    ){ a =>
-      ( a.storn
-      , a.name
-      , a.houseNumber
-      , a.addressLine1
-      , a.addressLine2
-      , a.addressLine3
-      , a.addressLine4
-      , a.postcode
-      , a.phoneNumber
-      , a.emailAddress
-      , a.agentId
-      , a.isAuthorised
-    )
-  }
+  implicit val format: OFormat[AgentDetails] = Json.format[AgentDetails]
 }
