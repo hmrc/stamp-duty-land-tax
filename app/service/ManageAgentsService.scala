@@ -29,4 +29,8 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
   def getAgentDetails(storn: String)
                      (implicit hc: HeaderCarrier): Future[Option[AgentDetails]] =
     formp.getAgentDetails(storn)
+
+  def getAllAgents(storn: String)
+                     (implicit hc: HeaderCarrier): Future[List[AgentDetails]] =
+    formp.getAllAgents(storn)
 }

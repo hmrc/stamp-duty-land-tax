@@ -25,7 +25,7 @@ import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ManageAgentsController @Inject()(
@@ -42,6 +42,20 @@ class ManageAgentsController @Inject()(
         Status(u.statusCode)(Json.obj("message" -> u.message))
       case t: Throwable =>
         logger.error("[getAgentDetails] failed", t)
+        InternalServerError(Json.obj("message" -> "Unexpected error"))
+    }
+  }
+
+  def getAllAgents(storn: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAllAgents(storn) map { agentDetailsList =>
+      Ok(Json.toJson(
+        agentDetailsList
+      ))
+    } recover {
+      case u: UpstreamErrorResponse =>
+        Status(u.statusCode)(Json.obj("message" -> u.message))
+      case t: Throwable =>
+        logger.error("[getAllAgents] failed", t)
         InternalServerError(Json.obj("message" -> "Unexpected error"))
     }
   }

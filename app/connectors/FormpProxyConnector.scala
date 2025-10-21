@@ -47,4 +47,15 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
   }
+
+  def getAllAgents(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetails]] = {
+    http.post(url"$base/$servicePath/manage-agents/agent-details/get-all-agents")
+      .withBody(Json.obj("storn" -> storn))
+      .execute[List[AgentDetails]]
+      .recover {
+        case e: Throwable =>
+          logger.error(s"[getAgentDetails]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+  }
 }
