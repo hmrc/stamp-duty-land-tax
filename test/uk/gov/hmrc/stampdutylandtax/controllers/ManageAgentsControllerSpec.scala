@@ -34,7 +34,7 @@ class ManageAgentsControllerSpec extends SpecBase {
 
   "ManageAgentsController" - {
 
-    "GET agent-details/agentId/:agentId/get (getAgentDetails)" - {
+    "GET agent-details/storn/:storn/get (getAgentDetails)" - {
 
       "return OK with agent details when service returns agent details" in new BaseSetup {
         when(mockManageAgentsService.getAgentDetails(eqTo("A-123"))(any[HeaderCarrier]))
