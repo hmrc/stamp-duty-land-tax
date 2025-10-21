@@ -17,6 +17,7 @@
 package connectors
 
 import models.AgentDetails
+import models.response.SubmitAgentDetailsResponse
 import play.api.Logging
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpReads.Implicits.*
@@ -38,12 +39,23 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   private val servicePath = config.getString("microservice.services.formp-proxy.url")
 
   def getAgentDetails(agentId: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetails]] = {
-    http.post(url"$base/$servicePath/manage-agents/agent-details")
+    http.post(url"$base/$servicePath/manage-agents/agent-details/get")
       .withBody(Json.obj("agentId" -> agentId))
       .execute[Option[AgentDetails]]
       .recover {
         case e: Throwable =>
           logger.error(s"[getAgentDetails]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+  }
+
+  def submitAgentDetails(agentDetails: AgentDetails)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] = {
+    http.post(url"$base/$servicePath/manage-agents/agent-details/submit")
+      .withBody(Json.toJson(agentDetails))
+      .execute[SubmitAgentDetailsResponse]
+      .recover {
+        case e: Throwable =>
+          logger.error(s"[submitAgentDetails]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
   }

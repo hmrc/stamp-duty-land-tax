@@ -1,4 +1,5 @@
 # microservice specific routes
 
-GET         /manage-agents/agent-details/agentId/:agentId                   uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.getAgentDetails(agentId: String)
+GET         /manage-agents/agent-details/agentId/:agentId/get               uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.getAgentDetails(agentId: String)
+POST        /manage-agents/agent-details/submit                             uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.submitAgentDetails
 GET         /manage-agents/agent-details/get-all-agents/storn/:storn        uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.getAllAgents(storn: String)
