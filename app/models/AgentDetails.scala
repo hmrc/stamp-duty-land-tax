@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json.{Json, OFormat, OWrites, Reads, Writes, __}
+import play.api.libs.json.{Json, OFormat, OWrites, Reads, Writes}
 
 case class AgentDetails(
                          storn        : String,
