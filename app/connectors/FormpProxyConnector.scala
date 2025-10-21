@@ -18,13 +18,16 @@ package connectors
 
 import models.AgentDetails
 import play.api.Logging
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import play.api.libs.ws.JsonBodyWritables.*
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 class FormpProxyConnector @Inject()(http: HttpClientV2,
                                     config: ServicesConfig)
@@ -35,7 +38,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   private val servicePath = config.getString("microservice.services.formp-proxy.url")
 
   def getAgentDetails(storn: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetails]] = {
-    http.get(url"$base/$servicePath/manage-agents/agent-details/storn/$storn")
+    http.post(url"$base/$servicePath/manage-agents/agent-details")
+      .withBody(Json.obj("storn" -> storn))
       .execute[Option[AgentDetails]]
       .recover {
         case e: Throwable =>
