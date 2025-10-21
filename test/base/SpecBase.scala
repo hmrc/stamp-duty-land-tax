@@ -66,7 +66,39 @@ trait SpecBase
     agentId = "AGT001",
     isAuthorised = 1
   )
-  
+
+  val testAgentDetailsList: List[AgentDetails] = List(
+    AgentDetails(
+      storn = "STN001",
+      name = "Acme Property Agents Ltd",
+      houseNumber = "64",
+      addressLine1 = "Zoo Lane",
+      addressLine2 = Some("Westminster"),
+      addressLine3 = "London",
+      addressLine4 = None,
+      postcode = Some("SW1A 2AA"),
+      phoneNumber = "02079460000",
+      emailAddress = "test@example.com",
+      agentId = "AGT001",
+      isAuthorised = 1
+    ),
+    AgentDetails(
+      storn = "STN002",
+      name = "BrightHomes Estates",
+      houseNumber = "12B",
+      addressLine1 = "Maple Street",
+      addressLine2 = Some("Camden"),
+      addressLine3 = "London",
+      addressLine4 = Some("Greater London"),
+      postcode = Some("NW1 5LE"),
+      phoneNumber = "02071234567",
+      emailAddress = "info@brighthomes.co.uk",
+      agentId = "AGT002",
+      isAuthorised = 0
+    )
+  )
+
+
   val cc: ControllerComponents = stubControllerComponents()
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val bodyParsers: PlayBodyParsers = app.injector.instanceOf[PlayBodyParsers]
