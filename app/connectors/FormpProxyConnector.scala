@@ -37,9 +37,9 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
 
   private val servicePath = config.getString("microservice.services.formp-proxy.url")
 
-  def getAgentDetails(storn: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetails]] = {
+  def getAgentDetails(agentId: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetails]] = {
     http.post(url"$base/$servicePath/manage-agents/agent-details")
-      .withBody(Json.obj("storn" -> storn))
+      .withBody(Json.obj("agentId" -> agentId))
       .execute[Option[AgentDetails]]
       .recover {
         case e: Throwable =>

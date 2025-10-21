@@ -33,10 +33,10 @@ class ManageAgentsController @Inject()(
   service: ManageAgentsService
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
 
-  def getAgentDetails(storn: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getAgentDetails(storn) map {
+  def getAgentDetails(agentId: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getAgentDetails(agentId) map {
       case Some(agentDetails: AgentDetails) => Ok(Json.toJson(agentDetails))
-      case None                             => NotFound(s"No Agent details found for storn: $storn")
+      case None                             => NotFound(s"No Agent details found for storn: $agentId")
     } recover {
       case u: UpstreamErrorResponse =>
         Status(u.statusCode)(Json.obj("message" -> u.message))
