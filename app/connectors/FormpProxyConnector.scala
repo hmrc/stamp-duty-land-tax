@@ -67,9 +67,13 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def removeAgent(storn: String)(implicit hc: HeaderCarrier): Future[Boolean] =
+  def removeAgent(storn: String, agentReferenceNumber: String)
+                 (implicit hc: HeaderCarrier): Future[Boolean] =
     http.post(url"$base/$servicePath/manage-agents/agent-details/remove")
-      .withBody(Json.obj("storn" -> storn))
+      .withBody(Json.obj(
+        "storn" -> storn,
+        "agentReferenceNumber" -> agentReferenceNumber
+      ))
       .execute[Boolean]
       .recover {
         case e: Throwable =>

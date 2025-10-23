@@ -60,8 +60,8 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def removeAgent(storn: String): Action[AnyContent] = Action.async { implicit request =>
-    service.removeAgent(storn) map { isRemoved =>
+  def removeAgent(storn: String, agentReferenceNumber: String): Action[AnyContent] = Action.async { implicit request =>
+    service.removeAgent(storn, agentReferenceNumber) map { isRemoved =>
       Ok(Json.toJson(
         isRemoved
       ))

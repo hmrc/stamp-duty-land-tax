@@ -164,45 +164,45 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
     }
 
-    "GET agent-details/remove/storn/:storn (removeAgentDetails)" - {
+    "GET agent-details/remove (removeAgentDetails)" - {
 
       "return OK with true when service returns true" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
           .thenReturn(Future.successful(true))
 
-        val result: Future[Result] = controller.removeAgent("A-123")(fakeRequest)
+        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(true)
-        verify(mockManageAgentsService).removeAgent(eqTo("A-123"))(any[HeaderCarrier])
+        verify(mockManageAgentsService).removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier])
       }
 
       "return OK with false when service returns false" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
           .thenReturn(Future.successful(false))
 
-        val result: Future[Result] = controller.removeAgent("A-123")(fakeRequest)
+        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(false)
-        verify(mockManageAgentsService).removeAgent(eqTo("A-123"))(any[HeaderCarrier])
+        verify(mockManageAgentsService).removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier])
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
 
-        val result: Future[Result] = controller.removeAgent("A-123")(fakeRequest)
+        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
 
         status(result) mustBe BAD_GATEWAY
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.removeAgent("A-123")(fakeRequest)
+        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")

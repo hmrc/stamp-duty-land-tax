@@ -4,4 +4,4 @@ GET         /hello-world                                                    uk.g
 GET         /manage-agents/agent-details/storn/:storn                       uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.getAgentDetails(storn: String)
 POST        /manage-agents/agent-details/submit                             uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.submitAgentDetails
 GET         /manage-agents/agent-details/get-all-agents/storn/:storn        uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.getAllAgents(storn: String)
-GET         /manage-agents/agent-details/remove/storn/:storn                uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.removeAgent(storn: String)
+GET         /manage-agents/agent-details/remove                             uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.removeAgent(storn: String, agentReferenceNumber: String)
