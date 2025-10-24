@@ -32,10 +32,14 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp.getAgentDetails(storn)
 
   def submitAgentDetails(agentDetails: AgentDetails)
-                     (implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
+                        (implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
     formp.submitAgentDetails(agentDetails)
 
   def getAllAgents(storn: String)
-                     (implicit hc: HeaderCarrier): Future[List[AgentDetails]] =
+                  (implicit hc: HeaderCarrier): Future[List[AgentDetails]] =
     formp.getAllAgents(storn)
+
+  def removeAgent(storn: String, agentReferenceNumber: String)
+                 (implicit hc: HeaderCarrier): Future[Boolean] =
+    formp.removeAgent(storn, agentReferenceNumber)
 }

@@ -37,7 +37,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
 
   private val servicePath = config.getString("microservice.services.formp-proxy.url")
 
-  def getAgentDetails(storn: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetails]] = {
+  def getAgentDetails(storn: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetails]] =
     http.post(url"$base/$servicePath/manage-agents/agent-details")
       .withBody(Json.obj("storn" -> storn))
       .execute[Option[AgentDetails]]
@@ -46,9 +46,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[getAgentDetails]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
-  }
 
-  def submitAgentDetails(agentDetails: AgentDetails)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] = {
+  def submitAgentDetails(agentDetails: AgentDetails)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
     http.post(url"$base/$servicePath/manage-agents/agent-details/submit")
       .withBody(Json.toJson(agentDetails))
       .execute[SubmitAgentDetailsResponse]
@@ -57,9 +56,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[submitAgentDetails]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
-  }
 
-  def getAllAgents(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetails]] = {
+  def getAllAgents(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetails]] =
     http.post(url"$base/$servicePath/manage-agents/agent-details/get-all-agents")
       .withBody(Json.obj("storn" -> storn))
       .execute[List[AgentDetails]]
@@ -68,5 +66,18 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[getAllAgents]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
-  }
+
+  def removeAgent(storn: String, agentReferenceNumber: String)
+                 (implicit hc: HeaderCarrier): Future[Boolean] =
+    http.post(url"$base/$servicePath/manage-agents/agent-details/remove")
+      .withBody(Json.obj(
+        "storn" -> storn,
+        "agentReferenceNumber" -> agentReferenceNumber
+      ))
+      .execute[Boolean]
+      .recover {
+        case e: Throwable =>
+          logger.error(s"[removeAgent]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
 }

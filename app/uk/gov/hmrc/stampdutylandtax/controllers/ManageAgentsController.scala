@@ -60,6 +60,20 @@ class ManageAgentsController @Inject()(
     }
   }
 
+  def removeAgent(storn: String, agentReferenceNumber: String): Action[AnyContent] = Action.async { implicit request =>
+    service.removeAgent(storn, agentReferenceNumber) map { isRemoved =>
+      Ok(Json.toJson(
+        isRemoved
+      ))
+    } recover {
+      case u: UpstreamErrorResponse =>
+        Status(u.statusCode)(Json.obj("message" -> u.message))
+      case t: Throwable =>
+        logger.error("[removeAgent] failed", t)
+        InternalServerError(Json.obj("message" -> "Unexpected error"))
+    }
+  }
+
   def submitAgentDetails: Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[AgentDetails].fold(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
