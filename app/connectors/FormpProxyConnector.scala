@@ -16,17 +16,19 @@
 
 package connectors
 
+import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
 import models.manage.SdltReturnRecordResponse
-import models.{AgentDetailsRequest, AgentDetailsResponse}
 import models.response.SubmitAgentDetailsResponse
+import models.{AgentDetailsRequest, AgentDetailsResponse}
 import play.api.Logging
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import play.api.libs.ws.JsonBodyWritables.*
 
+import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,11 +36,14 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
                                     config: ServicesConfig)
                                    (implicit ec: ExecutionContext) extends Logging {
 
-  private val path = config.baseUrl("formp-proxy") + "/stamp-duty-land-tax-stub"
+  private val stubPath = config.baseUrl("stamp-duty-land-tax-stub") + "/stamp-duty-land-tax-stub"
+  private val formpPath = config.baseUrl("formp-proxy") + "/formp-proxy"
+  val stubFormPBool: Boolean = config.getBoolean("features.stub-formp-enabled")
 
   def getAgentDetails(storn: String, agentReferenceNumber: String)
                      (implicit hc: HeaderCarrier): Future[Option[AgentDetailsResponse]] =
-    http.post(url"$path/manage-agents/agent-details")
+    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details" else url"$formpPath/manage-agents/agent-details"
+    http.post(url)
       .withBody(Json.obj(
         "storn" -> storn,
         "agentReferenceNumber" -> agentReferenceNumber
@@ -51,7 +56,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       }
 
   def submitAgentDetails(agentDetails: AgentDetailsRequest)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
-    http.post(url"$path/manage-agents/agent-details/submit")
+    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/submit" else url"$formpPath/manage-agents/agent-details/submit"
+    http.post(url)
       .withBody(Json.toJson(agentDetails))
       .execute[SubmitAgentDetailsResponse]
       .recover {
@@ -61,7 +67,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       }
 
   def getAllAgents(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
-    http.post(url"$path/manage-agents/agent-details/get-all-agents")
+    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/get-all-agents" else url"$formpPath/manage-agents/agent-details/get-all-agents"
+    http.post(url)
       .withBody(Json.obj("storn" -> storn))
       .execute[List[AgentDetailsResponse]]
       .recover {
@@ -72,7 +79,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
 
   def removeAgent(storn: String, agentReferenceNumber: String)
                  (implicit hc: HeaderCarrier): Future[Boolean] =
-    http.post(url"$path/manage-agents/agent-details/remove")
+    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/remove" else url"$formpPath/manage-agents/agent-details/remove"
+    http.post(url)
       .withBody(Json.obj(
         "storn" -> storn,
         "agentReferenceNumber" -> agentReferenceNumber
@@ -83,10 +91,11 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][removeAgent]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
-  
+
   def getReturns(storn: String)
                 (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
-    http.post(url"$path/manage-returns/get-all")
+    val url: URL = if(stubFormPBool) url"$stubPath/manage-returns/get-all" else url"$formpPath/manage-returns/get-all"
+    http.post(url)
       .withBody(Json.obj(
         "storn" -> storn
       ))

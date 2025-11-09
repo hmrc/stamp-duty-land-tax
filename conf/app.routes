@@ -7,3 +7,9 @@ GET         /manage-agents/agent-details/get-all-agents     uk.gov.hmrc.stampdut
 GET         /manage-agents/agent-details/remove             uk.gov.hmrc.stampdutylandtax.controllers.ManageAgentsController.removeAgent(storn: String, agentReferenceNumber: String)
 
 GET         /manage-returns/get-returns                     uk.gov.hmrc.stampdutylandtax.controllers.ManageReturnsController.getReturns(storn: String)
+
+
+# Filing Routes
+
+POST        /filing/create/return                           uk.gov.hmrc.stampdutylandtax.controllers.FilingReturnsController.createReturn()
+POST        /filing/receive/full-return                     uk.gov.hmrc.stampdutylandtax.controllers.FilingReturnsController.getFullReturn()
