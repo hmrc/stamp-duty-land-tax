@@ -16,21 +16,16 @@
 
 package connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.{
-  aResponse,
-  equalToJson,
-  post,
-  stubFor,
-  urlPathEqualTo
-}
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
 import models.{AgentDetailsRequest, AgentDetailsResponse}
 import models.manage.SdltReturnRecordResponse
 import models.response.SubmitAgentDetailsResponse
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.{JsBoolean, Json}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -39,7 +34,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
   with ScalaFutures
   with IntegrationPatience
   with ApplicationWithWiremock {
-
+  
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val connector: FormpProxyConnector = app.injector.instanceOf[FormpProxyConnector]
