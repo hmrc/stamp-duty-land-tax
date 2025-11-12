@@ -41,16 +41,16 @@ object Agent {
       case JsString(s) if s.trim.nonEmpty => s.trim
       case _                              => "0"
     } and
-      (__ \ "name").read[String] and
-      (__ \ "agentId").readNullable[String] and
-      (__ \ "houseNumber").readNullable[String] and
-      (__ \ "addressLine1").readNullable[String] and
-      (__ \ "addressLine2").readNullable[String] and
-      (__ \ "addressLine3").readNullable[String] and
-      (__ \ "addressLine4").readNullable[String] and
-      (__ \ "postcode").readNullable[String] and
-      (__ \ "phone").readNullable[String] and
-      (__ \ "email").readNullable[String]
+      (__ \ "name")           .read[String] and
+      (__ \ "agentId")        .readNullable[String] and
+      (__ \ "houseNumber")    .readNullable[String] and
+      (__ \ "addressLine1")   .readNullable[String] and
+      (__ \ "addressLine2")   .readNullable[String] and
+      (__ \ "addressLine3")   .readNullable[String] and
+      (__ \ "addressLine4")   .readNullable[String] and
+      (__ \ "postcode")       .readNullable[String] and
+      (__ \ "phone")          .readNullable[String] and
+      (__ \ "email")          .readNullable[String]
     )(Agent.apply _)
 
   implicit val writes: OWrites[Agent] = OWrites { a =>
