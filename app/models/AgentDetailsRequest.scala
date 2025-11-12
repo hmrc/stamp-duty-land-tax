@@ -20,7 +20,6 @@ import play.api.libs.json.{Json, OFormat}
 
 case class AgentDetailsRequest(
                                 agentName             : String,
-                                houseNumber           : String,
                                 addressLine1          : String,
                                 addressLine2          : Option[String],
                                 addressLine3          : String,

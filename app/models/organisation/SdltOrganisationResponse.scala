@@ -16,14 +16,12 @@
 
 package models.organisation
 
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.{JsError, JsNumber, JsString, JsSuccess, JsValue, Json, OFormat, OWrites, Reads, __}
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json, OFormat, OWrites, Reads, __}
 
 case class Agent(
                   agentReferenceNumber : String,
-                  name                 : String,
+                  agentName            : String,
                   agentId              : Option[String],
-                  houseNumber          : Option[String],
                   addressLine1         : Option[String],
                   addressLine2         : Option[String],
                   addressLine3         : Option[String],
@@ -34,39 +32,8 @@ case class Agent(
                 )
 
 object Agent {
-  implicit val reads: Reads[Agent] = (
-    (__ \ "agentReferenceNumber").read[JsValue].map {
-      case JsNumber(n) if n.isWhole => n.toBigInt.toString
-      case JsNumber(_) => "0"
-      case JsString(s) if s.trim.nonEmpty => s.trim
-      case _ => "0"
-    } and
-      (__ \ "name").read[String] and
-      (__ \ "agentId").readNullable[String] and
-      (__ \ "houseNumber").readNullable[String] and
-      (__ \ "addressLine1").readNullable[String] and
-      (__ \ "addressLine2").readNullable[String] and
-      (__ \ "addressLine3").readNullable[String] and
-      (__ \ "addressLine4").readNullable[String] and
-      (__ \ "postcode").readNullable[String] and
-      (__ \ "phone").readNullable[String] and
-      (__ \ "email").readNullable[String]
-    )(Agent.apply _)
+  implicit val format: OFormat[Agent] = Json.format[Agent]
 
-  implicit val writes: OWrites[Agent] = OWrites { a =>
-    Json.obj(
-      "agentReferenceNumber" -> (if (a.agentReferenceNumber.trim.nonEmpty) a.agentReferenceNumber.trim else "0"),
-      "agentName" -> a.name,
-      "houseNumber" -> a.houseNumber.getOrElse(""),
-      "addressLine1" -> a.addressLine1.getOrElse(""),
-      "addressLine2" -> a.addressLine2,
-      "addressLine3" -> a.addressLine3.getOrElse(""),
-      "addressLine4" -> a.addressLine4,
-      "postcode" -> a.postcode,
-      "phone" -> a.phone,
-      "email" -> a.email.getOrElse("")
-    )
-  }
 }
 
 case class SdltOrganisation(
