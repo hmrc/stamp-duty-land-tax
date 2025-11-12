@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.stampdutylandtax.controllers
+package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.{AgentDetailsResponse, AgentDetailsRequest}
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse}
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -56,7 +56,7 @@ class ManageAgentsController @Inject()(
       case u: UpstreamErrorResponse =>
         Status(u.statusCode)(Json.obj("message" -> u.message))
       case t: Throwable =>
-        logger.error("[ManageAgentsController][getAllAgents] failed", t)
+        logger.error("[ManageAgentsController][getAllAgentsLegacy] failed", t)
         InternalServerError(Json.obj("message" -> "Unexpected error"))
     }
   }
@@ -70,7 +70,7 @@ class ManageAgentsController @Inject()(
       case u: UpstreamErrorResponse =>
         Status(u.statusCode)(Json.obj("message" -> u.message))
       case t: Throwable =>
-        logger.error("[ManageAgentsController][getAllAgents] failed", t)
+        logger.error("[ManageAgentsController][getSdltOrganisation] failed", t)
         InternalServerError(Json.obj("message" -> "Unexpected error"))
     }
   }
@@ -101,7 +101,7 @@ class ManageAgentsController @Inject()(
           case u: UpstreamErrorResponse =>
             Status(u.statusCode)(Json.obj("message" -> u.message))
           case t: Throwable =>
-            logger.error("[ManageAgentsController][getAgentDetails] failed", t)
+            logger.error("[ManageAgentsController][submitAgentDetails] failed", t)
             InternalServerError(Json.obj("message" -> "Unexpected error"))
         }
     )

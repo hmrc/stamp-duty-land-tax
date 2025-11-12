@@ -17,9 +17,7 @@
 package service
 
 import connectors.FormpProxyConnector
-import models.organisation.SdltOrganisation
-import models.{AgentDetailsRequest, AgentDetailsResponse}
-import models.response.SubmitAgentDetailsResponse
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}

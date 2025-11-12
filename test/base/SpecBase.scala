@@ -16,8 +16,7 @@
 
 package base
 
-import models.{AgentDetailsResponse, AgentDetailsRequest}
-import models.response.SubmitAgentDetailsResponse
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SubmitAgentDetailsResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -54,8 +53,7 @@ trait SpecBase
       .build()
 
   val testAgentDetailsRequest: AgentDetailsRequest = AgentDetailsRequest(
-    agentName = "Acme Property Agents Ltd",
-    houseNumber = "64",
+    agentName = "64Acme Property Agents Ltd",
     addressLine1 = "Zoo Lane",
     addressLine2 = Some("Westminster"),
     addressLine3 = "London",
@@ -67,8 +65,7 @@ trait SpecBase
 
   val testAgentDetailsAfterCreation: AgentDetailsResponse = AgentDetailsResponse(
     agentReferenceNumber = "ARN001",
-    agentName = "Acme Property Agents Ltd",
-    houseNumber = "64",
+    agentName = "64 Acme Property Agents Ltd",
     addressLine1 = "Zoo Lane",
     addressLine2 = Some("Westminster"),
     addressLine3 = "London",
@@ -81,8 +78,7 @@ trait SpecBase
   val testAgentDetailsList: List[AgentDetailsResponse] = List(
     AgentDetailsResponse(
       agentReferenceNumber = "ARN001",
-      agentName = "Acme Property Agents Ltd",
-      houseNumber = "64",
+      agentName = "64 Acme Property Agents Ltd",
       addressLine1 = "Zoo Lane",
       addressLine2 = Some("Westminster"),
       addressLine3 = "London",
@@ -93,8 +89,7 @@ trait SpecBase
     ),
     AgentDetailsResponse(
       agentReferenceNumber = "ARN001",
-      agentName = "BrightHomes Estates",
-      houseNumber = "12B",
+      agentName = "12B BrightHomes Estates",
       addressLine1 = "Maple Street",
       addressLine2 = Some("Camden"),
       addressLine3 = "London",

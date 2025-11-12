@@ -18,9 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.organisation.{Agent, SdltOrganisation}
-import models.{AgentDetailsRequest, AgentDetailsResponse}
-import models.response.SubmitAgentDetailsResponse
+import models.agent.{Agent, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -39,7 +37,6 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val arn   = "ARN-999"
         private val resp  = AgentDetailsResponse(
           agentName            = "Acme Property",
-          houseNumber          = "42",
           addressLine1         = "High Street",
           addressLine2         = Some("Westminster"),
           addressLine3         = "London",
@@ -89,8 +86,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
         private val req = AgentDetailsRequest(
-          agentName    = "Harborview Estates",
-          houseNumber  = "22A",
+          agentName    = "22A Harborview Estates",
           addressLine1 = "Queensway",
           addressLine2 = None,
           addressLine3 = "Birmingham",
@@ -111,8 +107,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val req = AgentDetailsRequest(
-          agentName    = "Bad Data Inc",
-          houseNumber  = "??",
+          agentName    = "?? Bad Data Inc",
           addressLine1 = "Unknown",
           addressLine2 = None,
           addressLine3 = "Nowhere",
@@ -140,8 +135,7 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val list  = List(
           AgentDetailsResponse(
             agentName            = "Alpha",
-            houseNumber          = "1",
-            addressLine1         = "Street 1",
+            addressLine1         = "1 Street 1",
             addressLine2         = None,
             addressLine3         = "Town",
             addressLine4         = None,
@@ -152,8 +146,7 @@ class ManageAgentsServiceSpec extends SpecBase {
           ),
           AgentDetailsResponse(
             agentName            = "Beta",
-            houseNumber          = "2",
-            addressLine1         = "Street 2",
+            addressLine1         = "2 Street 2",
             addressLine2         = Some("Area"),
             addressLine3         = "City",
             addressLine4         = None,
@@ -250,10 +243,9 @@ class ManageAgentsServiceSpec extends SpecBase {
           doNotDisplayWelcomePage = "Yes",
           agents = Seq(
             Agent(
-              agentReference = "ARN001",
-              name = "John",
+              agentReferenceNumber = "ARN001",
+              agentName = "John",
               agentId = Some("AGT001"),
-              houseNumber = None,
               addressLine1 = Some("1 High Street"),
               addressLine2 = Some("Westminster"),
               addressLine3 = Some("London"),

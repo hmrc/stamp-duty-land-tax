@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.stampdutylandtax.controllers
+package uk.gov.hmrc.stampdutylandtax.controllers.manage
 
 import play.api.Logging
 import play.api.libs.json.Json

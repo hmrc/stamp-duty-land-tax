@@ -16,11 +16,9 @@
 
 package connectors
 
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
 import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
 import models.manage.SdltReturnRecordResponse
-import models.organisation.SdltOrganisation
-import models.response.SubmitAgentDetailsResponse
-import models.{AgentDetailsRequest, AgentDetailsResponse}
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*

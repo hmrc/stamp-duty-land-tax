@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package models.organisation
+package models.agent
 
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Json, OFormat, OWrites, Reads, __}
+import play.api.libs.json.*
 
 case class Agent(
                   agentReferenceNumber : String,

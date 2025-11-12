@@ -17,8 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.organisation.{Agent, SdltOrganisation}
-import models.{AgentDetailsRequest, AgentDetailsResponse}
+import models.agent.{Agent, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -28,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import service.ManageAgentsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -219,11 +219,10 @@ class ManageAgentsControllerSpec extends SpecBase {
           doNotDisplayWelcomePage = "No",
           agents = Seq(
             Agent(
-              agentReference = "ARN001",
-              name = "Anderson Legal LLP",
+              agentReferenceNumber = "ARN001",
+              agentName = "Anderson Legal LLP",
               agentId = Some("AGT001"),
-              houseNumber = Some("10"),
-              addressLine1 = Some("Downing Street"),
+              addressLine1 = Some("10 Downing Street"),
               addressLine2 = Some("Westminster"),
               addressLine3 = Some("London"),
               addressLine4 = Some("United Kingdom"),

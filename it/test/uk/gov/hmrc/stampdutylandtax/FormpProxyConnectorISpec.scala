@@ -18,10 +18,8 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
-import models.{AgentDetailsRequest, AgentDetailsResponse}
+import models.agent.{Agent, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
 import models.manage.SdltReturnRecordResponse
-import models.organisation.{Agent, SdltOrganisation}
-import models.response.SubmitAgentDetailsResponse
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec

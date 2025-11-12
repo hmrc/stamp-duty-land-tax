@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package models
+package models.agent
 
 import play.api.libs.json.{Json, OFormat}
 
-case class AgentDetailsResponse(
+case class AgentDetailsRequest(
                                 agentName             : String,
                                 addressLine1          : String,
                                 addressLine2          : Option[String],
@@ -26,10 +26,9 @@ case class AgentDetailsResponse(
                                 addressLine4          : Option[String],
                                 postcode              : Option[String],
                                 phone                 : Option[String],
-                                email                 : String,
-                                agentReferenceNumber  : String
+                                email                 : String
 )
 
-object AgentDetailsResponse {
-  implicit val format: OFormat[AgentDetailsResponse] = Json.format[AgentDetailsResponse]
+object AgentDetailsRequest {
+  implicit val format: OFormat[AgentDetailsRequest] = Json.format[AgentDetailsRequest]
 }
