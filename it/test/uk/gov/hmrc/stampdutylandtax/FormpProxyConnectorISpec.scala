@@ -20,8 +20,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, 
 import itutil.ApplicationWithWiremock
 import models.{AgentDetailsRequest, AgentDetailsResponse}
 import models.manage.SdltReturnRecordResponse
+import models.organisation.{Agent, SdltOrganisation}
 import models.response.SubmitAgentDetailsResponse
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -169,7 +169,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "getAllAgents" should {
 
-    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/get-all-agents"
+    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/get-all-agents-legacy"
 
     "return a list of AgentDetails when BE returns OK with valid JSON" in {
       stubFor(
@@ -355,6 +355,103 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         connector.getReturns(storn).futureValue
       }
       ex.getMessage must include ("returned 500")
+    }
+  }
+  "getSdltOrganisation" should {
+
+    val url = "/stamp-duty-land-tax-stub/organisation"
+
+    "return SdltOrganisation when BE returns OK with valid JSON" in {
+      val responseJson =
+        s"""
+           |{
+           |  "storn": "STN001",
+           |  "version": 1,
+           |  "isReturnUser": "true",
+           |  "doNotDisplayWelcomePage": "Yes",
+           |  "agents": [
+           |    {
+           |      "agentReference": "ARN001",
+           |      "name": "John",
+           |      "agentId": "AGT001",
+           |      "houseNumber": null,
+           |      "addressLine1": "1 High Street",
+           |      "addressLine2": "Westminster",
+           |      "addressLine3": "London",
+           |      "addressLine4": "Greater London",
+           |      "postcode": "SW72AZ",
+           |      "phone": "02079460000",
+           |      "email": "info@acme.co.uk"
+           |    }
+           |  ]
+           |}
+           |
+         """.stripMargin
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(responseJson))
+      )
+
+      val result = connector.getSdltOrganisation(storn).futureValue
+
+       result mustBe SdltOrganisation(
+         storn                   = storn,
+         version                 = 1,
+         isReturnUser            = "true",
+         doNotDisplayWelcomePage = "Yes",
+         agents = Seq(Agent(
+           agentReference = "ARN001",
+           name           = "John",
+           agentId        = Some("AGT001"),
+           houseNumber    = None,
+           addressLine1   = Some("1 High Street"),
+           addressLine2   = Some("Westminster"),
+           addressLine3   = Some("London"),
+           addressLine4   = Some("Greater London"),
+           postcode       = Some("SW72AZ"),
+           phone          = Some("02079460000"),
+           email          = Some("info@acme.co.uk")
+         ))
+       )
+
+      result.toString must include("SW72AZ")
+      result.toString must include("AGT001")
+      result.toString must include("John")
+      result.toString must include("ARN001")
+      result.toString must include("02079460000")
+      result.toString must include("1 High Street")
+      result.toString must include("Westminster")
+      result.toString must include("London")
+      result.toString must include("Greater London")
+      result.toString must include("info@acme.co.uk")
+    }
+
+    "fail when BE returns OK with invalid JSON" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
+      )
+
+      val ex = intercept[Exception] {
+        connector.getSdltOrganisation(storn).futureValue
+      }
+      ex.getMessage.toLowerCase must include("error")
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.getSdltOrganisation(storn).futureValue
+      }
+      ex.getMessage must include("returned 500")
     }
   }
 }
