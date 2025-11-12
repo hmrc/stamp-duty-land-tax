@@ -163,36 +163,36 @@ class ManageAgentsServiceSpec extends SpecBase {
           )
         )
 
-        when(mockFormp.getAllAgents(eqTo(storn))(any[HeaderCarrier]))
+        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.successful(list))
 
-        val result = service.getAllAgents(storn).futureValue
+        val result = service.getAllAgentsLegacy(storn).futureValue
         result mustBe list
-        verify(mockFormp, times(1)).getAllAgents(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
       }
 
       "should return Nil when the connector successfully returns an empty list of agents" in new BaseSetup {
         private val storn = "STN-EMPTY"
 
-        when(mockFormp.getAllAgents(eqTo(storn))(any[HeaderCarrier]))
+        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.successful(Nil))
 
-        val result = service.getAllAgents(storn).futureValue
+        val result = service.getAllAgentsLegacy(storn).futureValue
         result mustBe empty
-        verify(mockFormp, times(1)).getAllAgents(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val storn = "STN-ERR"
 
-        when(mockFormp.getAllAgents(eqTo(storn))(any[HeaderCarrier]))
+        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("boom")))
 
         val ex = intercept[RuntimeException] {
-          service.getAllAgents(storn).futureValue
+          service.getAllAgentsLegacy(storn).futureValue
         }
         ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).getAllAgents(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
       }
     }
 

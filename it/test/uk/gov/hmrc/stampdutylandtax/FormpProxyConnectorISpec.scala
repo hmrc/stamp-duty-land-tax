@@ -208,7 +208,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val result = connector.getAllAgents(storn).futureValue
+      val result = connector.getAllAgentsLegacy(storn).futureValue
 
       result mustBe List(
         AgentDetailsResponse(
@@ -246,7 +246,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.getAllAgents(storn).futureValue
+        connector.getAllAgentsLegacy(storn).futureValue
       }
       ex.getMessage.toLowerCase must include ("error")
     }
@@ -259,7 +259,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.getAllAgents(storn).futureValue
+        connector.getAllAgentsLegacy(storn).futureValue
       }
       ex.getMessage must include ("returned 500")
     }

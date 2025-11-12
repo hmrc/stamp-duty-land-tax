@@ -18,6 +18,7 @@ package connectors
 
 import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
 import models.manage.SdltReturnRecordResponse
+import models.organisation.SdltOrganisation
 import models.response.SubmitAgentDetailsResponse
 import models.{AgentDetailsRequest, AgentDetailsResponse}
 import play.api.Logging
@@ -66,14 +67,25 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def getAllAgents(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
-    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/get-all-agents" else url"$formpPath/manage-agents/agent-details/get-all-agents"
+  def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisation] =
+    val url: URL = if(stubFormPBool) url"$stubPath/organisation" else url"$formpPath/organisation"
+    http.post(url)
+      .withBody(Json.obj("storn" -> storn))
+      .execute[SdltOrganisation]
+      .recover {
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][getSdltOrganisation]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def getAllAgentsLegacy(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
+    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/get-all-agents-legacy" else url"$formpPath/manage-agents/agent-details/get-all-agents-legacy"
     http.post(url)
       .withBody(Json.obj("storn" -> storn))
       .execute[List[AgentDetailsResponse]]
       .recover {
         case e: Throwable =>
-          logger.error(s"[FormpProxyConnector][getAllAgents]: ${e.getMessage}")
+          logger.error(s"[FormpProxyConnector][getAllAgentsLegacy]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
 
