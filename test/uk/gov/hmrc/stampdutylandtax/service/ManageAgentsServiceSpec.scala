@@ -18,6 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
+import models.organisation.{Agent, SdltOrganisation}
 import models.{AgentDetailsRequest, AgentDetailsResponse}
 import models.response.SubmitAgentDetailsResponse
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
@@ -234,6 +235,57 @@ class ManageAgentsServiceSpec extends SpecBase {
         }
         ex.getMessage must include("boom")
         verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
+      }
+    }
+    "getSdltOrganisation" - {
+
+      "should delegate to connector and return SdltOrganisation" in new BaseSetup {
+
+        private val storn = "STN-ORG"
+
+        private val expected = SdltOrganisation(
+          storn = storn,
+          version = 1,
+          isReturnUser = "true",
+          doNotDisplayWelcomePage = "Yes",
+          agents = Seq(
+            Agent(
+              agentReference = "ARN001",
+              name = "John",
+              agentId = Some("AGT001"),
+              houseNumber = None,
+              addressLine1 = Some("1 High Street"),
+              addressLine2 = Some("Westminster"),
+              addressLine3 = Some("London"),
+              addressLine4 = Some("Greater London"),
+              postcode = Some("SW72AZ"),
+              phone = Some("02079460000"),
+              email = Some("info@acme.co.uk")
+            )
+          )
+        )
+
+        when(mockFormp.getSdltOrganisation(eqTo(storn))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(expected))
+
+        val result = service.getSdltOrganisation(storn).futureValue
+        result mustBe expected
+
+        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(any[HeaderCarrier])
+      }
+
+      "should propagate exceptions from the connector" in new BaseSetup {
+        private val storn = "STN-ORG-ERR"
+
+        when(mockFormp.getSdltOrganisation(eqTo(storn))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("boom")))
+
+        val ex = intercept[RuntimeException] {
+          service.getSdltOrganisation(storn).futureValue
+        }
+        ex.getMessage must include("boom")
+
+        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(any[HeaderCarrier])
       }
     }
   }
