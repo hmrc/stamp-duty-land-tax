@@ -48,7 +48,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier])
       }
 
-      "return 404 with message when service returns None" in new BaseSetup {
+      "return NOT_FOUND with message when service returns None" in new BaseSetup {
         when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
           .thenReturn(Future.successful(None))
 
@@ -69,7 +69,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
@@ -112,7 +112,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
@@ -154,7 +154,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
@@ -199,7 +199,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
@@ -272,7 +272,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
