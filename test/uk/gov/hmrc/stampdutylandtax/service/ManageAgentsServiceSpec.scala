@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{AgentDetailsResponse, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -37,13 +37,14 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val arn   = "ARN-999"
         private val resp  = AgentDetailsResponse(
           agentName            = "Acme Property",
-          addressLine1         = "High Street",
+          agentId              = Some("AGT001"),
+          addressLine1         = Some("High Street"),
           addressLine2         = Some("Westminster"),
-          addressLine3         = "London",
+          addressLine3         = Some("London"),
           addressLine4         = Some("Greater London"),
           postcode             = Some("SW1A 2AA"),
           phone                = Some("02079460000"),
-          email                = "info@acmeagents.co.uk",
+          email                = Some("info@acmeagents.co.uk"),
           agentReferenceNumber = arn
         )
 
@@ -135,24 +136,26 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val list  = List(
           AgentDetailsResponse(
             agentName            = "Alpha",
-            addressLine1         = "1 Street 1",
+            agentId              = Some("AGT001"),
+            addressLine1         = Some("1 Street 1"),
             addressLine2         = None,
-            addressLine3         = "Town",
+            addressLine3         = Some("Town"),
             addressLine4         = None,
             postcode             = Some("AA1 1AA"),
             phone                = None,
-            email                = "alpha@example.com",
+            email                = Some("alpha@example.com"),
             agentReferenceNumber = "ARN-1"
           ),
           AgentDetailsResponse(
             agentName            = "Beta",
-            addressLine1         = "2 Street 2",
+            agentId              = Some("AGT001"),
+            addressLine1         = Some("2 Street 2"),
             addressLine2         = Some("Area"),
-            addressLine3         = "City",
+            addressLine3         = Some("City"),
             addressLine4         = None,
             postcode             = Some("BB2 2BB"),
             phone                = Some("02070000000"),
-            email                = "beta@example.com",
+            email                = Some("beta@example.com"),
             agentReferenceNumber = "ARN-2"
           )
         )
@@ -236,7 +239,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
         private val storn = "STN-ORG"
 
-        private val expected = SdltOrganisation(
+        private val expected = SdltOrganisationResponse(
           storn = storn,
           version = 1,
           isReturnUser = "true",

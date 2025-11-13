@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{AgentDetailsResponse, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation}
+import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -212,7 +212,7 @@ class ManageAgentsControllerSpec extends SpecBase {
     "GET organisation/storn/:storn (getSdltOrganisation)" - {
 
       "return OK with organisation payload when service returns the organisation" in new BaseSetup {
-        val testOrg = SdltOrganisation(
+        val testOrg = SdltOrganisationResponse(
           storn = "A-123",
           version = 1,
           isReturnUser = "1",
@@ -244,7 +244,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "return OK with empty agents when service returns an organisation with no agents" in new BaseSetup {
-        val emptyOrg = SdltOrganisation(
+        val emptyOrg = SdltOrganisationResponse(
           storn = "A-123",
           version = 1,
           isReturnUser = "1",

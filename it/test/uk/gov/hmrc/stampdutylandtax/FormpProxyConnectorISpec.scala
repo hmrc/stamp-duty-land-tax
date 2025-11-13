@@ -18,7 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
-import models.agent.{AgentDetailsResponse, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.manage.SdltReturnRecordResponse
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
@@ -54,6 +54,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
               .withBody(
                 """{
                   |  "agentName": "Sunrise Realty",
+                  |  "agentId": "AGT001",
                   |  "addressLine1": "8B Baker Street",
                   |  "addressLine2": null,
                   |  "addressLine3": "Manchester",
@@ -71,13 +72,14 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       result mustBe Some(AgentDetailsResponse(
         agentName            = "Sunrise Realty",
-        addressLine1         = "8B Baker Street",
+        agentId              = Some("AGT001"),
+        addressLine1         = Some("8B Baker Street"),
         addressLine2         = None,
-        addressLine3         = "Manchester",
+        addressLine3         = Some("Manchester"),
         addressLine4         = None,
         postcode             = Some("M1 2AB"),
         phone                = Some("01611234567"),
-        email                = "contact@sunriserealty.co.uk",
+        email                = Some("contact@sunriserealty.co.uk"),
         agentReferenceNumber = "ARN001"
       ))
     }
@@ -177,6 +179,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
                 """[
                   |  {
                   |    "agentName": "Acme Property Agents Ltd",
+                  |    "agentId": "AGT001",
                   |    "addressLine1": "42 High Street",
                   |    "addressLine2": "Westminster",
                   |    "addressLine3": "London",
@@ -188,6 +191,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
                   |  },
                   |  {
                   |    "agentName": "Harborview Estates",
+                  |    "agentId": "AGT002",
                   |    "addressLine1": "22A Queensway",
                   |    "addressLine2": null,
                   |    "addressLine3": "Birmingham",
@@ -206,24 +210,26 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       result mustBe List(
         AgentDetailsResponse(
           agentName            = "Acme Property Agents Ltd",
-          addressLine1         = "42 High Street",
+          addressLine1         = Some("42 High Street"),
+          agentId              = Some("AGT001"),
           addressLine2         = Some("Westminster"),
-          addressLine3         = "London",
+          addressLine3         = Some("London"),
           addressLine4         = Some("Greater London"),
           postcode             = Some("SW1A 2AA"),
           phone                = Some("02079460000"),
-          email                = "info@acmeagents.co.uk",
+          email                = Some("info@acmeagents.co.uk"),
           agentReferenceNumber = "ARN001"
         ),
         AgentDetailsResponse(
           agentName            = "Harborview Estates",
-          addressLine1         = "22A Queensway",
+          agentId              = Some("AGT002"),
+          addressLine1         = Some("22A Queensway"),
           addressLine2         = None,
-          addressLine3         = "Birmingham",
+          addressLine3         = Some("Birmingham"),
           addressLine4         = None,
           postcode             = Some("B2 4ND"),
           phone                = Some("01214567890"),
-          email                = "info@harborviewestates.co.uk",
+          email                = Some("info@harborviewestates.co.uk"),
           agentReferenceNumber = "ARN002"
         )
       )
@@ -386,7 +392,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       val result = connector.getSdltOrganisation(storn).futureValue
 
-       result mustBe SdltOrganisation(
+       result mustBe SdltOrganisationResponse(
          storn                   = storn,
          version                 = 1,
          isReturnUser            = "true",

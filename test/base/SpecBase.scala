@@ -66,37 +66,40 @@ trait SpecBase
   val testAgentDetailsAfterCreation: AgentDetailsResponse = AgentDetailsResponse(
     agentReferenceNumber = "ARN001",
     agentName = "64 Acme Property Agents Ltd",
-    addressLine1 = "Zoo Lane",
+    agentId = Some("AGT001"),
+    addressLine1 = Some("Zoo Lane"),
     addressLine2 = Some("Westminster"),
-    addressLine3 = "London",
+    addressLine3 = Some("London"),
     addressLine4 = None,
     postcode = Some("SW1A 2AA"),
     phone = Some("02079460000"),
-    email = "test@example.com"
+    email = Some("test@example.com")
   )
 
   val testAgentDetailsList: List[AgentDetailsResponse] = List(
     AgentDetailsResponse(
       agentReferenceNumber = "ARN001",
       agentName = "64 Acme Property Agents Ltd",
-      addressLine1 = "Zoo Lane",
+      agentId = Some("AGT001"),
+      addressLine1 = Some("Zoo Lane"),
       addressLine2 = Some("Westminster"),
-      addressLine3 = "London",
+      addressLine3 = Some("London"),
       addressLine4 = None,
       postcode = Some("SW1A 2AA"),
       phone = Some("02079460000"),
-      email = "test@example.com"
+      email = Some("test@example.com")
     ),
     AgentDetailsResponse(
       agentReferenceNumber = "ARN001",
       agentName = "12B BrightHomes Estates",
-      addressLine1 = "Maple Street",
+      agentId = Some("AGT001"),
+      addressLine1 = Some("Maple Street"),
       addressLine2 = Some("Camden"),
-      addressLine3 = "London",
+      addressLine3 = Some("London"),
       addressLine4 = Some("Greater London"),
       postcode = Some("NW1 5LE"),
       phone = Some("02071234567"),
-      email = "info@brighthomes.co.uk"
+      email = Some("info@brighthomes.co.uk")
     )
   )
 

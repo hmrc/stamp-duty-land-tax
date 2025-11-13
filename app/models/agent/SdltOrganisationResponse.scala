@@ -18,32 +18,15 @@ package models.agent
 
 import play.api.libs.json.*
 
-case class AgentDetailsResponse(
-                                agentReferenceNumber : String,
-                                agentName            : String,
-                                agentId              : Option[String],
-                                addressLine1         : Option[String],
-                                addressLine2         : Option[String],
-                                addressLine3         : Option[String],
-                                addressLine4         : Option[String],
-                                postcode             : Option[String],
-                                phone                : Option[String],
-                                email                : Option[String]
-                              )
 
-object AgentDetailsResponse {
-  implicit val format: OFormat[AgentDetailsResponse] = Json.format[AgentDetailsResponse]
+case class SdltOrganisationResponse(
+                                    storn                   : String,
+                                    version                 : Int,
+                                    isReturnUser            : String,
+                                    doNotDisplayWelcomePage : String,
+                                    agents                  : Seq[AgentDetailsResponse]
+                                   )
 
-}
-
-case class SdltOrganisation(
-                             storn                   : String,
-                             version                 : Int,
-                             isReturnUser            : String,
-                             doNotDisplayWelcomePage : String,
-                             agents                  : Seq[AgentDetailsResponse]
-                           )
-
-object SdltOrganisation {
-  implicit val format: OFormat[SdltOrganisation] = Json.format[SdltOrganisation]
+object SdltOrganisationResponse {
+  implicit val format: OFormat[SdltOrganisationResponse] = Json.format[SdltOrganisationResponse]
 }

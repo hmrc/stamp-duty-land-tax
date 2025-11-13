@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
 import models.manage.SdltReturnRecordResponse
 import play.api.Logging
@@ -65,11 +65,11 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisation] =
+  def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
     val url: URL = if(stubFormPBool) url"$stubPath/organisation" else url"$formpPath/organisation"
     http.post(url)
       .withBody(Json.obj("storn" -> storn))
-      .execute[SdltOrganisation]
+      .execute[SdltOrganisationResponse]
       .recover {
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][getSdltOrganisation]: ${e.getMessage}")

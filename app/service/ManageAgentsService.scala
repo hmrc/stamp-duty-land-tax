@@ -17,7 +17,7 @@
 package service
 
 import connectors.FormpProxyConnector
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
@@ -38,7 +38,7 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp
       .getAllAgentsLegacy(storn)
 
-  def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisation] =
+  def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
     formp
       .getSdltOrganisation(storn)
 
