@@ -54,8 +54,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
               .withBody(
                 """{
                   |  "agentName": "Sunrise Realty",
-                  |  "houseNumber": "8B",
-                  |  "addressLine1": "Baker Street",
+                  |  "addressLine1": "8B Baker Street",
                   |  "addressLine2": null,
                   |  "addressLine3": "Manchester",
                   |  "addressLine4": null,
@@ -72,8 +71,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       result mustBe Some(AgentDetailsResponse(
         agentName            = "Sunrise Realty",
-        houseNumber          = "8B",
-        addressLine1         = "Baker Street",
+        addressLine1         = "8B Baker Street",
         addressLine2         = None,
         addressLine3         = "Manchester",
         addressLine4         = None,
@@ -117,8 +115,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     val payload = AgentDetailsRequest(
       agentName   = "Acme Property Agents Ltd",
-      houseNumber = "42",
-      addressLine1 = "High Street",
+      addressLine1 = "42 High Street",
       addressLine2 = Some("Westminster"),
       addressLine3 = "London",
       addressLine4 = Some("Greater London"),
@@ -180,8 +177,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
                 """[
                   |  {
                   |    "agentName": "Acme Property Agents Ltd",
-                  |    "houseNumber": "42",
-                  |    "addressLine1": "High Street",
+                  |    "addressLine1": "42 High Street",
                   |    "addressLine2": "Westminster",
                   |    "addressLine3": "London",
                   |    "addressLine4": "Greater London",
@@ -192,8 +188,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
                   |  },
                   |  {
                   |    "agentName": "Harborview Estates",
-                  |    "houseNumber": "22A",
-                  |    "addressLine1": "Queensway",
+                  |    "addressLine1": "22A Queensway",
                   |    "addressLine2": null,
                   |    "addressLine3": "Birmingham",
                   |    "addressLine4": null,
@@ -211,8 +206,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       result mustBe List(
         AgentDetailsResponse(
           agentName            = "Acme Property Agents Ltd",
-          houseNumber          = "42",
-          addressLine1         = "High Street",
+          addressLine1         = "42 High Street",
           addressLine2         = Some("Westminster"),
           addressLine3         = "London",
           addressLine4         = Some("Greater London"),
@@ -223,8 +217,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         ),
         AgentDetailsResponse(
           agentName            = "Harborview Estates",
-          houseNumber          = "22A",
-          addressLine1         = "Queensway",
+          addressLine1         = "22A Queensway",
           addressLine2         = None,
           addressLine3         = "Birmingham",
           addressLine4         = None,
@@ -369,10 +362,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
            |  "doNotDisplayWelcomePage": "Yes",
            |  "agents": [
            |    {
-           |      "agentReference": "ARN001",
-           |      "name": "John",
+           |      "agentReferenceNumber": "ARN001",
+           |      "agentName": "John",
            |      "agentId": "AGT001",
-           |      "houseNumber": null,
            |      "addressLine1": "1 High Street",
            |      "addressLine2": "Westminster",
            |      "addressLine3": "London",
@@ -400,17 +392,16 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          isReturnUser            = "true",
          doNotDisplayWelcomePage = "Yes",
          agents = Seq(Agent(
-           agentReference = "ARN001",
-           name           = "John",
-           agentId        = Some("AGT001"),
-           houseNumber    = None,
-           addressLine1   = Some("1 High Street"),
-           addressLine2   = Some("Westminster"),
-           addressLine3   = Some("London"),
-           addressLine4   = Some("Greater London"),
-           postcode       = Some("SW72AZ"),
-           phone          = Some("02079460000"),
-           email          = Some("info@acme.co.uk")
+           agentReferenceNumber = "ARN001",
+           agentName            = "John",
+           agentId              = Some("AGT001"),
+           addressLine1         = Some("1 High Street"),
+           addressLine2         = Some("Westminster"),
+           addressLine3         = Some("London"),
+           addressLine4         = Some("Greater London"),
+           postcode             = Some("SW72AZ"),
+           phone                = Some("02079460000"),
+           email                = Some("info@acme.co.uk")
          ))
        )
 
