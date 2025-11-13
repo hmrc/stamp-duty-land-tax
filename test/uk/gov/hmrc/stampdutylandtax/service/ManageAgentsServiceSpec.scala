@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{Agent, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsResponse, AgentDetailsRequest, AgentDetailsResponse, SdltOrganisation, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -242,7 +242,7 @@ class ManageAgentsServiceSpec extends SpecBase {
           isReturnUser = "true",
           doNotDisplayWelcomePage = "Yes",
           agents = Seq(
-            Agent(
+            AgentDetailsResponse(
               agentReferenceNumber = "ARN001",
               agentName = "John",
               agentId = Some("AGT001"),

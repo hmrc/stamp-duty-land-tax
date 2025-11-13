@@ -18,21 +18,21 @@ package models.agent
 
 import play.api.libs.json.*
 
-case class Agent(
-                  agentReferenceNumber : String,
-                  agentName            : String,
-                  agentId              : Option[String],
-                  addressLine1         : Option[String],
-                  addressLine2         : Option[String],
-                  addressLine3         : Option[String],
-                  addressLine4         : Option[String],
-                  postcode             : Option[String],
-                  phone                : Option[String],
-                  email                : Option[String]
-                )
+case class AgentDetailsResponse(
+                                agentReferenceNumber : String,
+                                agentName            : String,
+                                agentId              : Option[String],
+                                addressLine1         : Option[String],
+                                addressLine2         : Option[String],
+                                addressLine3         : Option[String],
+                                addressLine4         : Option[String],
+                                postcode             : Option[String],
+                                phone                : Option[String],
+                                email                : Option[String]
+                              )
 
-object Agent {
-  implicit val format: OFormat[Agent] = Json.format[Agent]
+object AgentDetailsResponse {
+  implicit val format: OFormat[AgentDetailsResponse] = Json.format[AgentDetailsResponse]
 
 }
 
@@ -41,7 +41,7 @@ case class SdltOrganisation(
                              version                 : Int,
                              isReturnUser            : String,
                              doNotDisplayWelcomePage : String,
-                             agents                  : Seq[Agent]
+                             agents                  : Seq[AgentDetailsResponse]
                            )
 
 object SdltOrganisation {
