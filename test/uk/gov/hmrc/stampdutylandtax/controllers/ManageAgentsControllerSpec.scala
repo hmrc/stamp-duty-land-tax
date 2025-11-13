@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.{AgentDetailsResponse, AgentDetailsRequest}
+import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -27,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import service.ManageAgentsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,7 +48,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier])
       }
 
-      "return 404 with message when service returns None" in new BaseSetup {
+      "return NOT_FOUND with message when service returns None" in new BaseSetup {
         when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
           .thenReturn(Future.successful(None))
 
@@ -68,7 +69,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
@@ -81,41 +82,41 @@ class ManageAgentsControllerSpec extends SpecBase {
     "GET agent-details/get-all-agents/storn/:storn (getAllAgents)" - {
 
       "return OK with agent details when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgents(eqTo("A-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
           .thenReturn(Future.successful(testAgentDetailsList))
 
-        val result: Future[Result] = controller.getAllAgents("A-123")(fakeRequest)
+        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(testAgentDetailsList)
-        verify(mockManageAgentsService).getAllAgents(eqTo("A-123"))(any[HeaderCarrier])
+        verify(mockManageAgentsService).getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier])
       }
 
       "return OK with message when service returns an empty list" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgents(eqTo("A-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
           .thenReturn(Future.successful(Nil))
 
-        val result: Future[Result] = controller.getAllAgents("A-123")(fakeRequest)
+        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
 
         status(result) mustBe OK
-        verify(mockManageAgentsService).getAllAgents(eqTo("A-123"))(any[HeaderCarrier])
+        verify(mockManageAgentsService).getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier])
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgents(eqTo("A-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
 
-        val result: Future[Result] = controller.getAllAgents("A-123")(fakeRequest)
+        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
 
         status(result) mustBe BAD_GATEWAY
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgents(eqTo("A-123"))(any[HeaderCarrier]))
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
+        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.getAllAgents("A-123")(fakeRequest)
+        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
@@ -153,7 +154,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
@@ -198,11 +199,84 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
-      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
         when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
         val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+      }
+    }
+    "GET organisation/storn/:storn (getSdltOrganisation)" - {
+
+      "return OK with organisation payload when service returns the organisation" in new BaseSetup {
+        val testOrg = SdltOrganisationResponse(
+          storn = "A-123",
+          version = 1,
+          isReturnUser = "1",
+          doNotDisplayWelcomePage = "No",
+          agents = Seq(
+            AgentDetailsResponse(
+              agentReferenceNumber = "ARN001",
+              agentName = "Anderson Legal LLP",
+              agentId = Some("AGT001"),
+              addressLine1 = Some("10 Downing Street"),
+              addressLine2 = Some("Westminster"),
+              addressLine3 = Some("London"),
+              addressLine4 = Some("United Kingdom"),
+              postcode = Some("SW1A 2AA"),
+              phone = Some("02079460001"),
+              email = Some("info@andersonlegal.co.uk")
+            )
+          )
+        )
+
+        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testOrg))
+
+        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(testOrg)
+        verify(mockManageAgentsService).getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier])
+      }
+
+      "return OK with empty agents when service returns an organisation with no agents" in new BaseSetup {
+        val emptyOrg = SdltOrganisationResponse(
+          storn = "A-123",
+          version = 1,
+          isReturnUser = "1",
+          doNotDisplayWelcomePage = "No",
+          agents = Nil
+        )
+
+        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(emptyOrg))
+
+        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(emptyOrg)
+        verify(mockManageAgentsService).getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier])
+      }
+
+      "propagate UpstreamErrorResponse status & message" in new BaseSetup {
+        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+
+        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
+
+        status(result) mustBe BAD_GATEWAY
+        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+      }
+
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
+        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("unexpected")))
+
+        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")

@@ -17,8 +17,7 @@
 package service
 
 import connectors.FormpProxyConnector
-import models.{AgentDetailsResponse, AgentDetailsRequest}
-import models.response.SubmitAgentDetailsResponse
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
@@ -27,19 +26,23 @@ import scala.concurrent.Future
 @Singleton
 class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
 
-  def getAgentDetails(storn: String, agentReferenceNumber: String)
-                     (implicit hc: HeaderCarrier): Future[Option[AgentDetailsResponse]] =
-    formp.getAgentDetails(storn, agentReferenceNumber)
+  def getAgentDetails(storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetailsResponse]] =
+    formp
+      .getAgentDetails(storn, agentReferenceNumber)
 
-  def submitAgentDetails(agentDetails: AgentDetailsRequest)
-                        (implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
-    formp.submitAgentDetails(agentDetails)
+  def submitAgentDetails(agentDetails: AgentDetailsRequest)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
+    formp
+      .submitAgentDetails(agentDetails)
 
-  def getAllAgents(storn: String)
-                  (implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
-    formp.getAllAgents(storn)
+  def getAllAgentsLegacy(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
+    formp
+      .getAllAgentsLegacy(storn)
 
-  def removeAgent(storn: String, agentReferenceNumber: String)
-                 (implicit hc: HeaderCarrier): Future[Boolean] =
-    formp.removeAgent(storn, agentReferenceNumber)
+  def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
+    formp
+      .getSdltOrganisation(storn)
+
+  def removeAgent(storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[Boolean] =
+    formp
+      .removeAgent(storn, agentReferenceNumber)
 }

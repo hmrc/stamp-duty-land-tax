@@ -18,8 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.{AgentDetailsRequest, AgentDetailsResponse}
-import models.response.SubmitAgentDetailsResponse
+import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -38,14 +37,14 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val arn   = "ARN-999"
         private val resp  = AgentDetailsResponse(
           agentName            = "Acme Property",
-          houseNumber          = "42",
-          addressLine1         = "High Street",
+          agentId              = Some("AGT001"),
+          addressLine1         = Some("High Street"),
           addressLine2         = Some("Westminster"),
-          addressLine3         = "London",
+          addressLine3         = Some("London"),
           addressLine4         = Some("Greater London"),
           postcode             = Some("SW1A 2AA"),
           phone                = Some("02079460000"),
-          email                = "info@acmeagents.co.uk",
+          email                = Some("info@acmeagents.co.uk"),
           agentReferenceNumber = arn
         )
 
@@ -88,8 +87,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
         private val req = AgentDetailsRequest(
-          agentName    = "Harborview Estates",
-          houseNumber  = "22A",
+          agentName    = "22A Harborview Estates",
           addressLine1 = "Queensway",
           addressLine2 = None,
           addressLine3 = "Birmingham",
@@ -110,8 +108,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val req = AgentDetailsRequest(
-          agentName    = "Bad Data Inc",
-          houseNumber  = "??",
+          agentName    = "?? Bad Data Inc",
           addressLine1 = "Unknown",
           addressLine2 = None,
           addressLine3 = "Nowhere",
@@ -139,60 +136,60 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val list  = List(
           AgentDetailsResponse(
             agentName            = "Alpha",
-            houseNumber          = "1",
-            addressLine1         = "Street 1",
+            agentId              = Some("AGT001"),
+            addressLine1         = Some("1 Street 1"),
             addressLine2         = None,
-            addressLine3         = "Town",
+            addressLine3         = Some("Town"),
             addressLine4         = None,
             postcode             = Some("AA1 1AA"),
             phone                = None,
-            email                = "alpha@example.com",
+            email                = Some("alpha@example.com"),
             agentReferenceNumber = "ARN-1"
           ),
           AgentDetailsResponse(
             agentName            = "Beta",
-            houseNumber          = "2",
-            addressLine1         = "Street 2",
+            agentId              = Some("AGT001"),
+            addressLine1         = Some("2 Street 2"),
             addressLine2         = Some("Area"),
-            addressLine3         = "City",
+            addressLine3         = Some("City"),
             addressLine4         = None,
             postcode             = Some("BB2 2BB"),
             phone                = Some("02070000000"),
-            email                = "beta@example.com",
+            email                = Some("beta@example.com"),
             agentReferenceNumber = "ARN-2"
           )
         )
 
-        when(mockFormp.getAllAgents(eqTo(storn))(any[HeaderCarrier]))
+        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.successful(list))
 
-        val result = service.getAllAgents(storn).futureValue
+        val result = service.getAllAgentsLegacy(storn).futureValue
         result mustBe list
-        verify(mockFormp, times(1)).getAllAgents(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
       }
 
       "should return Nil when the connector successfully returns an empty list of agents" in new BaseSetup {
         private val storn = "STN-EMPTY"
 
-        when(mockFormp.getAllAgents(eqTo(storn))(any[HeaderCarrier]))
+        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.successful(Nil))
 
-        val result = service.getAllAgents(storn).futureValue
+        val result = service.getAllAgentsLegacy(storn).futureValue
         result mustBe empty
-        verify(mockFormp, times(1)).getAllAgents(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val storn = "STN-ERR"
 
-        when(mockFormp.getAllAgents(eqTo(storn))(any[HeaderCarrier]))
+        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("boom")))
 
         val ex = intercept[RuntimeException] {
-          service.getAllAgents(storn).futureValue
+          service.getAllAgentsLegacy(storn).futureValue
         }
         ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).getAllAgents(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
       }
     }
 
@@ -234,6 +231,56 @@ class ManageAgentsServiceSpec extends SpecBase {
         }
         ex.getMessage must include("boom")
         verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
+      }
+    }
+    "getSdltOrganisation" - {
+
+      "should delegate to connector and return SdltOrganisation" in new BaseSetup {
+
+        private val storn = "STN-ORG"
+
+        private val expected = SdltOrganisationResponse(
+          storn = storn,
+          version = 1,
+          isReturnUser = "true",
+          doNotDisplayWelcomePage = "Yes",
+          agents = Seq(
+            AgentDetailsResponse(
+              agentReferenceNumber = "ARN001",
+              agentName = "John",
+              agentId = Some("AGT001"),
+              addressLine1 = Some("1 High Street"),
+              addressLine2 = Some("Westminster"),
+              addressLine3 = Some("London"),
+              addressLine4 = Some("Greater London"),
+              postcode = Some("SW72AZ"),
+              phone = Some("02079460000"),
+              email = Some("info@acme.co.uk")
+            )
+          )
+        )
+
+        when(mockFormp.getSdltOrganisation(eqTo(storn))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(expected))
+
+        val result = service.getSdltOrganisation(storn).futureValue
+        result mustBe expected
+
+        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(any[HeaderCarrier])
+      }
+
+      "should propagate exceptions from the connector" in new BaseSetup {
+        private val storn = "STN-ORG-ERR"
+
+        when(mockFormp.getSdltOrganisation(eqTo(storn))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("boom")))
+
+        val ex = intercept[RuntimeException] {
+          service.getSdltOrganisation(storn).futureValue
+        }
+        ex.getMessage must include("boom")
+
+        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(any[HeaderCarrier])
       }
     }
   }

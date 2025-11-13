@@ -16,8 +16,7 @@
 
 package base
 
-import models.{AgentDetailsResponse, AgentDetailsRequest}
-import models.response.SubmitAgentDetailsResponse
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SubmitAgentDetailsResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -54,8 +53,7 @@ trait SpecBase
       .build()
 
   val testAgentDetailsRequest: AgentDetailsRequest = AgentDetailsRequest(
-    agentName = "Acme Property Agents Ltd",
-    houseNumber = "64",
+    agentName = "64Acme Property Agents Ltd",
     addressLine1 = "Zoo Lane",
     addressLine2 = Some("Westminster"),
     addressLine3 = "London",
@@ -67,41 +65,41 @@ trait SpecBase
 
   val testAgentDetailsAfterCreation: AgentDetailsResponse = AgentDetailsResponse(
     agentReferenceNumber = "ARN001",
-    agentName = "Acme Property Agents Ltd",
-    houseNumber = "64",
-    addressLine1 = "Zoo Lane",
+    agentName = "64 Acme Property Agents Ltd",
+    agentId = Some("AGT001"),
+    addressLine1 = Some("Zoo Lane"),
     addressLine2 = Some("Westminster"),
-    addressLine3 = "London",
+    addressLine3 = Some("London"),
     addressLine4 = None,
     postcode = Some("SW1A 2AA"),
     phone = Some("02079460000"),
-    email = "test@example.com"
+    email = Some("test@example.com")
   )
 
   val testAgentDetailsList: List[AgentDetailsResponse] = List(
     AgentDetailsResponse(
       agentReferenceNumber = "ARN001",
-      agentName = "Acme Property Agents Ltd",
-      houseNumber = "64",
-      addressLine1 = "Zoo Lane",
+      agentName = "64 Acme Property Agents Ltd",
+      agentId = Some("AGT001"),
+      addressLine1 = Some("Zoo Lane"),
       addressLine2 = Some("Westminster"),
-      addressLine3 = "London",
+      addressLine3 = Some("London"),
       addressLine4 = None,
       postcode = Some("SW1A 2AA"),
       phone = Some("02079460000"),
-      email = "test@example.com"
+      email = Some("test@example.com")
     ),
     AgentDetailsResponse(
       agentReferenceNumber = "ARN001",
-      agentName = "BrightHomes Estates",
-      houseNumber = "12B",
-      addressLine1 = "Maple Street",
+      agentName = "12B BrightHomes Estates",
+      agentId = Some("AGT001"),
+      addressLine1 = Some("Maple Street"),
       addressLine2 = Some("Camden"),
-      addressLine3 = "London",
+      addressLine3 = Some("London"),
       addressLine4 = Some("Greater London"),
       postcode = Some("NW1 5LE"),
       phone = Some("02071234567"),
-      email = "info@brighthomes.co.uk"
+      email = Some("info@brighthomes.co.uk")
     )
   )
 

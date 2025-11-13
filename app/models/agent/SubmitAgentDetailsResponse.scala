@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package models.response
+package models.agent
 
 import play.api.libs.json.{Json, OFormat}
 

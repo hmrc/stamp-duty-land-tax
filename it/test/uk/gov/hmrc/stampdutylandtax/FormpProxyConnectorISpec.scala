@@ -18,10 +18,8 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
-import models.{AgentDetailsRequest, AgentDetailsResponse}
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.manage.SdltReturnRecordResponse
-import models.response.SubmitAgentDetailsResponse
-import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -56,8 +54,8 @@ class FormpProxyConnectorISpec extends AnyWordSpec
               .withBody(
                 """{
                   |  "agentName": "Sunrise Realty",
-                  |  "houseNumber": "8B",
-                  |  "addressLine1": "Baker Street",
+                  |  "agentId": "AGT001",
+                  |  "addressLine1": "8B Baker Street",
                   |  "addressLine2": null,
                   |  "addressLine3": "Manchester",
                   |  "addressLine4": null,
@@ -74,14 +72,14 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       result mustBe Some(AgentDetailsResponse(
         agentName            = "Sunrise Realty",
-        houseNumber          = "8B",
-        addressLine1         = "Baker Street",
+        agentId              = Some("AGT001"),
+        addressLine1         = Some("8B Baker Street"),
         addressLine2         = None,
-        addressLine3         = "Manchester",
+        addressLine3         = Some("Manchester"),
         addressLine4         = None,
         postcode             = Some("M1 2AB"),
         phone                = Some("01611234567"),
-        email                = "contact@sunriserealty.co.uk",
+        email                = Some("contact@sunriserealty.co.uk"),
         agentReferenceNumber = "ARN001"
       ))
     }
@@ -119,8 +117,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     val payload = AgentDetailsRequest(
       agentName   = "Acme Property Agents Ltd",
-      houseNumber = "42",
-      addressLine1 = "High Street",
+      addressLine1 = "42 High Street",
       addressLine2 = Some("Westminster"),
       addressLine3 = "London",
       addressLine4 = Some("Greater London"),
@@ -169,7 +166,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "getAllAgents" should {
 
-    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/get-all-agents"
+    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/get-all-agents-legacy"
 
     "return a list of AgentDetails when BE returns OK with valid JSON" in {
       stubFor(
@@ -182,8 +179,8 @@ class FormpProxyConnectorISpec extends AnyWordSpec
                 """[
                   |  {
                   |    "agentName": "Acme Property Agents Ltd",
-                  |    "houseNumber": "42",
-                  |    "addressLine1": "High Street",
+                  |    "agentId": "AGT001",
+                  |    "addressLine1": "42 High Street",
                   |    "addressLine2": "Westminster",
                   |    "addressLine3": "London",
                   |    "addressLine4": "Greater London",
@@ -194,8 +191,8 @@ class FormpProxyConnectorISpec extends AnyWordSpec
                   |  },
                   |  {
                   |    "agentName": "Harborview Estates",
-                  |    "houseNumber": "22A",
-                  |    "addressLine1": "Queensway",
+                  |    "agentId": "AGT002",
+                  |    "addressLine1": "22A Queensway",
                   |    "addressLine2": null,
                   |    "addressLine3": "Birmingham",
                   |    "addressLine4": null,
@@ -208,31 +205,31 @@ class FormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val result = connector.getAllAgents(storn).futureValue
+      val result = connector.getAllAgentsLegacy(storn).futureValue
 
       result mustBe List(
         AgentDetailsResponse(
           agentName            = "Acme Property Agents Ltd",
-          houseNumber          = "42",
-          addressLine1         = "High Street",
+          addressLine1         = Some("42 High Street"),
+          agentId              = Some("AGT001"),
           addressLine2         = Some("Westminster"),
-          addressLine3         = "London",
+          addressLine3         = Some("London"),
           addressLine4         = Some("Greater London"),
           postcode             = Some("SW1A 2AA"),
           phone                = Some("02079460000"),
-          email                = "info@acmeagents.co.uk",
+          email                = Some("info@acmeagents.co.uk"),
           agentReferenceNumber = "ARN001"
         ),
         AgentDetailsResponse(
           agentName            = "Harborview Estates",
-          houseNumber          = "22A",
-          addressLine1         = "Queensway",
+          agentId              = Some("AGT002"),
+          addressLine1         = Some("22A Queensway"),
           addressLine2         = None,
-          addressLine3         = "Birmingham",
+          addressLine3         = Some("Birmingham"),
           addressLine4         = None,
           postcode             = Some("B2 4ND"),
           phone                = Some("01214567890"),
-          email                = "info@harborviewestates.co.uk",
+          email                = Some("info@harborviewestates.co.uk"),
           agentReferenceNumber = "ARN002"
         )
       )
@@ -246,7 +243,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.getAllAgents(storn).futureValue
+        connector.getAllAgentsLegacy(storn).futureValue
       }
       ex.getMessage.toLowerCase must include ("error")
     }
@@ -259,7 +256,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.getAllAgents(storn).futureValue
+        connector.getAllAgentsLegacy(storn).futureValue
       }
       ex.getMessage must include ("returned 500")
     }
@@ -355,6 +352,101 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         connector.getReturns(storn).futureValue
       }
       ex.getMessage must include ("returned 500")
+    }
+  }
+  "getSdltOrganisation" should {
+
+    val url = "/stamp-duty-land-tax-stub/organisation"
+
+    "return SdltOrganisation when BE returns OK with valid JSON" in {
+      val responseJson =
+        s"""
+           |{
+           |  "storn": "STN001",
+           |  "version": 1,
+           |  "isReturnUser": "true",
+           |  "doNotDisplayWelcomePage": "Yes",
+           |  "agents": [
+           |    {
+           |      "agentReferenceNumber": "ARN001",
+           |      "agentName": "John",
+           |      "agentId": "AGT001",
+           |      "addressLine1": "1 High Street",
+           |      "addressLine2": "Westminster",
+           |      "addressLine3": "London",
+           |      "addressLine4": "Greater London",
+           |      "postcode": "SW72AZ",
+           |      "phone": "02079460000",
+           |      "email": "info@acme.co.uk"
+           |    }
+           |  ]
+           |}
+           |
+         """.stripMargin
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(responseJson))
+      )
+
+      val result = connector.getSdltOrganisation(storn).futureValue
+
+       result mustBe SdltOrganisationResponse(
+         storn                   = storn,
+         version                 = 1,
+         isReturnUser            = "true",
+         doNotDisplayWelcomePage = "Yes",
+         agents = Seq(AgentDetailsResponse(
+           agentReferenceNumber = "ARN001",
+           agentName            = "John",
+           agentId              = Some("AGT001"),
+           addressLine1         = Some("1 High Street"),
+           addressLine2         = Some("Westminster"),
+           addressLine3         = Some("London"),
+           addressLine4         = Some("Greater London"),
+           postcode             = Some("SW72AZ"),
+           phone                = Some("02079460000"),
+           email                = Some("info@acme.co.uk")
+         ))
+       )
+
+      result.toString must include("SW72AZ")
+      result.toString must include("AGT001")
+      result.toString must include("John")
+      result.toString must include("ARN001")
+      result.toString must include("02079460000")
+      result.toString must include("1 High Street")
+      result.toString must include("Westminster")
+      result.toString must include("London")
+      result.toString must include("Greater London")
+      result.toString must include("info@acme.co.uk")
+    }
+
+    "fail when BE returns OK with invalid JSON" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
+      )
+
+      val ex = intercept[Exception] {
+        connector.getSdltOrganisation(storn).futureValue
+      }
+      ex.getMessage.toLowerCase must include("error")
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.getSdltOrganisation(storn).futureValue
+      }
+      ex.getMessage must include("returned 500")
     }
   }
 }
