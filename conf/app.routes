@@ -1,6 +1,5 @@
 # microservice specific routes
 
-GET         /hello-world                                    uk.gov.hmrc.stampdutylandtax.controllers.MicroserviceHelloWorldController.hello
 GET         /manage-agents/agent-details/get                uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.getAgentDetails(storn: String, agentReferenceNumber: String)
 POST        /manage-agents/agent-details/submit             uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.submitAgentDetails
 GET         /manage-agents/agent-details/get-all-agents     uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.getAllAgentsLegacy(storn: String)
