@@ -49,7 +49,13 @@ object CreateReturnRequest {
       (JsPath \ "addressLine3").readNullable[String] and
       (JsPath \ "addressLine4").readNullable[String] and
       (JsPath \ "postcode").readNullable[String] and
-      (JsPath \ "transactionType").read[String]
+      (JsPath \ "transactionType").read[String].map{
+        case "conveyanceTransfer" => "F"
+        case "grantOfLease" => "L"
+        case "conveyanceTransferLease" => "A"
+        case "otherTransaction" => "O"
+        case other => other
+      }
     )(CreateReturnRequest.apply _)
 
   implicit val writes: OWrites[CreateReturnRequest] = Json.writes[CreateReturnRequest]
