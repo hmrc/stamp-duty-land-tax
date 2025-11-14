@@ -31,7 +31,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN12345",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "Smith",
           |  "houseNumber": 42,
           |  "addressLine1": "High Street",
@@ -39,14 +39,14 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
           |  "addressLine3": "London",
           |  "addressLine4": "Greater London",
           |  "postcode": "SW1A 1AA",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
 
       val model = json.as[CreateReturnRequest]
       model.stornId mustBe "STORN12345"
-      model.purchaserIsCompany mustBe "N"
+      model.purchaserIsCompany mustBe "NO"
       model.surNameOrCompanyName mustBe "Smith"
       model.houseNumber mustBe Some(42)
       model.addressLine1 mustBe "High Street"
@@ -54,9 +54,8 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
       model.addressLine3 mustBe Some("London")
       model.addressLine4 mustBe Some("Greater London")
       model.postcode mustBe Some("SW1A 1AA")
-      model.transactionType mustBe "RESIDENTIAL"
+      model.transactionType mustBe "O"
 
-      Json.toJson(model) mustBe json
     }
 
     "read and write an object with minimal fields (no optional values)" in {
@@ -64,17 +63,17 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN99999",
-          |  "purchaserIsCompany": "Y",
+          |  "purchaserIsCompany": "Business",
           |  "surNameOrCompanyName": "ABC Property Ltd",
           |  "addressLine1": "Business Park",
-          |  "transactionType": "NON_RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
 
       val model = json.as[CreateReturnRequest]
       model.stornId mustBe "STORN99999"
-      model.purchaserIsCompany mustBe "Y"
+      model.purchaserIsCompany mustBe "YES"
       model.surNameOrCompanyName mustBe "ABC Property Ltd"
       model.houseNumber mustBe None
       model.addressLine1 mustBe "Business Park"
@@ -82,9 +81,110 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
       model.addressLine3 mustBe None
       model.addressLine4 mustBe None
       model.postcode mustBe None
-      model.transactionType mustBe "NON_RESIDENTIAL"
+      model.transactionType mustBe "O"
 
-      Json.toJson(model) mustBe json
+    }
+
+    "handle conversion for Individual to N" in {
+      val json = Json.parse(
+        """
+          |{
+          |  "stornId": "STORN99999",
+          |  "purchaserIsCompany": "Individual",
+          |  "surNameOrCompanyName": "ABC Property Ltd",
+          |  "addressLine1": "Business Park",
+          |  "transactionType": "otherTransaction"
+          |}
+            """.stripMargin
+      )
+
+      val model = json.as[CreateReturnRequest]
+      model.purchaserIsCompany mustBe "NO"
+    }
+
+    "handle conversion for Business to Y" in {
+      val json = Json.parse(
+        """
+          |{
+          |  "stornId": "STORN99999",
+          |  "purchaserIsCompany": "Business",
+          |  "surNameOrCompanyName": "ABC Property Ltd",
+          |  "addressLine1": "Business Park",
+          |  "transactionType": "otherTransaction"
+          |}
+                """.stripMargin
+      )
+
+      val model = json.as[CreateReturnRequest]
+      model.purchaserIsCompany mustBe "YES"
+    }
+
+    "handle conversion for Transaction Type conveyanceTransfer to F" in {
+      val json = Json.parse(
+        """
+          |{
+          |  "stornId": "STORN99999",
+          |  "purchaserIsCompany": "Individual",
+          |  "surNameOrCompanyName": "ABC Property Ltd",
+          |  "addressLine1": "Business Park",
+          |  "transactionType": "conveyanceTransfer"
+          |}
+                    """.stripMargin
+      )
+
+      val model = json.as[CreateReturnRequest]
+      model.transactionType mustBe "F"
+    }
+
+    "handle conversion for Transaction Type grantOfLease to L" in {
+      val json = Json.parse(
+        """
+          |{
+          |  "stornId": "STORN99999",
+          |  "purchaserIsCompany": "Individual",
+          |  "surNameOrCompanyName": "ABC Property Ltd",
+          |  "addressLine1": "Business Park",
+          |  "transactionType": "grantOfLease"
+          |}
+                        """.stripMargin
+      )
+
+      val model = json.as[CreateReturnRequest]
+      model.transactionType mustBe "L"
+    }
+
+    "handle conversion for Transaction Type conveyanceTransferLease to A" in {
+      val json = Json.parse(
+        """
+          |{
+          |  "stornId": "STORN99999",
+          |  "purchaserIsCompany": "Individual",
+          |  "surNameOrCompanyName": "ABC Property Ltd",
+          |  "addressLine1": "Business Park",
+          |  "transactionType": "conveyanceTransferLease"
+          |}
+                            """.stripMargin
+      )
+
+      val model = json.as[CreateReturnRequest]
+      model.transactionType mustBe "A"
+    }
+
+    "handle conversion for Transaction Type otherTransaction to O" in {
+      val json = Json.parse(
+        """
+          |{
+          |  "stornId": "STORN99999",
+          |  "purchaserIsCompany": "Individual",
+          |  "surNameOrCompanyName": "ABC Property Ltd",
+          |  "addressLine1": "Business Park",
+          |  "transactionType": "otherTransaction"
+          |}
+                                """.stripMargin
+      )
+
+      val model = json.as[CreateReturnRequest]
+      model.transactionType mustBe "O"
     }
 
     "read object with explicit null values for optional fields" in {
@@ -92,7 +192,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN88888",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "Johnson",
           |  "houseNumber": null,
           |  "addressLine1": "Oak Street",
@@ -100,7 +200,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
           |  "addressLine3": null,
           |  "addressLine4": null,
           |  "postcode": null,
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -117,7 +217,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
     "write object with None optional fields as missing JSON fields (not null)" in {
       val model = CreateReturnRequest(
         stornId = "STORN77777",
-        purchaserIsCompany = "Y",
+        purchaserIsCompany = "Business",
         surNameOrCompanyName = "Test Corp",
         houseNumber = None,
         addressLine1 = "Main Road",
@@ -125,7 +225,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         addressLine3 = None,
         addressLine4 = None,
         postcode = None,
-        transactionType = "NON_RESIDENTIAL"
+        transactionType = "NON_otherTransaction"
       )
 
       val json = Json.toJson(model)
@@ -141,10 +241,10 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
       val json = Json.parse(
         """
           |{
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "Smith",
           |  "addressLine1": "High Street",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -159,7 +259,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
           |  "stornId": "STORN12345",
           |  "surNameOrCompanyName": "Smith",
           |  "addressLine1": "High Street",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -172,9 +272,9 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN12345",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "addressLine1": "High Street",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -187,9 +287,9 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN12345",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "Smith",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -202,7 +302,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN12345",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "Smith",
           |  "addressLine1": "High Street"
           |}
@@ -217,11 +317,11 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN12345",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "Smith",
           |  "houseNumber": "not-a-number",
           |  "addressLine1": "High Street",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -234,22 +334,22 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN55555",
-          |  "purchaserIsCompany": "Y",
+          |  "purchaserIsCompany": "Business",
           |  "surNameOrCompanyName": "Global Property Holdings Ltd",
           |  "houseNumber": 250,
           |  "addressLine1": "Corporate Drive",
           |  "addressLine2": "Business Quarter",
           |  "addressLine3": "Birmingham",
           |  "postcode": "B1 1AA",
-          |  "transactionType": "NON_RESIDENTIAL"
+          |  "transactionType": "NON_otherTransaction"
           |}
         """.stripMargin
       )
 
       val model = json.as[CreateReturnRequest]
-      model.purchaserIsCompany mustBe "Y"
+      model.purchaserIsCompany mustBe "YES"
       model.surNameOrCompanyName mustBe "Global Property Holdings Ltd"
-      model.transactionType mustBe "NON_RESIDENTIAL"
+      model.transactionType mustBe "NON_otherTransaction"
     }
 
     "successfully read with individual purchaser" in {
@@ -257,21 +357,21 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN44444",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "Williams",
           |  "houseNumber": 7,
           |  "addressLine1": "Elm Avenue",
           |  "addressLine2": "Cambridge",
           |  "postcode": "CB1 1AA",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
 
       val model = json.as[CreateReturnRequest]
-      model.purchaserIsCompany mustBe "N"
+      model.purchaserIsCompany mustBe "NO"
       model.surNameOrCompanyName mustBe "Williams"
-      model.transactionType mustBe "RESIDENTIAL"
+      model.transactionType mustBe "O"
     }
 
     "handle very long address lines" in {
@@ -280,12 +380,12 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         s"""
            |{
            |  "stornId": "STORN33333",
-           |  "purchaserIsCompany": "N",
+           |  "purchaserIsCompany": "Individual",
            |  "surNameOrCompanyName": "LongAddressPerson",
            |  "addressLine1": "$longAddress",
            |  "addressLine2": "$longAddress",
            |  "addressLine3": "$longAddress",
-           |  "transactionType": "RESIDENTIAL"
+           |  "transactionType": "otherTransaction"
            |}
         """.stripMargin
       )
@@ -301,11 +401,11 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN22222",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "ZeroHouse",
           |  "houseNumber": 0,
           |  "addressLine1": "Unnamed Building",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -319,11 +419,11 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN11111",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "NegativeHouse",
           |  "houseNumber": -1,
           |  "addressLine1": "Basement Flat",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
@@ -332,38 +432,18 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
       model.houseNumber mustBe Some(-1)
     }
 
-    "round-trip serialize and deserialize preserving all data" in {
-      val original = CreateReturnRequest(
-        stornId = "STORN00000",
-        purchaserIsCompany = "N",
-        surNameOrCompanyName = "RoundTrip",
-        houseNumber = Some(999),
-        addressLine1 = "Test Street",
-        addressLine2 = Some("Test Town"),
-        addressLine3 = Some("Test County"),
-        addressLine4 = Some("Test Region"),
-        postcode = Some("TE1 1ST"),
-        transactionType = "RESIDENTIAL"
-      )
-
-      val json         = Json.toJson(original)
-      val deserialized = json.as[CreateReturnRequest]
-
-      deserialized mustBe original
-    }
-
     "handle special characters in string fields" in {
       val json = Json.parse(
         """
           |{
           |  "stornId": "STORN-123-ABC",
-          |  "purchaserIsCompany": "N",
+          |  "purchaserIsCompany": "Individual",
           |  "surNameOrCompanyName": "O'Brien-Smith & Sons",
           |  "houseNumber": 42,
           |  "addressLine1": "High St. (North)",
           |  "addressLine2": "St. Mary's District",
           |  "postcode": "SW1A 1AA",
-          |  "transactionType": "RESIDENTIAL"
+          |  "transactionType": "otherTransaction"
           |}
         """.stripMargin
       )
