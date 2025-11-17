@@ -88,13 +88,13 @@ class ManageAgentsServiceSpec extends SpecBase {
       "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
         private val req = AgentDetailsRequest(
           agentName    = "22A Harborview Estates",
-          addressLine1 = "Queensway",
+          addressLine1 = Some("Queensway"),
           addressLine2 = None,
-          addressLine3 = "Birmingham",
+          addressLine3 = Some("Birmingham"),
           addressLine4 = None,
           postcode     = Some("B2 4ND"),
           phone        = Some("01214567890"),
-          email        = "info@harborviewestates.co.uk"
+          email        = Some("info@harborviewestates.co.uk")
         )
         private val resp = SubmitAgentDetailsResponse("ARN123456")
 
@@ -109,13 +109,13 @@ class ManageAgentsServiceSpec extends SpecBase {
       "should propagate exceptions from the connector" in new BaseSetup {
         private val req = AgentDetailsRequest(
           agentName    = "?? Bad Data Inc",
-          addressLine1 = "Unknown",
+          addressLine1 = Some("Unknown"),
           addressLine2 = None,
-          addressLine3 = "Nowhere",
+          addressLine3 = Some("Nowhere"),
           addressLine4 = None,
           postcode     = None,
           phone        = None,
-          email        = "bad@example.com"
+          email        = Some("bad@example.com")
         )
 
         when(mockFormp.submitAgentDetails(eqTo(req))(any[HeaderCarrier]))
