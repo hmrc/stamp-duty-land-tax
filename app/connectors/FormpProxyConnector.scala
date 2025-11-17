@@ -18,7 +18,7 @@ package connectors
 
 import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
-import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse, SdltReturnRecordResponseLegacy}
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
@@ -107,13 +107,13 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
 
   @deprecated("Use FormpProxyConnector.getReturns")
   def getReturnsLegacy(storn: String)
-                      (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
+                      (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponseLegacy]] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-returns/get-all" else url"$formpPath/manage-returns/get-all"
     http.post(url)
       .withBody(Json.obj(
         "storn" -> storn
       ))
-      .execute[Option[SdltReturnRecordResponse]]
+      .execute[Option[SdltReturnRecordResponseLegacy]]
       .recover {
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][getReturnsLegacy]: ${e.getMessage}")

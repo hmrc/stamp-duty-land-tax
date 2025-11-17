@@ -19,13 +19,15 @@ package connectors
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
 import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
-import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse, SdltReturnRecordResponseLegacy}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.http.Status.*
 import play.api.libs.json.{JsBoolean, Json}
 import uk.gov.hmrc.http.HeaderCarrier
+
+import java.time.LocalDate
 
 class FormpProxyConnectorISpec extends AnyWordSpec
   with Matchers
@@ -325,7 +327,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val result = connector.getReturnsLegacy(storn).futureValue
-      result mustBe Some(SdltReturnRecordResponse(storn = storn, returnSummaryCount = 3, Nil))
+      result mustBe Some(SdltReturnRecordResponseLegacy(storn = storn, returnSummaryCount = 3, Nil))
     }
 
     "fail when BE returns OK with invalid JSON" in {
@@ -367,8 +369,18 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         s"""
            |{
            |  "storn": "$storn",
-           |  "returnSummaryCount": 3,
-           |  "returnSummaryList": []
+           |  "returnSummaryCount": 1,
+           |  "returnSummaryList": [
+           |    {
+           |      "returnReference": "RET123",
+           |      "utrn": "UTRN001",
+           |      "status": "SUBMITTED",
+           |      "dateSubmitted": "2025-11-10",
+           |      "purchaserName": "John Smith",
+           |      "address": "10 Downing Street, London",
+           |      "agentReference": "Smith & Co"
+           |    }
+           |  ]
            |}
          """.stripMargin
 
@@ -379,7 +391,20 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val result = connector.getReturns(request).futureValue
-      result mustBe SdltReturnRecordResponse(storn = storn, returnSummaryCount = 3, returnSummaryList = Nil)
+      result mustBe SdltReturnRecordResponse(
+        returnSummaryCount = Some(1),
+        returnSummaryList = List(
+          ReturnSummary(
+            returnReference = "RET123",
+            utrn = Some("UTRN001"),
+            status = "SUBMITTED",
+            dateSubmitted = Some(LocalDate.parse("2025-11-10")),
+            purchaserName = "John Smith",
+            address = "10 Downing Street, London",
+            agentReference = Some("Smith & Co")
+          )
+        )
+      )
     }
 
     "fail when BE returns OK with invalid JSON" in {

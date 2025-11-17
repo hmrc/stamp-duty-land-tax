@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse, SdltReturnRecordResponseLegacy}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq as eqTo
 import org.mockito.Mockito.{verify, when}
@@ -40,7 +40,7 @@ class ManageReturnsControllerSpec extends SpecBase {
 
       "return OK with returns when service successfully returns a ReturnsResponse payload" in new BaseSetup {
         private val storn = "STN-123"
-        private val payload = SdltReturnRecordResponse(
+        private val payload = SdltReturnRecordResponseLegacy(
           storn              = storn,
           returnSummaryCount = 3,
           returnSummaryList = Nil
@@ -102,8 +102,7 @@ class ManageReturnsControllerSpec extends SpecBase {
 
       "return OK with returns when service successfully returns a ReturnsResponse payload" in new BaseSetup {
         private val payload = SdltReturnRecordResponse(
-          storn              = storn,
-          returnSummaryCount = 3,
+          returnSummaryCount = Some(3),
           returnSummaryList  = Nil
         )
 

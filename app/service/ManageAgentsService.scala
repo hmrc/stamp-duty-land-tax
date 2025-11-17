@@ -26,6 +26,7 @@ import scala.concurrent.Future
 @Singleton
 class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
 
+  @deprecated("Use ManageAgentsService.getSdltOrganisation")
   def getAgentDetails(storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[Option[AgentDetailsResponse]] =
     formp
       .getAgentDetails(storn, agentReferenceNumber)
@@ -34,6 +35,7 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp
       .submitAgentDetails(agentDetails)
 
+  @deprecated("Use ManageAgentsService.getSdltOrganisation")
   def getAllAgentsLegacy(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
     formp
       .getAllAgentsLegacy(storn)
