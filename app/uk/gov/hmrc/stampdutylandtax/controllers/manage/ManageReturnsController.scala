@@ -59,7 +59,7 @@ class ManageReturnsController @Inject()(
             Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
           body =>
             service
-              .getReturns(body.storn)
+              .getReturns(body)
               .map { result =>
                 Ok(Json.toJson(result))
               }

@@ -31,10 +31,10 @@ class ManageReturnsService @Inject()(formp: FormpProxyConnector) {
   def getReturnsLegacy(storn: String)
                       (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
     formp
-      .getReturns(storn)
+      .getReturnsLegacy(storn)
 
-  def getReturns(storn: String)
-                (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
+  def getReturns(request: SdltReturnRecordRequest)
+                (implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] =
     formp
-      .getReturns(storn)
+      .getReturns(request)
 }

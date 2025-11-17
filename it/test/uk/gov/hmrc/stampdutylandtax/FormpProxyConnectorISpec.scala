@@ -19,7 +19,7 @@ package connectors
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
 import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
-import models.manage.SdltReturnRecordResponse
+import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -304,7 +304,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     }
   }
 
-  "getReturns" should {
+  "getReturnsLegacy" should {
 
     val url = "/stamp-duty-land-tax-stub/manage-returns/get-all"
 
@@ -324,7 +324,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(aResponse().withStatus(OK).withBody(body))
       )
 
-      val result = connector.getReturns(storn).futureValue
+      val result = connector.getReturnsLegacy(storn).futureValue
       result mustBe Some(SdltReturnRecordResponse(storn = storn, returnSummaryCount = 3, Nil))
     }
 
@@ -336,7 +336,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.getReturns(storn).futureValue
+        connector.getReturnsLegacy(storn).futureValue
       }
       ex.getMessage.toLowerCase must include ("error")
     }
@@ -349,11 +349,68 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.getReturns(storn).futureValue
+        connector.getReturnsLegacy(storn).futureValue
       }
       ex.getMessage must include ("returned 500")
     }
   }
+
+  "getReturns" should {
+
+    val url = "/stamp-duty-land-tax-stub/returns"
+
+    val request = SdltReturnRecordRequest(storn = storn, None, false, None)
+
+    "return SdltReturnRecordResponse when BE returns OK with valid JSON" in {
+
+      val responseBody =
+        s"""
+           |{
+           |  "storn": "$storn",
+           |  "returnSummaryCount": 3,
+           |  "returnSummaryList": []
+           |}
+         """.stripMargin
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(responseBody))
+      )
+
+      val result = connector.getReturns(request).futureValue
+      result mustBe SdltReturnRecordResponse(storn = storn, returnSummaryCount = 3, returnSummaryList = Nil)
+    }
+
+    "fail when BE returns OK with invalid JSON" in {
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
+      )
+
+      val ex = intercept[Exception] {
+        connector.getReturns(request).futureValue
+      }
+      ex.getMessage.toLowerCase must include("error")
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.getReturns(request).futureValue
+      }
+      ex.getMessage must include("returned 500")
+    }
+  }
+
   "getSdltOrganisation" should {
 
     val url = "/stamp-duty-land-tax-stub/organisation"

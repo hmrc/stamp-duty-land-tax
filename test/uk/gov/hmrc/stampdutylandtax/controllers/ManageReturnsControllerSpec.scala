@@ -96,18 +96,19 @@ class ManageReturnsControllerSpec extends SpecBase {
 
     ".getReturns" - {
 
+      val storn = "STN-123"
+
+      val requestBody = SdltReturnRecordRequest(storn = storn, None, false, None)
+
       "return OK with returns when service successfully returns a ReturnsResponse payload" in new BaseSetup {
-        private val storn = "STN-123"
         private val payload = SdltReturnRecordResponse(
           storn              = storn,
           returnSummaryCount = 3,
           returnSummaryList  = Nil
         )
 
-        when(mockManageReturnsService.getReturns(eqTo(storn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(Some(payload)))
-
-        val requestBody = SdltReturnRecordRequest(storn = storn, None, false, None)
+        when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(payload))
 
         val fakePostRequest: FakeRequest[JsValue] =
           FakeRequest("POST", "/manage-returns/get-returns")
@@ -118,7 +119,7 @@ class ManageReturnsControllerSpec extends SpecBase {
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(payload)
-        verify(mockManageReturnsService).getReturns(eqTo(storn))(any[HeaderCarrier])
+        verify(mockManageReturnsService).getReturns(eqTo(requestBody))(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST when payload is invalid" in new BaseSetup {
@@ -139,10 +140,8 @@ class ManageReturnsControllerSpec extends SpecBase {
       "return INTERNAL_SERVER_ERROR with Unexpected error on upstream failure" in new BaseSetup {
         private val storn = "STN-BADGATE"
 
-        when(mockManageReturnsService.getReturns(eqTo(storn))(any[HeaderCarrier]))
+        when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
-
-        val requestBody = SdltReturnRecordRequest(storn = storn, None, false, None)
 
         val fakePostRequest: FakeRequest[JsValue] =
           FakeRequest("POST", "/manage-returns/get-returns")
@@ -158,10 +157,8 @@ class ManageReturnsControllerSpec extends SpecBase {
       "return INTERNAL_SERVER_ERROR with Unexpected error on unknown exception" in new BaseSetup {
         private val storn = "STN-ERR"
 
-        when(mockManageReturnsService.getReturns(eqTo(storn))(any[HeaderCarrier]))
+        when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
-
-        val requestBody = SdltReturnRecordRequest(storn = storn, None, false, None)
 
         val fakePostRequest: FakeRequest[JsValue] =
           FakeRequest("POST", "/manage-returns/get-returns")

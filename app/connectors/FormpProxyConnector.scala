@@ -18,18 +18,19 @@ package connectors
 
 import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
-import models.manage.SdltReturnRecordResponse
+import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 class FormpProxyConnector @Inject()(http: HttpClientV2,
                                     config: ServicesConfig)
@@ -102,8 +103,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def getReturns(storn: String)
-                (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
+  def getReturnsLegacy(storn: String)
+                      (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-returns/get-all" else url"$formpPath/manage-returns/get-all"
     http.post(url)
       .withBody(Json.obj(
@@ -112,7 +113,23 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       .execute[Option[SdltReturnRecordResponse]]
       .recover {
         case e: Throwable =>
-          logger.error(s"[FormpProxyConnector][getReturns]: ${e.getMessage}")
+          logger.error(s"[FormpProxyConnector][getReturnsLegacy]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
+      }
+
+  def getReturns(request: SdltReturnRecordRequest)
+                (implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] =
+    val url: URL = if(stubFormPBool) url"$stubPath/returns" else url"$formpPath/returns"
+    http.post(url)
+      .withBody(Json.toJson(request))
+      .execute[Either[UpstreamErrorResponse, SdltReturnRecordResponse]]
+      .flatMap {
+        case Right(resp) => Future.successful(resp)
+        case Left(error) => Future.failed(error)
+      }
+      .recoverWith {
+        case NonFatal(e) =>
+          logger.error(s"[FormpProxyConnector][getReturns] failed for storn ${request.storn}: ${e.getMessage}", e)
+          Future.failed(e)
       }
 }
