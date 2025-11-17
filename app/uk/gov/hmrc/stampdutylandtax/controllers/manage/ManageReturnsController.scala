@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.manage
 
+import models.manage.SdltReturnRecordRequest
 import play.api.Logging
-import play.api.libs.json.Json
+import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.ManageReturnsService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ManageReturnsController @Inject()(
@@ -32,8 +33,10 @@ class ManageReturnsController @Inject()(
   service: ManageReturnsService
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
 
-  def getReturns(storn: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getReturns(storn)
+  //TODO: INCORRECT CALL 
+  @deprecated
+  def getReturnsLegacy(storn: String): Action[AnyContent] = Action.async { implicit request =>
+    service.getReturnsLegacy(storn)
       .map {
         case Some(returnItem) => Ok(Json.toJson(returnItem))
         case None             => NotFound(Json.obj("message" -> s"No returns found for storn: $storn"))
@@ -46,3 +49,23 @@ class ManageReturnsController @Inject()(
         InternalServerError(Json.obj("message" -> "Unexpected error"))
     }
   }
+
+  def getReturns: Action[JsValue] =
+    Action.async(parse.json) { implicit request =>
+      request.body
+        .validate[SdltReturnRecordRequest]
+        .fold(
+          errs =>
+            Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+          body =>
+            service
+              .getReturns(body.storn)
+              .map { result =>
+                Ok(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[ManageReturnsController][getReturns] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
+    }

@@ -41,7 +41,7 @@ class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase 
         when(mockFormpProxyConnector.getReturns(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.successful(Some(response)))
 
-        val result = service.getReturns(storn).futureValue
+        val result = service.getReturnsLegacy(storn).futureValue
 
         result mustBe Some(response)
         verify(mockFormpProxyConnector, times(1)).getReturns(eqTo(storn))(any[HeaderCarrier])
@@ -53,7 +53,7 @@ class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase 
         when(mockFormpProxyConnector.getReturns(eqTo(storn))(any[HeaderCarrier]))
           .thenReturn(Future.successful(None))
 
-        val result = service.getReturns(storn).futureValue
+        val result = service.getReturnsLegacy(storn).futureValue
 
         result mustBe None
         verify(mockFormpProxyConnector, times(1)).getReturns(eqTo(storn))(any[HeaderCarrier])
@@ -66,7 +66,7 @@ class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase 
           .thenReturn(Future.failed(new RuntimeException("boom")))
 
         val ex = intercept[RuntimeException] {
-          service.getReturns(storn).futureValue
+          service.getReturnsLegacy(storn).futureValue
         }
 
         ex.getMessage must include("boom")

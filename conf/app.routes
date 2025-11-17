@@ -7,8 +7,10 @@ GET         /manage-agents/agent-details/remove             uk.gov.hmrc.stampdut
 
 # Dummy response in line with formp schema
 GET         /manage-agents/get-sdlt-organisation            uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.getSdltOrganisation(storn: String)
+POST        /manage-returns/get-returns                     uk.gov.hmrc.stampdutylandtax.controllers.manage.ManageReturnsController.getReturns
 
-GET         /manage-returns/get-returns                     uk.gov.hmrc.stampdutylandtax.controllers.manage.ManageReturnsController.getReturns(storn: String)
+# INCORRECT CALL - TO BE REMOVED
+GET         /manage-returns/get-returns                     uk.gov.hmrc.stampdutylandtax.controllers.manage.ManageReturnsController.getReturnsLegacy(storn: String)
 
 # Filing Routes
 
