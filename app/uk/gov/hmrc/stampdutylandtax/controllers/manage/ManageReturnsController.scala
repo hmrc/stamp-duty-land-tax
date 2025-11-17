@@ -33,7 +33,7 @@ class ManageReturnsController @Inject()(
   service: ManageReturnsService
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
 
-  //TODO: INCORRECT CALL 
+  //TODO: INCORRECT CALL
   @deprecated
   def getReturnsLegacy(storn: String): Action[AnyContent] = Action.async { implicit request =>
     service.getReturnsLegacy(storn)
@@ -42,10 +42,10 @@ class ManageReturnsController @Inject()(
         case None             => NotFound(Json.obj("message" -> s"No returns found for storn: $storn"))
     } recover {
       case u: UpstreamErrorResponse =>
-        logger.error("[ManageReturnsController][getReturns] failed with UpstreamErrorResponse", u)
+        logger.error("[ManageReturnsController][getReturnsLegacy] failed with UpstreamErrorResponse", u)
         Status(u.statusCode)(Json.obj("message" -> u.message))
       case t: Throwable =>
-        logger.error("[ManageReturnsController][getReturns] failed", t)
+        logger.error("[ManageReturnsController][getReturnsLegacy] failed", t)
         InternalServerError(Json.obj("message" -> "Unexpected error"))
     }
   }
