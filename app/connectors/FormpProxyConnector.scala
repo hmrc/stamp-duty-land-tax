@@ -40,6 +40,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   private val formpPath = config.baseUrl("formp-proxy") + "/formp-proxy"
   val stubFormPBool: Boolean = config.getBoolean("features.stub-formp-enabled")
 
+  @deprecated("Use FormpProxyConnector.getSdltOrganisation")
   def getAgentDetails(storn: String, agentReferenceNumber: String)
                      (implicit hc: HeaderCarrier): Future[Option[AgentDetailsResponse]] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details" else url"$formpPath/manage-agents/agent-details"
@@ -77,6 +78,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
+  @deprecated("Use FormpProxyConnector.getSdltOrganisation")
   def getAllAgentsLegacy(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/get-all-agents-legacy" else url"$formpPath/manage-agents/agent-details/get-all-agents-legacy"
     http.post(url)
@@ -103,6 +105,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
+  @deprecated("Use FormpProxyConnector.getReturns")
   def getReturnsLegacy(storn: String)
                       (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-returns/get-all" else url"$formpPath/manage-returns/get-all"
