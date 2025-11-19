@@ -17,7 +17,7 @@
 package service
 
 import connectors.FormpProxyConnector
-import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse, SdltReturnRecordResponseLegacy}
+import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
