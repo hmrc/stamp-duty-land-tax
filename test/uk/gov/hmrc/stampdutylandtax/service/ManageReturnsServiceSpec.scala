@@ -33,48 +33,6 @@ class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase 
 
   "ManageReturnsService" - {
 
-    "getReturnsLegacy" - {
-
-      "should delegate to FormpProxyConnector and return a successful ReturnsResponse" in new Setup {
-        private val storn = "STN-123"
-        private val response = SdltReturnRecordResponseLegacy(storn, 5, Nil)
-
-        when(mockFormpProxyConnector.getReturnsLegacy(eqTo(storn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(Some(response)))
-
-        val result = service.getReturnsLegacy(storn).futureValue
-
-        result mustBe Some(response)
-        verify(mockFormpProxyConnector, times(1)).getReturnsLegacy(eqTo(storn))(any[HeaderCarrier])
-      }
-
-      "should delegate to FormpProxyConnector and return None when connector fails to find a return" in new Setup {
-        private val storn = "STN-NONE"
-
-        when(mockFormpProxyConnector.getReturnsLegacy(eqTo(storn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(None))
-
-        val result = service.getReturnsLegacy(storn).futureValue
-
-        result mustBe None
-        verify(mockFormpProxyConnector, times(1)).getReturnsLegacy(eqTo(storn))(any[HeaderCarrier])
-      }
-
-      "should propagate exceptions thrown by the connector" in new Setup {
-        private val storn = "STN-ERR"
-
-        when(mockFormpProxyConnector.getReturnsLegacy(eqTo(storn))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("boom")))
-
-        val ex = intercept[RuntimeException] {
-          service.getReturnsLegacy(storn).futureValue
-        }
-
-        ex.getMessage must include("boom")
-        verify(mockFormpProxyConnector, times(1)).getReturnsLegacy(eqTo(storn))(any[HeaderCarrier])
-      }
-    }
-
     "getReturns" - {
 
       val request = SdltReturnRecordRequest(storn = "STN-123", None, false, None)

@@ -47,20 +47,6 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def getAllAgentsLegacy(storn: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getAllAgentsLegacy(storn) map { agentDetailsList =>
-      Ok(Json.toJson(
-        agentDetailsList
-      ))
-    } recover {
-      case u: UpstreamErrorResponse =>
-        Status(u.statusCode)(Json.obj("message" -> u.message))
-      case t: Throwable =>
-        logger.error("[ManageAgentsController][getAllAgentsLegacy] failed", t)
-        InternalServerError(Json.obj("message" -> "Unexpected error"))
-    }
-  }
-
   def getSdltOrganisation(storn: String): Action[AnyContent] = Action.async { implicit request =>
     service.getSdltOrganisation(storn) map { sdltOrganisation =>
       Ok(Json.toJson(

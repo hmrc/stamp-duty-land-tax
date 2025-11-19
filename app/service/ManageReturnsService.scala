@@ -26,13 +26,6 @@ import scala.concurrent.Future
 @Singleton
 class ManageReturnsService @Inject()(formp: FormpProxyConnector) {
 
-  // WRONG CALL
-  @deprecated("Use ManageReturnsService.getReturns")
-  def getReturnsLegacy(storn: String)
-                      (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponseLegacy]] =
-    formp
-      .getReturnsLegacy(storn)
-
   def getReturns(request: SdltReturnRecordRequest)
                 (implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] =
     formp

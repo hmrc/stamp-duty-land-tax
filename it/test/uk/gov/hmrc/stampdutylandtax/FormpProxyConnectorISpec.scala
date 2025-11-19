@@ -19,7 +19,7 @@ package connectors
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
 import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
-import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse, SdltReturnRecordResponseLegacy}
+import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -166,104 +166,6 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     }
   }
 
-  "getAllAgents" should {
-
-    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/get-all-agents-legacy"
-
-    "return a list of AgentDetails when BE returns OK with valid JSON" in {
-      stubFor(
-        post(urlPathEqualTo(url))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(
-            aResponse()
-              .withStatus(OK)
-              .withBody(
-                """[
-                  |  {
-                  |    "agentName": "Acme Property Agents Ltd",
-                  |    "agentId": "AGT001",
-                  |    "addressLine1": "42 High Street",
-                  |    "addressLine2": "Westminster",
-                  |    "addressLine3": "London",
-                  |    "addressLine4": "Greater London",
-                  |    "postcode": "SW1A 2AA",
-                  |    "phone": "02079460000",
-                  |    "email": "info@acmeagents.co.uk",
-                  |    "agentReferenceNumber": "ARN001"
-                  |  },
-                  |  {
-                  |    "agentName": "Harborview Estates",
-                  |    "agentId": "AGT002",
-                  |    "addressLine1": "22A Queensway",
-                  |    "addressLine2": null,
-                  |    "addressLine3": "Birmingham",
-                  |    "addressLine4": null,
-                  |    "postcode": "B2 4ND",
-                  |    "phone": "01214567890",
-                  |    "email": "info@harborviewestates.co.uk",
-                  |    "agentReferenceNumber": "ARN002"
-                  |  }
-                  |]""".stripMargin)
-          )
-      )
-
-      val result = connector.getAllAgentsLegacy(storn).futureValue
-
-      result mustBe List(
-        AgentDetailsResponse(
-          agentName            = "Acme Property Agents Ltd",
-          addressLine1         = Some("42 High Street"),
-          agentId              = Some("AGT001"),
-          addressLine2         = Some("Westminster"),
-          addressLine3         = Some("London"),
-          addressLine4         = Some("Greater London"),
-          postcode             = Some("SW1A 2AA"),
-          phone                = Some("02079460000"),
-          email                = Some("info@acmeagents.co.uk"),
-          agentReferenceNumber = "ARN001"
-        ),
-        AgentDetailsResponse(
-          agentName            = "Harborview Estates",
-          agentId              = Some("AGT002"),
-          addressLine1         = Some("22A Queensway"),
-          addressLine2         = None,
-          addressLine3         = Some("Birmingham"),
-          addressLine4         = None,
-          postcode             = Some("B2 4ND"),
-          phone                = Some("01214567890"),
-          email                = Some("info@harborviewestates.co.uk"),
-          agentReferenceNumber = "ARN002"
-        )
-      )
-    }
-
-    "fail when BE returns OK with invalid JSON" in {
-      stubFor(
-        post(urlPathEqualTo(url))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
-      )
-
-      val ex = intercept[Exception] {
-        connector.getAllAgentsLegacy(storn).futureValue
-      }
-      ex.getMessage.toLowerCase must include ("error")
-    }
-
-    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
-      stubFor(
-        post(urlPathEqualTo(url))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
-      )
-
-      val ex = intercept[Exception] {
-        connector.getAllAgentsLegacy(storn).futureValue
-      }
-      ex.getMessage must include ("returned 500")
-    }
-  }
-
   "removeAgent" should {
 
     val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/remove"
@@ -301,57 +203,6 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       val ex = intercept[Exception] {
         connector.removeAgent(storn, arn).futureValue
-      }
-      ex.getMessage must include ("returned 500")
-    }
-  }
-
-  "getReturnsLegacy" should {
-
-    val url = "/stamp-duty-land-tax-stub/manage-returns/get-all"
-
-    "return ReturnsResponse when BE returns OK with valid JSON" in {
-      val body =
-        s"""
-           |{
-           |  "storn": "$storn",
-           |  "returnSummaryCount": 3,
-           |  "returnSummaryList": []
-           |}
-         """.stripMargin
-
-      stubFor(
-        post(urlPathEqualTo(url))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody(body))
-      )
-
-      val result = connector.getReturnsLegacy(storn).futureValue
-      result mustBe Some(SdltReturnRecordResponseLegacy(storn = storn, returnSummaryCount = 3, Nil))
-    }
-
-    "fail when BE returns OK with invalid JSON" in {
-      stubFor(
-        post(urlPathEqualTo(url))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
-      )
-
-      val ex = intercept[Exception] {
-        connector.getReturnsLegacy(storn).futureValue
-      }
-      ex.getMessage.toLowerCase must include ("error")
-    }
-
-    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
-      stubFor(
-        post(urlPathEqualTo(url))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
-      )
-
-      val ex = intercept[Exception] {
-        connector.getReturnsLegacy(storn).futureValue
       }
       ex.getMessage must include ("returned 500")
     }

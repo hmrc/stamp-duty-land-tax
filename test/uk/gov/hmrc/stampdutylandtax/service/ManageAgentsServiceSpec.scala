@@ -129,70 +129,6 @@ class ManageAgentsServiceSpec extends SpecBase {
       }
     }
 
-    "getAllAgents" - {
-
-      "should return a non-empty list of agents when connector successfully returns a list of agents" in new BaseSetup {
-        private val storn = "STN-ALL"
-        private val list  = List(
-          AgentDetailsResponse(
-            agentName            = "Alpha",
-            agentId              = Some("AGT001"),
-            addressLine1         = Some("1 Street 1"),
-            addressLine2         = None,
-            addressLine3         = Some("Town"),
-            addressLine4         = None,
-            postcode             = Some("AA1 1AA"),
-            phone                = None,
-            email                = Some("alpha@example.com"),
-            agentReferenceNumber = "ARN-1"
-          ),
-          AgentDetailsResponse(
-            agentName            = "Beta",
-            agentId              = Some("AGT001"),
-            addressLine1         = Some("2 Street 2"),
-            addressLine2         = Some("Area"),
-            addressLine3         = Some("City"),
-            addressLine4         = None,
-            postcode             = Some("BB2 2BB"),
-            phone                = Some("02070000000"),
-            email                = Some("beta@example.com"),
-            agentReferenceNumber = "ARN-2"
-          )
-        )
-
-        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(list))
-
-        val result = service.getAllAgentsLegacy(storn).futureValue
-        result mustBe list
-        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
-      }
-
-      "should return Nil when the connector successfully returns an empty list of agents" in new BaseSetup {
-        private val storn = "STN-EMPTY"
-
-        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(Nil))
-
-        val result = service.getAllAgentsLegacy(storn).futureValue
-        result mustBe empty
-        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
-      }
-
-      "should propagate exceptions from the connector" in new BaseSetup {
-        private val storn = "STN-ERR"
-
-        when(mockFormp.getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("boom")))
-
-        val ex = intercept[RuntimeException] {
-          service.getAllAgentsLegacy(storn).futureValue
-        }
-        ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).getAllAgentsLegacy(eqTo(storn))(any[HeaderCarrier])
-      }
-    }
-
     "removeAgent" - {
 
       "should return true when the connector successfully removes an agent" in new BaseSetup {
@@ -233,6 +169,7 @@ class ManageAgentsServiceSpec extends SpecBase {
         verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
       }
     }
+    
     "getSdltOrganisation" - {
 
       "should delegate to connector and return SdltOrganisation" in new BaseSetup {

@@ -19,9 +19,8 @@ package uk.gov.hmrc.stampdutylandtax.controllers.manage
 import models.manage.SdltReturnRecordRequest
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, ControllerComponents}
 import service.ManageReturnsService
-import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -32,23 +31,6 @@ class ManageReturnsController @Inject()(
   cc: ControllerComponents,
   service: ManageReturnsService
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
-
-  //TODO: INCORRECT CALL
-  @deprecated
-  def getReturnsLegacy(storn: String): Action[AnyContent] = Action.async { implicit request =>
-    service.getReturnsLegacy(storn)
-      .map {
-        case Some(returnItem) => Ok(Json.toJson(returnItem))
-        case None             => NotFound(Json.obj("message" -> s"No returns found for storn: $storn"))
-    } recover {
-      case u: UpstreamErrorResponse =>
-        logger.error("[ManageReturnsController][getReturnsLegacy] failed with UpstreamErrorResponse", u)
-        Status(u.statusCode)(Json.obj("message" -> u.message))
-      case t: Throwable =>
-        logger.error("[ManageReturnsController][getReturnsLegacy] failed", t)
-        InternalServerError(Json.obj("message" -> "Unexpected error"))
-    }
-  }
 
   def getReturns: Action[JsValue] =
     Action.async(parse.json) { implicit request =>
