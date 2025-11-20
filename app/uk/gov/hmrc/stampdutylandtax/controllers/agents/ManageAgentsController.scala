@@ -89,4 +89,21 @@ class ManageAgentsController @Inject()(
         }
     )
   }
-}
+
+  def updateAgentDetails(storn: String, agentReferenceNumber: String): Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body.validate[AgentDetailsRequest].fold(
+      invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
+      payload =>
+        service.updateAgentDetails(payload, storn, agentReferenceNumber) map { Response =>
+          Ok(Json.toJson(
+            Response
+          ))
+        } recover {
+          case u: UpstreamErrorResponse =>
+            Status(u.statusCode)(Json.obj("message" -> u.message))
+          case t: Throwable =>
+            logger.error("[ManageAgentsController][submitAgentDetails] failed", t)
+            InternalServerError(Json.obj("message" -> "Unexpected error"))
+        }
+    )
+  }

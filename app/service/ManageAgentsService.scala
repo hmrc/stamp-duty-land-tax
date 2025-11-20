@@ -30,6 +30,11 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp
       .submitAgentDetails(createPredefinedAgentRequest)
 
+  //TODO: Update request model to include reference number, storn
+  def updateAgentDetails(agentDetails: AgentDetailsRequest, storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
+    formp
+      .submitAgentDetails(agentDetails)
+
   def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
     formp
       .getSdltOrganisation(storn)
