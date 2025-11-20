@@ -79,49 +79,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
       }
     }
-    "GET agent-details/get-all-agents/storn/:storn (getAllAgents)" - {
-
-      "return OK with agent details when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(testAgentDetailsList))
-
-        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
-
-        status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(testAgentDetailsList)
-        verify(mockManageAgentsService).getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier])
-      }
-
-      "return OK with message when service returns an empty list" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(Nil))
-
-        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
-
-        status(result) mustBe OK
-        verify(mockManageAgentsService).getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier])
-      }
-
-      "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
-
-        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
-
-        status(result) mustBe BAD_GATEWAY
-        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
-      }
-
-      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.getAllAgentsLegacy(eqTo("A-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("unexpected")))
-
-        val result: Future[Result] = controller.getAllAgentsLegacy("A-123")(fakeRequest)
-
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
-      }
-    }
+    
     "POST /agent-details/submit (submitAgentDetails)" - {
 
       "return OK with agent details when service returns agent details" in new BaseSetup {
