@@ -195,27 +195,15 @@ class ManageAgentsServiceSpec extends SpecBase {
 
     "removeAgent" - {
 
-      "should return true when the connector successfully removes an agent" in new BaseSetup {
+      "should return Unit when the connector successfully removes an agent" in new BaseSetup {
         private val storn = "STN-DEL"
         private val arn   = "ARN-DEL"
 
         when(mockFormp.removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(true))
+          .thenReturn(Future.unit)
 
-        val result = service.removeAgent(storn, arn).futureValue
-        result mustBe true
-        verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
-      }
-
-      "should return false when connector fails to remove an agent" in new BaseSetup {
-        private val storn = "STN-DEL"
-        private val arn   = "ARN-NOT-FOUND"
-
-        when(mockFormp.removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(false))
-
-        val result = service.removeAgent(storn, arn).futureValue
-        result mustBe false
+        val result: Unit = service.removeAgent(storn, arn).futureValue
+        result mustBe ()
         verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
       }
 
@@ -233,6 +221,7 @@ class ManageAgentsServiceSpec extends SpecBase {
         verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
       }
     }
+    
     "getSdltOrganisation" - {
 
       "should delegate to connector and return SdltOrganisation" in new BaseSetup {

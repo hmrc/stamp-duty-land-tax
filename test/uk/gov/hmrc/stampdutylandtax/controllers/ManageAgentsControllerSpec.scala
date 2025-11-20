@@ -167,25 +167,14 @@ class ManageAgentsControllerSpec extends SpecBase {
 
     "GET agent-details/remove (removeAgentDetails)" - {
 
-      "return OK with true when service returns true" in new BaseSetup {
+      "returns 200 OK when service runs successfully" in new BaseSetup {
         when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(true))
+          .thenReturn(Future.unit)
 
         val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(true)
-        verify(mockManageAgentsService).removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier])
-      }
-
-      "return OK with false when service returns false" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(false))
-
-        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
-
-        status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(false)
+        contentAsJson(result) mustBe Json.obj("message" -> "Agent Deleted")
         verify(mockManageAgentsService).removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier])
       }
 
@@ -209,6 +198,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
       }
     }
+    
     "GET organisation/storn/:storn (getSdltOrganisation)" - {
 
       "return OK with organisation payload when service returns the organisation" in new BaseSetup {
