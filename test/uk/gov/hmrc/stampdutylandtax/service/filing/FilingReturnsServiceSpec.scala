@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.stampdutylandtax.service
+package uk.gov.hmrc.stampdutylandtax.service.filing
 
 import base.SpecBase
 import connectors.FilingFormpProxyConnector
-import models.filing._
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import models.filing.*
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
+import service.filing.FilingReturnsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import scala.concurrent.Future
-import service.FilingReturnsService
 
 final class FilingReturnsServiceSpec extends SpecBase {
 

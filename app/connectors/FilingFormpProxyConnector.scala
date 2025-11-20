@@ -16,14 +16,14 @@
 
 package connectors
 
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SubmitAgentDetailsResponse}
-import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
-import models.manage.SdltReturnRecordResponse
+import models.filing.*
 import play.api.Logging
+import play.api.http.Status.{CREATED, OK}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -35,15 +35,16 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
                                           config: ServicesConfig)
                                          (implicit ec: ExecutionContext) extends Logging {
 
-  private val stubPath = config.baseUrl("stamp-duty-land-tax-stub") + "/stamp-duty-land-tax-stub"
   private val formpPath = config.baseUrl("formp-proxy") + "/formp-proxy"
-  val stubFormPBool: Boolean = config.getBoolean("features.stub-formp-enabled")
   
   def createReturn(createReturnRequest: CreateReturnRequest)(implicit hc: HeaderCarrier): Future[CreateReturnResult] =
     http.post(url"$formpPath/create/return")
        .withBody(Json.toJson(createReturnRequest))
        .execute[CreateReturnResult]
        .recover {
+         case e: UpstreamErrorResponse =>
+           logger.error(s"[FormpProxyConnector][createReturn]: Upstream error - ${e.getMessage}")
+           throw e
          case e: Throwable =>
            logger.error(s"[FormpProxyConnector][createReturn]: ${e.getMessage}")
            throw new RuntimeException(e.getMessage)
@@ -55,8 +56,104 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
       .withBody(Json.toJson(getReturnByRefRequest))
       .execute[GetReturnRequest]
       .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][getFullReturn]: Upstream error - ${e.getMessage}")
+          throw e
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][getFullReturn]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def createVendor(createVendorRequest: CreateVendorRequest)(implicit hc: HeaderCarrier): Future[CreateVendorReturn] =
+    http.post(url"$formpPath/filing/create/vendor")
+      .withBody(Json.toJson(createVendorRequest))
+      .execute[CreateVendorReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createVendor]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createVendor]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def updateVendor(updateVendorRequest: UpdateVendorRequest)(implicit hc: HeaderCarrier): Future[UpdateVendorReturn] =
+    http.post(url"$formpPath/filing/update/vendor")
+      .withBody(Json.toJson(updateVendorRequest))
+      .execute[UpdateVendorReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateVendor]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateVendor]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def deleteVendor(deleteVendorRequest: DeleteVendorRequest)(implicit hc: HeaderCarrier): Future[DeleteVendorReturn] =
+    http.post(url"$formpPath/filing/delete/vendor")
+      .withBody(Json.toJson(deleteVendorRequest))
+      .execute[DeleteVendorReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deleteVendor]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deleteVendor]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+
+  def createReturnAgent(createReturnAgentRequest: CreateReturnAgentRequest)(implicit hc: HeaderCarrier): Future[CreateReturnAgentReturn] =
+    http.post(url"$formpPath/filing/create/return-agent")
+      .withBody(Json.toJson(createReturnAgentRequest))
+      .execute[CreateReturnAgentReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createReturnAgent]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createReturnAgent]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def updateReturnAgent(updateReturnAgentRequest: UpdateReturnAgentRequest)(implicit hc: HeaderCarrier): Future[UpdateReturnAgentReturn] =
+    http.post(url"$formpPath/filing/update/return-agent")
+      .withBody(Json.toJson(updateReturnAgentRequest))
+      .execute[UpdateReturnAgentReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateReturnAgent]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateReturnAgent]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def deleteReturnAgent(deleteReturnAgentRequest: DeleteReturnAgentRequest)(implicit hc: HeaderCarrier): Future[DeleteReturnAgentReturn] =
+    http.post(url"$formpPath/filing/delete/return-agent")
+      .withBody(Json.toJson(deleteReturnAgentRequest))
+      .execute[DeleteReturnAgentReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deleteReturnAgent]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deleteReturnAgent]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+
+  def updateReturnVersioning(returnVersionUpdateRequest: ReturnVersionUpdateRequest)(implicit hc: HeaderCarrier): Future[ReturnVersionUpdateReturn] =
+    http.post(url"$formpPath/filing/update/return-version")
+      .withBody(Json.toJson(returnVersionUpdateRequest))
+      .execute[ReturnVersionUpdateReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateReturnVersioning]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateReturnVersioning]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
 }
