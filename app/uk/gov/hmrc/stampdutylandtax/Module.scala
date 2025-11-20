@@ -17,7 +17,8 @@
 package uk.gov.hmrc.stampdutylandtax
 
 import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import play.api.inject.{Binding, Module as AppModule}
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
 
 import java.time.Clock
 
@@ -26,6 +27,8 @@ class Module extends AppModule:
   override def bindings(
     environment  : Environment,
     configuration: Configuration
-  ): Seq[Binding[_]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
+  ): Seq[Binding[_]] = {
+      bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
+      bind[IdentifierAction].to(classOf[AuthenticatedIdentifierAction]) :: // TODO: clarify how to change instantiation level :: asEagerSingleton() ??
     Nil
+  }
