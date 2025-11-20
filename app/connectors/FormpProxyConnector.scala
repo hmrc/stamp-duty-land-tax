@@ -17,19 +17,19 @@
 package connectors
 
 import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
-import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
-import models.manage.SdltReturnRecordResponse
+import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.net.URL
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.control.NonFatal
 
 class FormpProxyConnector @Inject()(http: HttpClientV2,
                                     config: ServicesConfig)
@@ -76,17 +76,6 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def getAllAgentsLegacy(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
-    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/get-all-agents-legacy" else url"$formpPath/manage-agents/agent-details/get-all-agents-legacy"
-    http.post(url)
-      .withBody(Json.obj("storn" -> storn))
-      .execute[List[AgentDetailsResponse]]
-      .recover {
-        case e: Throwable =>
-          logger.error(s"[FormpProxyConnector][getAllAgentsLegacy]: ${e.getMessage}")
-          throw new RuntimeException(e.getMessage)
-      }
-
   def removeAgent(storn: String, agentReferenceNumber: String)
                  (implicit hc: HeaderCarrier): Future[Boolean] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/remove" else url"$formpPath/manage-agents/agent-details/remove"
@@ -102,17 +91,19 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def getReturns(storn: String)
-                (implicit hc: HeaderCarrier): Future[Option[SdltReturnRecordResponse]] =
-    val url: URL = if(stubFormPBool) url"$stubPath/manage-returns/get-all" else url"$formpPath/manage-returns/get-all"
+  def getReturns(request: SdltReturnRecordRequest)
+                (implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] =
+    val url: URL = if(stubFormPBool) url"$stubPath/returns" else url"$formpPath/returns"
     http.post(url)
-      .withBody(Json.obj(
-        "storn" -> storn
-      ))
-      .execute[Option[SdltReturnRecordResponse]]
-      .recover {
-        case e: Throwable =>
-          logger.error(s"[FormpProxyConnector][getReturns]: ${e.getMessage}")
-          throw new RuntimeException(e.getMessage)
+      .withBody(Json.toJson(request))
+      .execute[Either[UpstreamErrorResponse, SdltReturnRecordResponse]]
+      .flatMap {
+        case Right(resp) => Future.successful(resp)
+        case Left(error) => Future.failed(error)
+      }
+      .recoverWith {
+        case NonFatal(e) =>
+          logger.error(s"[FormpProxyConnector][getReturns] failed for storn ${request.storn}: ${e.getMessage}", e)
+          Future.failed(e)
       }
 }

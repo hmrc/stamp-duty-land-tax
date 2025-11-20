@@ -34,10 +34,6 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp
       .submitAgentDetails(agentDetails)
 
-  def getAllAgentsLegacy(storn: String)(implicit hc: HeaderCarrier): Future[List[AgentDetailsResponse]] =
-    formp
-      .getAllAgentsLegacy(storn)
-
   def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
     formp
       .getSdltOrganisation(storn)
