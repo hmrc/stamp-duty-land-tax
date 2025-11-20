@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package service
+package service.filing
 
 import connectors.FilingFormpProxyConnector
-import models.filing.{CreateReturnRequest, CreateReturnResult, GetReturnByRefRequest, GetReturnRequest}
+import models.filing.*
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class FilingReturnsService @Inject()(formp: FilingFormpProxyConnector) {
+class VendorReturnsService @Inject()(formp: FilingFormpProxyConnector) {
 
-  def createReturn(createReturnRequest: CreateReturnRequest)
-                (implicit hc: HeaderCarrier): Future[CreateReturnResult] =
-    formp.createReturn(createReturnRequest)
+  def createVendor(createVendorRequest: CreateVendorRequest)
+                  (implicit hc: HeaderCarrier): Future[CreateVendorReturn] =
+    formp.createVendor(createVendorRequest)
 
-  def getFullReturn(getReturnByRefRequest: GetReturnByRefRequest)
-                 (implicit hc: HeaderCarrier): Future[GetReturnRequest] =
-    formp.getFullReturn(getReturnByRefRequest)
-}
+  def updateVendor(updateVendorRequest: UpdateVendorRequest)
+                  (implicit hc: HeaderCarrier): Future[UpdateVendorReturn] =
+    formp.updateVendor(updateVendorRequest)
+
+  def deleteVendor(deleteVendorRequest: DeleteVendorRequest)
+                  (implicit hc: HeaderCarrier): Future[DeleteVendorReturn] =
+    formp.deleteVendor(deleteVendorRequest)
+    
+  }
