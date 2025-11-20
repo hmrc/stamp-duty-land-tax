@@ -54,13 +54,13 @@ trait SpecBase
 
   val testAgentDetailsRequest: AgentDetailsRequest = AgentDetailsRequest(
     agentName = "64Acme Property Agents Ltd",
-    addressLine1 = "Zoo Lane",
+    addressLine1 = Some("Zoo Lane"),
     addressLine2 = Some("Westminster"),
-    addressLine3 = "London",
+    addressLine3 = Some("London"),
     addressLine4 = None,
     postcode = Some("SW1A 2AA"),
     phone = Some("02079460000"),
-    email = "test@example.com"
+    email = Some("test@example.com")
   )
 
   val testAgentDetailsAfterCreation: AgentDetailsResponse = AgentDetailsResponse(
