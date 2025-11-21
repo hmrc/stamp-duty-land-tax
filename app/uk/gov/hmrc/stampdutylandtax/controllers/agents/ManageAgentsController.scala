@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse}
 import models.auth.IdentifierRequest
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
@@ -78,8 +78,8 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def submitAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body.validate[AgentDetailsRequest].fold(
+  def submitAgentDetails: Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body.validate[AgentDetailsBeforeCreation].fold(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
       payload =>
         service.submitAgentDetails(payload) map { submissionResponse =>

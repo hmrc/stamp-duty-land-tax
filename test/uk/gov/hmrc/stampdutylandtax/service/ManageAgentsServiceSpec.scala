@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -70,7 +70,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val storn = "STN-ERR"
-        private val arn   = "ARN-ERR"
+        private val arn = "ARN-ERR"
 
         when(mockFormp.getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("boom")))
@@ -86,17 +86,18 @@ class ManageAgentsServiceSpec extends SpecBase {
     "submitAgentDetails" - {
 
       "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
-        private val req = AgentDetailsRequest(
+        private val req = AgentDetailsBeforeCreation(
+          storn        = "STN001",
           agentName    = "22A Harborview Estates",
-          addressLine1 = "Queensway",
+          addressLine1 = Some("Queensway"),
           addressLine2 = None,
-          addressLine3 = "Birmingham",
+          addressLine3 = Some("Birmingham"),
           addressLine4 = None,
           postcode     = Some("B2 4ND"),
           phone        = Some("01214567890"),
-          email        = "info@harborviewestates.co.uk"
+          email        = Some("info@harborviewestates.co.uk")
         )
-        private val resp = SubmitAgentDetailsResponse("ARN123456")
+        private val resp = SubmitAgentDetailsResponse("ARN123456", "07524")
 
         when(mockFormp.submitAgentDetails(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.successful(resp))
@@ -107,15 +108,16 @@ class ManageAgentsServiceSpec extends SpecBase {
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
-        private val req = AgentDetailsRequest(
+        private val req = AgentDetailsBeforeCreation(
+          storn        = "STN001",
           agentName    = "?? Bad Data Inc",
-          addressLine1 = "Unknown",
+          addressLine1 = Some("Unknown"),
           addressLine2 = None,
-          addressLine3 = "Nowhere",
+          addressLine3 = Some("Nowhere"),
           addressLine4 = None,
           postcode     = None,
           phone        = None,
-          email        = "bad@example.com"
+          email        = Some("bad@example.com")
         )
 
         when(mockFormp.submitAgentDetails(eqTo(req))(any[HeaderCarrier]))

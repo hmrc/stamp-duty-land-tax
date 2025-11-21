@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SubmitAgentDetailsResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -54,16 +54,16 @@ trait   SpecBase
       )
       .build()
 
-
-  val testAgentDetailsRequest: AgentDetailsRequest = AgentDetailsRequest(
+  val testAgentDetailsRequest: AgentDetailsBeforeCreation = AgentDetailsBeforeCreation(
+    storn = "STN001",
     agentName = "64Acme Property Agents Ltd",
-    addressLine1 = "Zoo Lane",
+    addressLine1 = Some("Zoo Lane"),
     addressLine2 = Some("Westminster"),
-    addressLine3 = "London",
+    addressLine3 = Some("London"),
     addressLine4 = None,
     postcode = Some("SW1A 2AA"),
     phone = Some("02079460000"),
-    email = "test@example.com"
+    email = Some("test@example.com")
   )
 
   val testAgentDetailsAfterCreation: AgentDetailsResponse = AgentDetailsResponse(
@@ -107,7 +107,8 @@ trait   SpecBase
   )
 
   val testAgentDetailsSuccessResponse: SubmitAgentDetailsResponse = SubmitAgentDetailsResponse(
-    agentResourceRef = "some-id"
+    agentResourceRef = "some-id",
+    agentId = "4567"
   )
 
   val cc: ControllerComponents = stubControllerComponents()
