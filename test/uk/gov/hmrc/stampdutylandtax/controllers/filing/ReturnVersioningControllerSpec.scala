@@ -301,7 +301,7 @@ class ReturnVersioningControllerSpec extends SpecBase {
     val mockReturnVersioningService: ReturnVersioningService = mock[ReturnVersioningService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ReturnVersioningController(cc, mockReturnVersioningService)
+    val controller = new ReturnVersioningController(cc, mockReturnVersioningService, fakeIdentifierAction)
 
     val testReturnVersionUpdateRequest: ReturnVersionUpdateRequest = ReturnVersionUpdateRequest(
       storn = "STORN12345",

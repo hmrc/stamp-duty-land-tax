@@ -27,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import service.ManageAgentsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 import uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -246,6 +247,6 @@ class ManageAgentsControllerSpec extends SpecBase {
     val mockManageAgentsService: ManageAgentsService = mock[ManageAgentsService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ManageAgentsController(cc, mockManageAgentsService)
+    val controller = new ManageAgentsController(cc, mockManageAgentsService, fakeIdentifierAction)
   }
 }

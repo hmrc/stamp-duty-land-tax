@@ -432,7 +432,7 @@ class ReturnAgentControllerSpec extends SpecBase {
     val mockReturnAgentService: ReturnAgentService = mock[ReturnAgentService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ReturnAgentController(cc, mockReturnAgentService)
+    val controller = new ReturnAgentController(cc, mockReturnAgentService, fakeIdentifierAction)
 
     val testCreateReturnAgentRequest: CreateReturnAgentRequest = CreateReturnAgentRequest(
       stornId = "STORN12345",

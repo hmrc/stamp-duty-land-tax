@@ -16,24 +16,26 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.manage
 
+import models.auth.IdentifierRequest
 import models.manage.SdltReturnRecordRequest
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
 import service.ManageReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ManageReturnsController @Inject()(
-  cc: ControllerComponents,
-  service: ManageReturnsService
-)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
+                                         cc: ControllerComponents,
+                                         service: ManageReturnsService,
+                                         auth: IdentifierAction
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
-  def getReturns: Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
+  def getReturns: Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
         .validate[SdltReturnRecordRequest]
         .fold(
@@ -51,3 +53,5 @@ class ManageReturnsController @Inject()(
               }
         )
     }
+
+}
