@@ -118,6 +118,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/submit"
 
     val payload = AgentDetailsRequest(
+      storn       = "STN001",
       agentName   = "Acme Property Agents Ltd",
       addressLine1 = Some("42 High Street"),
       addressLine2 = Some("Westminster"),
@@ -132,11 +133,11 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234" }"""))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""))
       )
 
       val result = connector.submitAgentDetails(payload).futureValue
-      result mustBe SubmitAgentDetailsResponse(agentResourceRef = "ARN4324234")
+      result mustBe SubmitAgentDetailsResponse(agentResourceRef = "ARN4324234", agentId = "1234")
     }
 
     "fail when BE returns OK with invalid JSON" in {
