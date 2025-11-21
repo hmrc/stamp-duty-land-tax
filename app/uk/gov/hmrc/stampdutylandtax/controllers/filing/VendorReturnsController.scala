@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
+import models.auth.IdentifierRequest
 import models.filing.{CreateVendorRequest, DeleteVendorRequest, UpdateVendorRequest}
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
 import service.filing.VendorReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,66 +31,65 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton()
 class VendorReturnsController @Inject()(
                                          cc: ControllerComponents,
-                                         service: VendorReturnsService
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
+                                         service: VendorReturnsService,
+                                         auth: IdentifierAction
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+  
+  def createVendor(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+    request.body
+      .validate[CreateVendorRequest]
+      .fold(
+        errs =>
+          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+        body =>
+          service
+            .createVendor(body)
+            .map { result =>
+              Created(Json.toJson(result))
+            }
+            .recover { case t =>
+              logger.error("[createVendor] failed", t)
+              InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
+  }
 
-    def createVendor(): Action[JsValue] =
-      Action.async(parse.json) { implicit request =>
-        request.body
-          .validate[CreateVendorRequest]
-          .fold(
-            errs =>
-              Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-            body =>
-              service
-                .createVendor(body)
-                .map { result =>
-                  Created(Json.toJson(result))
-                }
-                .recover { case t =>
-                  logger.error("[createVendor] failed", t)
-                  InternalServerError(Json.obj("message" -> "Unexpected error"))
-                }
-          )
-      }
+  def updateVendor(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+    request.body
+      .validate[UpdateVendorRequest]
+      .fold(
+        errs =>
+          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+        body =>
+          service
+            .updateVendor(body)
+            .map { result =>
+              Created(Json.toJson(result))
+            }
+            .recover { case t =>
+              logger.error("[updateVendor] failed", t)
+              InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
+  }
 
-    def updateVendor(): Action[JsValue] =
-      Action.async(parse.json) { implicit request =>
-        request.body
-          .validate[UpdateVendorRequest]
-          .fold(
-            errs =>
-              Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-            body =>
-              service
-                .updateVendor(body)
-                .map { result =>
-                  Created(Json.toJson(result))
-                }
-                .recover { case t =>
-                  logger.error("[updateVendor] failed", t)
-                  InternalServerError(Json.obj("message" -> "Unexpected error"))
-                }
-          )
-      }
+  def deleteVendor(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+    request.body
+      .validate[DeleteVendorRequest]
+      .fold(
+        errs =>
+          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+        body =>
+          service
+            .deleteVendor(body)
+            .map { result =>
+              Created(Json.toJson(result))
+            }
+            .recover { case t =>
+              logger.error("[deleteVendor] failed", t)
+              InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
+  }
 
-
-    def deleteVendor(): Action[JsValue] =
-      Action.async(parse.json) { implicit request =>
-        request.body
-          .validate[DeleteVendorRequest]
-          .fold(
-            errs =>
-              Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-            body =>
-              service
-                .deleteVendor(body)
-                .map { result =>
-                  Created(Json.toJson(result))
-                }
-                .recover { case t =>
-                  logger.error("[deleteVendor] failed", t)
-                  InternalServerError(Json.obj("message" -> "Unexpected error"))
-                }
-          )
-      }
+}

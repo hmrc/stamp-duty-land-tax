@@ -475,7 +475,7 @@ class VendorReturnsControllerSpec extends SpecBase {
     val mockVendorReturnsService: VendorReturnsService = mock[VendorReturnsService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new VendorReturnsController(cc, mockVendorReturnsService)
+    val controller = new VendorReturnsController(cc, mockVendorReturnsService, fakeIdentifierAction)
 
     val testCreateVendorRequest: CreateVendorRequest = CreateVendorRequest(
       stornId = "STORN12345",

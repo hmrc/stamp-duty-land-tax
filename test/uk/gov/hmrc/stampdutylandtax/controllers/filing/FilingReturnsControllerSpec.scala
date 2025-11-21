@@ -208,7 +208,7 @@ class FilingReturnsControllerSpec extends SpecBase {
     val mockFilingReturnsService: FilingReturnsService = mock[FilingReturnsService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new FilingReturnsController(cc, mockFilingReturnsService)
+    val controller = new FilingReturnsController(cc, mockFilingReturnsService, fakeIdentifierAction)
 
     val testCreateReturnRequest: CreateReturnRequest = CreateReturnRequest(
       stornId = "STORN123456",
