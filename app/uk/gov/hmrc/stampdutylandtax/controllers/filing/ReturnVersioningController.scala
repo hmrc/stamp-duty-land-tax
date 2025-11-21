@@ -30,28 +30,28 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ReturnVersioningController @Inject()(
-                                         cc: ControllerComponents,
-                                         service: ReturnVersioningService,
-                                         identify: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
-
-  private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
+                                            cc: ControllerComponents,
+                                            service: ReturnVersioningService,
+                                            auth: IdentifierAction
+                                          )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def updateReturnVersion(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-      request.body
-        .validate[ReturnVersionUpdateRequest]
-        .fold(
-          errs =>
-            Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-          body =>
-            service
-              .updateReturnVersion(body)
-              .map { result =>
-                Created(Json.toJson(result))
-              }
-              .recover { case t =>
-                logger.error("[createReturnAgent] failed", t)
-                InternalServerError(Json.obj("message" -> "Unexpected error"))
-              }
-        )
-    }
+    request.body
+      .validate[ReturnVersionUpdateRequest]
+      .fold(
+        errs =>
+          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+        body =>
+          service
+            .updateReturnVersion(body)
+            .map { result =>
+              Created(Json.toJson(result))
+            }
+            .recover { case t =>
+              logger.error("[createReturnAgent] failed", t)
+              InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
+  }
+
+}

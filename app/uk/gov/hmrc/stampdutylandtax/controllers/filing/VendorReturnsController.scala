@@ -32,11 +32,9 @@ import scala.concurrent.{ExecutionContext, Future}
 class VendorReturnsController @Inject()(
                                          cc: ControllerComponents,
                                          service: VendorReturnsService,
-                                         identify: IdentifierAction
+                                         auth: IdentifierAction
                                        )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
-
-  private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
-
+  
   def createVendor(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
       .validate[CreateVendorRequest]

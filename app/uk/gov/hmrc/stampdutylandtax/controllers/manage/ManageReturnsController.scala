@@ -32,10 +32,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class ManageReturnsController @Inject()(
                                          cc: ControllerComponents,
                                          service: ManageReturnsService,
-                                         identify: IdentifierAction
+                                         auth: IdentifierAction
                                        )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
-
-  private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
 
   def getReturns: Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body

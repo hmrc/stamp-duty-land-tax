@@ -33,10 +33,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class ManageAgentsController @Inject()(
   cc: ControllerComponents,
   service: ManageAgentsService,
-  identify: IdentifierAction
+  auth: IdentifierAction
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
-
-  private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
 
   def getAgentDetails(storn: String, agentReferenceNumber: String): Action[AnyContent] = auth.async { implicit request =>
     service.getAgentDetails(storn, agentReferenceNumber)
