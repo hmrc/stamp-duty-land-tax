@@ -49,12 +49,14 @@ class AuthenticatedIdentifierAction @Inject()(
           Retrievals.affinityGroup and
           Retrievals.credentialRole
       ) {
-        // TODO: apply what is required from FE auth
-        case _ =>
+        _ =>
           logger.info("[AuthenticatedIdentifierAction][authorised] - user authenticated")
           block(IdentifierRequest(request, "internalId", "storn"))
+      }.recoverWith{
+        case _: MissingBearerToken =>
+          logger.info("[AuthenticatedIdentifierAction][authorised] - MissingBearerToken ...")
+          block(IdentifierRequest(request, "internalId", "storn"))
       }
-    // TODO: resurrect recover if needed
   }
 
 }

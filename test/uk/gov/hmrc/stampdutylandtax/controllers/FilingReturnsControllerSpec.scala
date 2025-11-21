@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.filing._
+import models.filing.*
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq as eqTo
 import org.mockito.Mockito.{verify, when}
@@ -27,6 +27,7 @@ import play.api.mvc.Result
 import play.api.test.Helpers.{contentAsJson, status}
 import service.FilingReturnsService
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -207,9 +208,10 @@ class FilingReturnsControllerSpec extends SpecBase {
 
   private trait BaseSetup {
     val mockFilingReturnsService: FilingReturnsService = mock[FilingReturnsService]
+
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new FilingReturnsController(cc, mockFilingReturnsService)
+    val controller = new FilingReturnsController(cc, mockFilingReturnsService, fakeIdentifierAction)
 
     val testCreateReturnRequest: CreateReturnRequest = CreateReturnRequest(
       stornId = "STORN123456",

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse}
+import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -27,6 +27,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import service.ManageAgentsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 import uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -246,6 +247,6 @@ class ManageAgentsControllerSpec extends SpecBase {
     val mockManageAgentsService: ManageAgentsService = mock[ManageAgentsService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ManageAgentsController(cc, mockManageAgentsService)
+    val controller = new ManageAgentsController(cc, mockManageAgentsService, fakeIdentifierAction)
   }
 }

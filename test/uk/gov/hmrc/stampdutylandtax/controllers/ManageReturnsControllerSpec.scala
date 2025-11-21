@@ -28,6 +28,7 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 import service.ManageReturnsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.{FakeIdentifierAction, IdentifierAction}
 import uk.gov.hmrc.stampdutylandtax.controllers.manage.ManageReturnsController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -116,8 +117,9 @@ class ManageReturnsControllerSpec extends SpecBase {
 
   private trait BaseSetup {
     val mockManageReturnsService: ManageReturnsService = mock[ManageReturnsService]
+    
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ManageReturnsController(cc, mockManageReturnsService)
+    val controller = new ManageReturnsController(cc, mockManageReturnsService, fakeIdentifierAction)
   }
 }
