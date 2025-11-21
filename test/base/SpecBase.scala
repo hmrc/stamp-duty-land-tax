@@ -29,10 +29,12 @@ import play.api.mvc.{AnyContentAsEmpty, ControllerComponents, PlayBodyParsers}
 import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.{FakeIdentifierAction, IdentifierAction}
+import play.api.inject.bind
 
 import scala.concurrent.ExecutionContext
 
-trait SpecBase
+trait   SpecBase
   extends AnyFreeSpec
     with Matchers
     with DefaultAwaitTimeout
@@ -51,6 +53,7 @@ trait SpecBase
         "microservice.services.rds-datacache-proxy.port" -> 11111
       )
       .build()
+
 
   val testAgentDetailsRequest: AgentDetailsRequest = AgentDetailsRequest(
     agentName = "64Acme Property Agents Ltd",
@@ -110,6 +113,8 @@ trait SpecBase
   val cc: ControllerComponents = stubControllerComponents()
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val bodyParsers: PlayBodyParsers = app.injector.instanceOf[PlayBodyParsers]
+
+  val fakeIdentifierAction: FakeIdentifierAction = app.injector.instanceOf[FakeIdentifierAction]
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ec: ExecutionContext = cc.executionContext

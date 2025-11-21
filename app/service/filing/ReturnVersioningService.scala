@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.stampdutylandtax.controllers
+package service.filing
 
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import connectors.FilingFormpProxyConnector
+import models.filing.{ReturnVersionUpdateRequest, ReturnVersionUpdateReturn}
+import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.Future
 
-@Singleton()
-class MicroserviceHelloWorldController @Inject()(
-  cc: ControllerComponents
-) extends BackendController(cc):
+@Singleton
+class ReturnVersioningService @Inject()(formp: FilingFormpProxyConnector) {
 
-  val hello: Action[AnyContent] =
-    Action:
-      implicit request =>
-        Ok("Hello world")
+  def updateReturnVersion(returnVersionUpdateRequest: ReturnVersionUpdateRequest)
+                (implicit hc: HeaderCarrier): Future[ReturnVersionUpdateReturn] =
+    formp.updateReturnVersioning(returnVersionUpdateRequest)
+}

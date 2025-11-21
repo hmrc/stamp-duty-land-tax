@@ -17,12 +17,14 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
 import models.agent.{AgentDetailsRequest, AgentDetailsResponse}
+import models.auth.IdentifierRequest
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
 import service.ManageAgentsService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,15 +32,16 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton()
 class ManageAgentsController @Inject()(
   cc: ControllerComponents,
-  service: ManageAgentsService
-)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
+  service: ManageAgentsService,
+  auth: IdentifierAction
+)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
-  def getAgentDetails(storn: String, agentReferenceNumber: String): Action[AnyContent] = Action.async { implicit request =>
+  def getAgentDetails(storn: String, agentReferenceNumber: String): Action[AnyContent] = auth.async { implicit request =>
     service.getAgentDetails(storn, agentReferenceNumber)
       .map {
         case Some(agentDetails) => Ok(Json.toJson(agentDetails))
-        case None               => NotFound(Json.obj("message" -> "Agent details not found"))
-    } recover {
+        case None => NotFound(Json.obj("message" -> "Agent details not found"))
+      } recover {
       case u: UpstreamErrorResponse =>
         Status(u.statusCode)(Json.obj("message" -> u.message))
       case t: Throwable =>
@@ -47,7 +50,7 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def getSdltOrganisation(storn: String): Action[AnyContent] = Action.async { implicit request =>
+  def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async { implicit request =>
     service.getSdltOrganisation(storn) map { sdltOrganisation =>
       Ok(Json.toJson(
         sdltOrganisation
@@ -61,7 +64,7 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def removeAgent(storn: String, agentReferenceNumber: String): Action[AnyContent] = Action.async { implicit request =>
+  def removeAgent(storn: String, agentReferenceNumber: String): Action[AnyContent] = auth.async { implicit request =>
     service.removeAgent(storn, agentReferenceNumber) map { isRemoved =>
       Ok(Json.obj("message" -> "Agent Deleted"))
     } recover {
@@ -73,7 +76,7 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def submitAgentDetails: Action[JsValue] = Action.async(parse.json) { implicit request =>
+  def submitAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body.validate[AgentDetailsRequest].fold(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
       payload =>
@@ -90,3 +93,5 @@ class ManageAgentsController @Inject()(
         }
     )
   }
+
+}
