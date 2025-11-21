@@ -78,6 +78,31 @@ class ManageAgentsServiceSpec extends SpecBase {
       }
     }
 
+    "updateAgent" - {
+
+      "should return 204 when the connector successfully updates an agent" in new BaseSetup {
+
+        when(mockFormp.updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(204))
+
+        val result = service.updateAgentDetails(testUpdateAgentDetailsRequest).futureValue
+        result mustBe 204
+        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier])
+      }
+
+      "should propagate exceptions from the connector" in new BaseSetup {
+
+        when(mockFormp.updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("boom")))
+
+        val ex = intercept[RuntimeException] {
+          service.updateAgentDetails(testUpdateAgentDetailsRequest).futureValue
+        }
+        ex.getMessage must include("boom")
+        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier])
+      }
+    }
+
     "deletePredefinedAgent" - {
 
       "should return JSON Boolean when the connector successfully removes an agent" in new BaseSetup {
