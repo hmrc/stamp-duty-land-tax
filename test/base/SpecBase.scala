@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, CreatePredefinedAgentResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, CreatePredefinedAgentResponse, UpdateAgentDetailsRequest}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -123,6 +123,21 @@ trait   SpecBase
   val testDeletePredefinedAgentRequest: DeletePredefinedAgentRequest = DeletePredefinedAgentRequest(
     storn = "STN001",
     agentReferenceNumber = "100001"
+  )
+
+  //Update Agent Details Fixtures
+  val testUpdateAgentDetailsRequest: UpdateAgentDetailsRequest = UpdateAgentDetailsRequest(
+    agentReferenceNumber = "ARN001",
+    storn = "STN001",
+    name = "64 Acme Property Agents Ltd",
+    houseNumber = None,
+    addressLine1 = Some("Zoo Lane"),
+    addressLine2 = Some("Westminster"),
+    addressLine3 = Some("London"),
+    addressLine4 = None,
+    postcode = Some("SW1A 2AA"),
+    phone = Some("02079460000"),
+    email = Some("test@example.com")
   )
 
   val cc: ControllerComponents = stubControllerComponents()
