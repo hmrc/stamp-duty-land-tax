@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse,CreatePredefinedAgentResponse, UpdateAgentDetailsRequest }
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, AgentDetailsAfterCreation, SdltOrganisationResponse,CreatePredefinedAgentResponse, UpdateAgentDetailsRequest }
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
