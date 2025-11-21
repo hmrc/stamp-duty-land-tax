@@ -87,7 +87,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       ))
       .execute[HttpResponse]
       .flatMap { response =>
-        if(response.status / 100 == 2) Future.unit
+        if(response.status == 200) Future.unit
         else Future.failed(UpstreamErrorResponse(response.body, response.status))
       }
       .recover {

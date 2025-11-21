@@ -170,28 +170,15 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/remove"
 
-    "return true when BE returns OK with valid JSON boolean" in {
+    "return Unit when BE returns OK with valid JSON object" in {
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody(Json.stringify(JsBoolean(true))))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "message": Agent Deleted }"""))
       )
 
       val result = connector.removeAgent(storn, arn).futureValue
-      result mustBe true
-    }
-
-    "fail when BE returns OK with invalid JSON" in {
-      stubFor(
-        post(urlPathEqualTo(url))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
-      )
-
-      val ex = intercept[Exception] {
-        connector.removeAgent(storn, arn).futureValue
-      }
-      ex.getMessage.toLowerCase must include ("jsboolean")
+      result mustBe ()
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -204,7 +191,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       val ex = intercept[Exception] {
         connector.removeAgent(storn, arn).futureValue
       }
-      ex.getMessage must include ("returned 500")
+      ex.getMessage must include ("boom")
     }
   }
 
