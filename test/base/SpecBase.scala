@@ -52,9 +52,6 @@ trait   SpecBase
         "microservice.services.rds-datacache-proxy.host" -> "localhost",
         "microservice.services.rds-datacache-proxy.port" -> 11111
       )
-      .overrides(
-        bind[IdentifierAction].to[FakeIdentifierAction] // TODO: is that required at all ???
-      )
       .build()
 
 
