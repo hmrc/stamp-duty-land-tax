@@ -55,16 +55,17 @@ class FormpProxyConnectorISpec extends AnyWordSpec
               .withStatus(OK)
               .withBody(
                 """{
-                  |  "agentName": "Sunrise Realty",
+                  |  "name": "Sunrise Realty",
+                  |  "storn": "STN001",
                   |  "agentId": "AGT001",
-                  |  "addressLine1": "8B Baker Street",
-                  |  "addressLine2": null,
-                  |  "addressLine3": "Manchester",
-                  |  "addressLine4": null,
+                  |  "address1": "8B Baker Street",
+                  |  "address2": null,
+                  |  "address3": "Manchester",
+                  |  "address4": null,
                   |  "postcode": "M1 2AB",
                   |  "phone": "01611234567",
                   |  "email": "contact@sunriserealty.co.uk",
-                  |  "agentReferenceNumber": "ARN001"
+                  |  "agentResourceReference": "ARN001"
                   |}""".stripMargin
               )
           )
@@ -73,16 +74,19 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       val result = connector.getAgentDetails(storn, arn).futureValue
 
       result mustBe Some(AgentDetailsResponse(
-        agentName            = "Sunrise Realty",
-        agentId              = Some("AGT001"),
-        addressLine1         = Some("8B Baker Street"),
-        addressLine2         = None,
-        addressLine3         = Some("Manchester"),
-        addressLine4         = None,
-        postcode             = Some("M1 2AB"),
-        phone                = Some("01611234567"),
-        email                = Some("contact@sunriserealty.co.uk"),
-        agentReferenceNumber = "ARN001"
+        agentId                = Some("AGT001"),
+        storn                  = storn,
+        name                   = Some("Sunrise Realty"),
+        houseNumber            = None,
+        address1               = Some("8B Baker Street"),
+        address2               = None,
+        address3               = Some("Manchester"),
+        address4               = None,
+        postcode               = Some("M1 2AB"),
+        phone                  = Some("01611234567"),
+        email                  = Some("contact@sunriserealty.co.uk"),
+        dxAddress              = None,
+        agentResourceReference = Some("ARN001")
       ))
     }
 
@@ -297,18 +301,19 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         s"""
            |{
            |  "storn": "STN001",
-           |  "version": 1,
+           |  "version": "1",
            |  "isReturnUser": "true",
            |  "doNotDisplayWelcomePage": "Yes",
            |  "agents": [
            |    {
-           |      "agentReferenceNumber": "ARN001",
-           |      "agentName": "John",
+           |      "agentResourceReference": "ARN001",
+           |      "name": "John",
+           |      "storn": "STN001",
            |      "agentId": "AGT001",
-           |      "addressLine1": "1 High Street",
-           |      "addressLine2": "Westminster",
-           |      "addressLine3": "London",
-           |      "addressLine4": "Greater London",
+           |      "address1": "1 High Street",
+           |      "address2": "Westminster",
+           |      "address3": "London",
+           |      "address4": "Greater London",
            |      "postcode": "SW72AZ",
            |      "phone": "02079460000",
            |      "email": "info@acme.co.uk"
@@ -326,24 +331,30 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       val result = connector.getSdltOrganisation(storn).futureValue
 
-       result mustBe SdltOrganisationResponse(
-         storn                   = storn,
-         version                 = 1,
-         isReturnUser            = "true",
-         doNotDisplayWelcomePage = "Yes",
-         agents = Seq(AgentDetailsResponse(
-           agentReferenceNumber = "ARN001",
-           agentName            = "John",
-           agentId              = Some("AGT001"),
-           addressLine1         = Some("1 High Street"),
-           addressLine2         = Some("Westminster"),
-           addressLine3         = Some("London"),
-           addressLine4         = Some("Greater London"),
-           postcode             = Some("SW72AZ"),
-           phone                = Some("02079460000"),
-           email                = Some("info@acme.co.uk")
-         ))
-       )
+      result mustBe SdltOrganisationResponse(
+        storn = storn,
+        version = Some("1"),
+        isReturnUser = Some("true"),
+        doNotDisplayWelcomePage = Some("Yes"),
+        agents = Seq(
+          AgentDetailsResponse(
+            storn                  = storn,
+            agentId                = Some("AGT001"),
+            name                   = Some("John"),
+            houseNumber            = None,
+            address1               = Some("1 High Street"),
+            address2               = Some("Westminster"),
+            address3               = Some("London"),
+            address4               = Some("Greater London"),
+            postcode               = Some("SW72AZ"),
+            phone                  = Some("02079460000"),
+            email                  = Some("info@acme.co.uk"),
+            dxAddress              = None,
+            agentResourceReference = Some("ARN001")
+          )
+        )
+      )
+
 
       result.toString must include("SW72AZ")
       result.toString must include("AGT001")

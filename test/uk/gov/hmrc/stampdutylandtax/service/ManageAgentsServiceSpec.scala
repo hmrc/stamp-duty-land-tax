@@ -36,16 +36,19 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val storn = "STN-123"
         private val arn   = "ARN-999"
         private val resp  = AgentDetailsResponse(
-          agentName            = "Acme Property",
-          agentId              = Some("AGT001"),
-          addressLine1         = Some("High Street"),
-          addressLine2         = Some("Westminster"),
-          addressLine3         = Some("London"),
-          addressLine4         = Some("Greater London"),
-          postcode             = Some("SW1A 2AA"),
-          phone                = Some("02079460000"),
-          email                = Some("info@acmeagents.co.uk"),
-          agentReferenceNumber = arn
+          agentId                = Some("AGT001"),
+          storn                  = storn,
+          name                   = Some("Acme Property"),
+          houseNumber            = None,
+          address1               = Some("High Street"),
+          address2               = Some("Westminster"),
+          address3               = Some("London"),
+          address4               = Some("Greater London"),
+          postcode               = Some("SW1A 2AA"),
+          phone                  = Some("02079460000"),
+          email                  = Some("info@acmeagents.co.uk"),
+          dxAddress              = None,
+          agentResourceReference = Some(arn)
         )
 
         when(mockFormp.getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
@@ -179,22 +182,25 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val storn = "STN-ORG"
 
         private val expected = SdltOrganisationResponse(
-          storn = storn,
-          version = 1,
-          isReturnUser = "true",
-          doNotDisplayWelcomePage = "Yes",
+          storn                   = storn,
+          version                 = Some("1"),
+          isReturnUser            = Some("true"),
+          doNotDisplayWelcomePage = Some("Yes"),
           agents = Seq(
             AgentDetailsResponse(
-              agentReferenceNumber = "ARN001",
-              agentName = "John",
-              agentId = Some("AGT001"),
-              addressLine1 = Some("1 High Street"),
-              addressLine2 = Some("Westminster"),
-              addressLine3 = Some("London"),
-              addressLine4 = Some("Greater London"),
-              postcode = Some("SW72AZ"),
-              phone = Some("02079460000"),
-              email = Some("info@acme.co.uk")
+              agentId                = Some("AGT001"),
+              storn                  = storn,
+              name                   = Some("John"),
+              houseNumber            = None,
+              address1               = Some("1 High Street"),
+              address2               = Some("Westminster"),
+              address3               = Some("London"),
+              address4               = Some("Greater London"),
+              postcode               = Some("SW72AZ"),
+              phone                  = Some("02079460000"),
+              email                  = Some("info@acme.co.uk"),
+              dxAddress              = None,
+              agentResourceReference = Some("ARN001")
             )
           )
         )

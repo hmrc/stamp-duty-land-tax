@@ -173,21 +173,24 @@ class ManageAgentsControllerSpec extends SpecBase {
       "return OK with organisation payload when service returns the organisation" in new BaseSetup {
         val testOrg = SdltOrganisationResponse(
           storn = "A-123",
-          version = 1,
-          isReturnUser = "1",
-          doNotDisplayWelcomePage = "No",
+          version = Some("1"),
+          isReturnUser = Some("1"),
+          doNotDisplayWelcomePage = Some("No"),
           agents = Seq(
             AgentDetailsResponse(
-              agentReferenceNumber = "ARN001",
-              agentName = "Anderson Legal LLP",
               agentId = Some("AGT001"),
-              addressLine1 = Some("10 Downing Street"),
-              addressLine2 = Some("Westminster"),
-              addressLine3 = Some("London"),
-              addressLine4 = Some("United Kingdom"),
+              storn = "A-123",
+              name = Some("Anderson Legal LLP"),
+              houseNumber = None,
+              address1 = Some("10 Downing Street"),
+              address2 = Some("Westminster"),
+              address3 = Some("London"),
+              address4 = Some("United Kingdom"),
               postcode = Some("SW1A 2AA"),
               phone = Some("02079460001"),
-              email = Some("info@andersonlegal.co.uk")
+              email = Some("info@andersonlegal.co.uk"),
+              dxAddress = None,
+              agentResourceReference = Some("ARN001")
             )
           )
         )
@@ -205,9 +208,9 @@ class ManageAgentsControllerSpec extends SpecBase {
       "return OK with empty agents when service returns an organisation with no agents" in new BaseSetup {
         val emptyOrg = SdltOrganisationResponse(
           storn = "A-123",
-          version = 1,
-          isReturnUser = "1",
-          doNotDisplayWelcomePage = "No",
+          version = Some("1"),
+          isReturnUser = Some("1"),
+          doNotDisplayWelcomePage = Some("No"),
           agents = Nil
         )
 

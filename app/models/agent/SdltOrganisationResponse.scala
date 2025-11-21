@@ -21,9 +21,9 @@ import play.api.libs.json.*
 
 case class SdltOrganisationResponse(
                                     storn                   : String,
-                                    version                 : Int,
-                                    isReturnUser            : String,
-                                    doNotDisplayWelcomePage : String,
+                                    version                 : Option[String],
+                                    isReturnUser            : Option[String],
+                                    doNotDisplayWelcomePage : Option[String],
                                     agents                  : Seq[AgentDetailsResponse]
                                    )
 
