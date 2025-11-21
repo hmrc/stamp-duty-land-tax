@@ -14,67 +14,81 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.stampdutylandtax.controllers
+package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import models.auth.IdentifierRequest
-import models.filing.{CreateReturnRequest, GetReturnByRefRequest}
+import models.filing.*
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
-import service.FilingReturnsService
+import play.api.mvc.{Action, ControllerComponents}
+import service.filing.ReturnAgentService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class FilingReturnsController @Inject()(
+class ReturnAgentController @Inject()(
                                          cc: ControllerComponents,
-                                         service: FilingReturnsService,
-                                         identify: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
-  private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
+                                         service: ReturnAgentService
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
 
-  def createReturn(): Action[JsValue] =
-    auth.async(parse.json) { implicit request =>
+  def createReturnAgent(): Action[JsValue] =
+    Action.async(parse.json) { implicit request =>
       request.body
-        .validate[CreateReturnRequest]
+        .validate[CreateReturnAgentRequest]
         .fold(
           errs =>
             Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
           body =>
             service
-              .createReturn(body)
+              .createReturnAgent(body)
               .map { result =>
                 Created(Json.toJson(result))
               }
               .recover { case t =>
-                logger.error("[createReturn] failed", t)
+                logger.error("[createReturnAgent] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
+    }
+
+  def updateReturnAgent(): Action[JsValue] =
+    Action.async(parse.json) { implicit request =>
+      request.body
+        .validate[UpdateReturnAgentRequest]
+        .fold(
+          errs =>
+            Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+          body =>
+            service
+              .updateReturnAgent(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[updateReturnAgent] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )
     }
 
 
-  def getFullReturn(): Action[JsValue] =
-    auth.async(parse.json) { implicit request =>
+  def deleteReturnAgent(): Action[JsValue] =
+    Action.async(parse.json) { implicit request =>
       request.body
-        .validate[GetReturnByRefRequest]
+        .validate[DeleteReturnAgentRequest]
         .fold(
           errs =>
             Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
           body =>
             service
-              .getFullReturn(body)
+              .deleteReturnAgent(body)
               .map { result =>
                 Created(Json.toJson(result))
               }
               .recover { case t =>
-                logger.error("[createReturn] failed", t)
+                logger.error("[deleteReturnAgent] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )
     }
-
-}
