@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
+import models.auth.IdentifierRequest
 import models.filing.*
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
 import service.filing.ReturnVersioningService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,11 +31,13 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton()
 class ReturnVersioningController @Inject()(
                                          cc: ControllerComponents,
-                                         service: ReturnVersioningService
+                                         service: ReturnVersioningService,
+                                         identify: IdentifierAction
                                        )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
 
-  def updateReturnVersion(): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
+  private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
+
+  def updateReturnVersion(): Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
         .validate[ReturnVersionUpdateRequest]
         .fold(

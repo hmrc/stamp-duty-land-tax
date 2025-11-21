@@ -37,8 +37,7 @@ class ManageReturnsController @Inject()(
 
   private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
 
-  def getReturns: Action[JsValue] =
-    auth.async(parse.json) { implicit request =>
+  def getReturns: Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
         .validate[SdltReturnRecordRequest]
         .fold(

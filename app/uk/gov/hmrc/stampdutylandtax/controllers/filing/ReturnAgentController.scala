@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
+import models.auth.IdentifierRequest
 import models.filing.*
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
 import service.filing.ReturnAgentService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,11 +31,13 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton()
 class ReturnAgentController @Inject()(
                                          cc: ControllerComponents,
-                                         service: ReturnAgentService
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging:
+                                         service: ReturnAgentService,
+                                         identify: IdentifierAction
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
-  def createReturnAgent(): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
+  private lazy val auth: ActionBuilder[IdentifierRequest, AnyContent] = identify
+
+  def createReturnAgent(): Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
         .validate[CreateReturnAgentRequest]
         .fold(
@@ -52,8 +56,7 @@ class ReturnAgentController @Inject()(
         )
     }
 
-  def updateReturnAgent(): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
+  def updateReturnAgent(): Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
         .validate[UpdateReturnAgentRequest]
         .fold(
@@ -72,9 +75,7 @@ class ReturnAgentController @Inject()(
         )
     }
 
-
-  def deleteReturnAgent(): Action[JsValue] =
-    Action.async(parse.json) { implicit request =>
+  def deleteReturnAgent(): Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
         .validate[DeleteReturnAgentRequest]
         .fold(
@@ -92,3 +93,5 @@ class ReturnAgentController @Inject()(
               }
         )
     }
+
+}
