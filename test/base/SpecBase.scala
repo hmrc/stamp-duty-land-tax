@@ -53,6 +53,7 @@ trait SpecBase
       .build()
 
   val testAgentDetailsRequest: AgentDetailsRequest = AgentDetailsRequest(
+    storn = "STN001",
     agentName = "64Acme Property Agents Ltd",
     addressLine1 = Some("Zoo Lane"),
     addressLine2 = Some("Westminster"),
@@ -104,7 +105,8 @@ trait SpecBase
   )
 
   val testAgentDetailsSuccessResponse: SubmitAgentDetailsResponse = SubmitAgentDetailsResponse(
-    agentResourceRef = "some-id"
+    agentResourceRef = "some-id",
+    agentId = "4567"
   )
 
   val cc: ControllerComponents = stubControllerComponents()

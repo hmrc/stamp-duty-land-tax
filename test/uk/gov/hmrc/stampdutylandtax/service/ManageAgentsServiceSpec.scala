@@ -70,7 +70,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val storn = "STN-ERR"
-        private val arn   = "ARN-ERR"
+        private val arn = "ARN-ERR"
 
         when(mockFormp.getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("boom")))
@@ -87,6 +87,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
         private val req = AgentDetailsRequest(
+          storn        = "STN001",
           agentName    = "22A Harborview Estates",
           addressLine1 = Some("Queensway"),
           addressLine2 = None,
@@ -96,7 +97,7 @@ class ManageAgentsServiceSpec extends SpecBase {
           phone        = Some("01214567890"),
           email        = Some("info@harborviewestates.co.uk")
         )
-        private val resp = SubmitAgentDetailsResponse("ARN123456")
+        private val resp = SubmitAgentDetailsResponse("ARN123456", "07524")
 
         when(mockFormp.submitAgentDetails(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.successful(resp))
@@ -108,6 +109,7 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val req = AgentDetailsRequest(
+          storn        = "STN001",
           agentName    = "?? Bad Data Inc",
           addressLine1 = Some("Unknown"),
           addressLine2 = None,

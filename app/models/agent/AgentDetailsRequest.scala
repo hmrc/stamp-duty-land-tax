@@ -19,6 +19,7 @@ package models.agent
 import play.api.libs.json.{Json, OFormat}
 
 case class AgentDetailsRequest(
+                                storn                 : String,
                                 agentName             : String,
                                 addressLine1          : Option[String],
                                 addressLine2          : Option[String],
