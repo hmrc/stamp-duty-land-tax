@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SubmitAgentDetailsResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -66,7 +66,7 @@ trait   SpecBase
     email = Some("test@example.com")
   )
 
-  val testAgentDetailsAfterCreation: AgentDetailsResponse = AgentDetailsResponse(
+  val testAgentDetailsAfterCreation: CreatedAgent = CreatedAgent(
     agentId                = Some("AGT001"),
     storn                  = "STN001",
     name                   = Some("64 Acme Property Agents Ltd"),
@@ -82,8 +82,8 @@ trait   SpecBase
     agentResourceReference = Some("ARN001")
   )
 
-  val testAgentDetailsList: List[AgentDetailsResponse] = List(
-    AgentDetailsResponse(
+  val testAgentDetailsList: List[CreatedAgent] = List(
+    CreatedAgent(
       agentId                = Some("AGT001"),
       storn                  = "STN001",
       name                   = Some("64 Acme Property Agents Ltd"),
@@ -98,7 +98,7 @@ trait   SpecBase
       dxAddress              = None,
       agentResourceReference = Some("ARN001")
     ),
-    AgentDetailsResponse(
+    CreatedAgent(
       agentId                = Some("AGT001"),
       storn                  = "STN001",
       name                   = Some("12B BrightHomes Estates"),

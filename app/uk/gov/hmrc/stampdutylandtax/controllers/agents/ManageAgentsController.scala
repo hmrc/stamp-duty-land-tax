@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent}
 import models.auth.IdentifierRequest
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}

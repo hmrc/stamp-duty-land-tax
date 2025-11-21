@@ -18,7 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
-import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
@@ -73,7 +73,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       val result = connector.getAgentDetails(storn, arn).futureValue
 
-      result mustBe Some(AgentDetailsResponse(
+      result mustBe Some(CreatedAgent(
         agentId                = Some("AGT001"),
         storn                  = storn,
         name                   = Some("Sunrise Realty"),
@@ -337,7 +337,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         isReturnUser = Some("true"),
         doNotDisplayWelcomePage = Some("Yes"),
         agents = Seq(
-          AgentDetailsResponse(
+          CreatedAgent(
             storn                  = storn,
             agentId                = Some("AGT001"),
             name                   = Some("John"),
@@ -354,7 +354,6 @@ class FormpProxyConnectorISpec extends AnyWordSpec
           )
         )
       )
-
 
       result.toString must include("SW72AZ")
       result.toString must include("AGT001")

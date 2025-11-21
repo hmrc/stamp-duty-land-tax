@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -35,7 +35,7 @@ class ManageAgentsServiceSpec extends SpecBase {
       "should return Some(AgentDetailsResponse) when connector successfully finds an agent" in new BaseSetup {
         private val storn = "STN-123"
         private val arn   = "ARN-999"
-        private val resp  = AgentDetailsResponse(
+        private val resp  = CreatedAgent(
           agentId                = Some("AGT001"),
           storn                  = storn,
           name                   = Some("Acme Property"),
@@ -187,7 +187,7 @@ class ManageAgentsServiceSpec extends SpecBase {
           isReturnUser            = Some("true"),
           doNotDisplayWelcomePage = Some("Yes"),
           agents = Seq(
-            AgentDetailsResponse(
+            CreatedAgent(
               agentId                = Some("AGT001"),
               storn                  = storn,
               name                   = Some("John"),

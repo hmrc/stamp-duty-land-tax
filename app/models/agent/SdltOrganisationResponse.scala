@@ -24,7 +24,7 @@ case class SdltOrganisationResponse(
                                     version                 : Option[String],
                                     isReturnUser            : Option[String],
                                     doNotDisplayWelcomePage : Option[String],
-                                    agents                  : Seq[AgentDetailsResponse]
+                                    agents                  : Seq[CreatedAgent]
                                    )
 
 object SdltOrganisationResponse {

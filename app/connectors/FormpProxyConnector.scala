@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -40,14 +40,14 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   val stubFormPBool: Boolean = config.getBoolean("features.stub-formp-enabled")
 
   def getAgentDetails(storn: String, agentReferenceNumber: String)
-                     (implicit hc: HeaderCarrier): Future[Option[AgentDetailsResponse]] =
+                     (implicit hc: HeaderCarrier): Future[Option[CreatedAgent]] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details" else url"$formpPath/manage-agents/agent-details"
     http.post(url)
       .withBody(Json.obj(
         "storn" -> storn,
         "agentReferenceNumber" -> agentReferenceNumber
       ))
-      .execute[Option[AgentDetailsResponse]]
+      .execute[Option[CreatedAgent]]
       .recover {
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][getAgentDetails]: ${e.getMessage}")

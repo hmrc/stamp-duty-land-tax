@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -177,7 +177,7 @@ class ManageAgentsControllerSpec extends SpecBase {
           isReturnUser = Some("1"),
           doNotDisplayWelcomePage = Some("No"),
           agents = Seq(
-            AgentDetailsResponse(
+            CreatedAgent(
               agentId = Some("AGT001"),
               storn = "A-123",
               name = Some("Anderson Legal LLP"),
