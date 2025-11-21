@@ -53,7 +53,7 @@ class AuthenticatedIdentifierAction @Inject()(
           logger.info("[AuthenticatedIdentifierAction][authorised] - user authenticated")
           block(IdentifierRequest(request, "internalId", "storn"))
       }.recoverWith{
-        case _: MissingBearerToken =>
+        case _: MissingBearerToken => // Auth is disabled for the time been
           logger.info("[AuthenticatedIdentifierAction][authorised] - MissingBearerToken ...")
           block(IdentifierRequest(request, "internalId", "storn"))
       }
