@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse,CreatePredefinedAgentResponse }
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse,CreatePredefinedAgentResponse, UpdateAgentDetailsRequest }
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -95,6 +95,16 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][getReturns] failed for storn ${request.storn}: ${e.getMessage}", e)
           Future.failed(e)
       }
-  }
+
+  def updateAgentDetails(updateAgentDetails: UpdateAgentDetailsRequest)(implicit hc: HeaderCarrier): Future[Int] =
+    val url: URL = if (stubFormPBool) url"$stubPath/manage-agents/agent-details/update" else url"$formpPath/manage-agents/agent-details/update"
+    http.put(url)
+      .withBody(Json.toJson(updateAgentDetails))
+      .execute[Int]
+      .recover {
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateAgentDetails]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
 
 }
