@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -54,10 +54,10 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def submitAgentDetails(agentDetails: AgentDetailsRequest)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
+  def submitAgentDetails(agentDetailsBeforeCreation: AgentDetailsBeforeCreation)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/submit" else url"$formpPath/manage-agents/agent-details/submit"
     http.post(url)
-      .withBody(Json.toJson(agentDetails))
+      .withBody(Json.toJson(agentDetailsBeforeCreation))
       .execute[SubmitAgentDetailsResponse]
       .recover {
         case e: Throwable =>

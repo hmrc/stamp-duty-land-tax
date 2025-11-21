@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -86,7 +86,7 @@ class ManageAgentsServiceSpec extends SpecBase {
     "submitAgentDetails" - {
 
       "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
-        private val req = AgentDetailsRequest(
+        private val req = AgentDetailsBeforeCreation(
           storn        = "STN001",
           agentName    = "22A Harborview Estates",
           addressLine1 = Some("Queensway"),
@@ -108,7 +108,7 @@ class ManageAgentsServiceSpec extends SpecBase {
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
-        private val req = AgentDetailsRequest(
+        private val req = AgentDetailsBeforeCreation(
           storn        = "STN001",
           agentName    = "?? Bad Data Inc",
           addressLine1 = Some("Unknown"),

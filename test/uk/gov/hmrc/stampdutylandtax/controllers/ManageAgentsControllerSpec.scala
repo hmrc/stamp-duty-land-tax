@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{AgentDetailsResponse, AgentDetailsRequest, SdltOrganisationResponse}
+import models.agent.{AgentDetailsBeforeCreation, AgentDetailsResponse, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -83,7 +83,7 @@ class ManageAgentsControllerSpec extends SpecBase {
     "POST /agent-details/submit (submitAgentDetails)" - {
 
       "return OK with agent details when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testAgentDetailsSuccessResponse))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
@@ -94,7 +94,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testAgentDetailsSuccessResponse))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(Json.obj())))
@@ -103,7 +103,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
@@ -113,7 +113,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))

@@ -18,7 +18,7 @@ package models.agent
 
 import play.api.libs.json.{Json, OFormat}
 
-case class AgentDetailsRequest(
+case class AgentDetailsBeforeCreation(
                                 storn                 : String,
                                 agentName             : String,
                                 addressLine1          : Option[String],
@@ -30,6 +30,6 @@ case class AgentDetailsRequest(
                                 email                 : Option[String]
 )
 
-object AgentDetailsRequest {
-  implicit val format: OFormat[AgentDetailsRequest] = Json.format[AgentDetailsRequest]
+object AgentDetailsBeforeCreation {
+  implicit val format: OFormat[AgentDetailsBeforeCreation] = Json.format[AgentDetailsBeforeCreation]
 }
