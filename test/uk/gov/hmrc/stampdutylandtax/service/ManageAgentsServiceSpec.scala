@@ -30,62 +30,6 @@ class ManageAgentsServiceSpec extends SpecBase {
 
   "ManageAgentsService" - {
 
-    "getAgentDetails" - {
-
-      "should return Some(AgentDetailsResponse) when connector successfully finds an agent" in new BaseSetup {
-        private val storn = "STN-123"
-        private val arn   = "ARN-999"
-        private val resp  = CreatedAgent(
-          agentId                = Some("AGT001"),
-          storn                  = storn,
-          name                   = Some("Acme Property"),
-          houseNumber            = None,
-          address1               = Some("High Street"),
-          address2               = Some("Westminster"),
-          address3               = Some("London"),
-          address4               = Some("Greater London"),
-          postcode               = Some("SW1A 2AA"),
-          phone                  = Some("02079460000"),
-          email                  = Some("info@acmeagents.co.uk"),
-          dxAddress              = None,
-          agentResourceReference = Some(arn)
-        )
-
-        when(mockFormp.getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(Some(resp)))
-
-        val result = service.getAgentDetails(storn, arn).futureValue
-        result mustBe Some(resp)
-        verify(mockFormp, times(1)).getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
-      }
-
-      "should return None when connector fails to find the agent by storn" in new BaseSetup {
-        private val storn = "STN-123"
-        private val arn   = "ARN-NONE"
-
-        when(mockFormp.getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(None))
-
-        val result = service.getAgentDetails(storn, arn).futureValue
-        result mustBe None
-        verify(mockFormp, times(1)).getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
-      }
-
-      "should propagate exceptions from the connector" in new BaseSetup {
-        private val storn = "STN-ERR"
-        private val arn = "ARN-ERR"
-
-        when(mockFormp.getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("boom")))
-
-        val ex = intercept[RuntimeException] {
-          service.getAgentDetails(storn, arn).futureValue
-        }
-        ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).getAgentDetails(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
-      }
-    }
-
     "submitAgentDetails" - {
 
       "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
