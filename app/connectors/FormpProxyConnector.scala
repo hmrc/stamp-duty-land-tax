@@ -39,21 +39,6 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   private val formpPath = config.baseUrl("formp-proxy") + "/formp-proxy"
   val stubFormPBool: Boolean = config.getBoolean("features.stub-formp-enabled")
 
-  def getAgentDetails(storn: String, agentReferenceNumber: String)
-                     (implicit hc: HeaderCarrier): Future[Option[CreatedAgent]] =
-    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details" else url"$formpPath/manage-agents/agent-details"
-    http.post(url)
-      .withBody(Json.obj(
-        "storn" -> storn,
-        "agentReferenceNumber" -> agentReferenceNumber
-      ))
-      .execute[Option[CreatedAgent]]
-      .recover {
-        case e: Throwable =>
-          logger.error(s"[FormpProxyConnector][getAgentDetails]: ${e.getMessage}")
-          throw new RuntimeException(e.getMessage)
-      }
-
   def submitAgentDetails(agentDetailsBeforeCreation: AgentDetailsBeforeCreation)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/submit" else url"$formpPath/manage-agents/agent-details/submit"
     http.post(url)

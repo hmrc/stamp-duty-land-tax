@@ -26,10 +26,6 @@ import scala.concurrent.Future
 @Singleton
 class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
 
-  def getAgentDetails(storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[Option[CreatedAgent]] =
-    formp
-      .getAgentDetails(storn, agentReferenceNumber)
-
   def submitAgentDetails(agentDetailsBeforeCreation: AgentDetailsBeforeCreation)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
     formp
       .submitAgentDetails(agentDetailsBeforeCreation)

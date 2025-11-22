@@ -36,20 +36,6 @@ class ManageAgentsController @Inject()(
   auth: IdentifierAction
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
-  def getAgentDetails(storn: String, agentReferenceNumber: String): Action[AnyContent] = auth.async { implicit request =>
-    service.getAgentDetails(storn, agentReferenceNumber)
-      .map {
-        case Some(agentDetails) => Ok(Json.toJson(agentDetails))
-        case None => NotFound(Json.obj("message" -> "Agent details not found"))
-      } recover {
-      case u: UpstreamErrorResponse =>
-        Status(u.statusCode)(Json.obj("message" -> u.message))
-      case t: Throwable =>
-        logger.error("[ManageAgentsController][getAgentDetails] failed", t)
-        InternalServerError(Json.obj("message" -> "Unexpected error"))
-    }
-  }
-
   def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async { implicit request =>
     service.getSdltOrganisation(storn) map { sdltOrganisation =>
       Ok(Json.toJson(
