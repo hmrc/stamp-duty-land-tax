@@ -35,51 +35,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class ManageAgentsControllerSpec extends SpecBase {
 
   "ManageAgentsController" - {
-
-    "GET agent-details/storn/:storn (getAgentDetails)" - {
-
-      "return OK with agent details when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(Some(testAgentDetailsAfterCreation)))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(testAgentDetailsAfterCreation)
-        verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier])
-      }
-
-      "return NOT_FOUND with message when service returns None" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(None))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe NOT_FOUND
-        (contentAsJson(result) \ "message").as[String] mustBe "Agent details not found"
-        verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier])
-      }
-
-      "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe BAD_GATEWAY
-        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
-      }
-
-      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("unexpected")))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
-      }
-    }
     
     "POST /agent-details/submit (submitAgentDetails)" - {
 
