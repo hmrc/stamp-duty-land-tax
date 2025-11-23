@@ -133,7 +133,7 @@ class ManageAgentsServiceSpec extends SpecBase {
           agents = Seq(
             CreatedAgent(
               agentId                = Some("AGT001"),
-              storn                  = storn,
+              storn                  = Some(storn),
               name                   = Some("John"),
               houseNumber            = None,
               address1               = Some("1 High Street"),

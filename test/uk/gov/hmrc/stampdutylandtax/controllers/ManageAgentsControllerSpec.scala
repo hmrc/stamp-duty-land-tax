@@ -134,7 +134,7 @@ class ManageAgentsControllerSpec extends SpecBase {
           agents = Seq(
             CreatedAgent(
               agentId = Some("AGT001"),
-              storn = "A-123",
+              storn = Some("A-123"),
               name = Some("Anderson Legal LLP"),
               houseNumber = None,
               address1 = Some("10 Downing Street"),

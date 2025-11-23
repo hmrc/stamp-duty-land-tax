@@ -263,7 +263,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         doNotDisplayWelcomePage = Some("Yes"),
         agents = Seq(
           CreatedAgent(
-            storn                  = storn,
+            storn                  = Some(storn),
             agentId                = Some("AGT001"),
             name                   = Some("John"),
             houseNumber            = None,

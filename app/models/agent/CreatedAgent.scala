@@ -19,7 +19,7 @@ package models.agent
 import play.api.libs.json.{Json, OFormat}
 
 case class CreatedAgent(
-                         storn:                  String,
+                         storn:                  Option[String],
                          agentId:                Option[String],
                          name:                   Option[String],
                          houseNumber:            Option[String],

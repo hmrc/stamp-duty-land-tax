@@ -68,7 +68,7 @@ trait   SpecBase
 
   val testAgentDetailsAfterCreation: CreatedAgent = CreatedAgent(
     agentId                = Some("AGT001"),
-    storn                  = "STN001",
+    storn                  = Some("STN001"),
     name                   = Some("64 Acme Property Agents Ltd"),
     houseNumber            = None,
     address1               = Some("Zoo Lane"),
@@ -85,7 +85,7 @@ trait   SpecBase
   val testAgentDetailsList: List[CreatedAgent] = List(
     CreatedAgent(
       agentId                = Some("AGT001"),
-      storn                  = "STN001",
+      storn                  = Some("STN001"),
       name                   = Some("64 Acme Property Agents Ltd"),
       houseNumber            = None,
       address1               = Some("Zoo Lane"),
@@ -100,7 +100,7 @@ trait   SpecBase
     ),
     CreatedAgent(
       agentId                = Some("AGT001"),
-      storn                  = "STN001",
+      storn                  = Some("STN001"),
       name                   = Some("12B BrightHomes Estates"),
       houseNumber            = None,
       address1               = Some("Maple Street"),
