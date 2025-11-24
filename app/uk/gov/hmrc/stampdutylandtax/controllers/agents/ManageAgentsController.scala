@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent}
 import models.auth.IdentifierRequest
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
@@ -35,20 +35,6 @@ class ManageAgentsController @Inject()(
   service: ManageAgentsService,
   auth: IdentifierAction
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
-
-  def getAgentDetails(storn: String, agentReferenceNumber: String): Action[AnyContent] = auth.async { implicit request =>
-    service.getAgentDetails(storn, agentReferenceNumber)
-      .map {
-        case Some(agentDetails) => Ok(Json.toJson(agentDetails))
-        case None => NotFound(Json.obj("message" -> "Agent details not found"))
-      } recover {
-      case u: UpstreamErrorResponse =>
-        Status(u.statusCode)(Json.obj("message" -> u.message))
-      case t: Throwable =>
-        logger.error("[ManageAgentsController][getAgentDetails] failed", t)
-        InternalServerError(Json.obj("message" -> "Unexpected error"))
-    }
-  }
 
   def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async { implicit request =>
     service.getSdltOrganisation(storn) map { sdltOrganisation =>
@@ -76,8 +62,8 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def submitAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body.validate[AgentDetailsRequest].fold(
+  def submitAgentDetails: Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body.validate[AgentDetailsBeforeCreation].fold(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
       payload =>
         service.submitAgentDetails(payload) map { submissionResponse =>

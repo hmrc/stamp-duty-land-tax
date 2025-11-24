@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SdltOrganisationResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -35,56 +35,11 @@ import scala.concurrent.{ExecutionContext, Future}
 class ManageAgentsControllerSpec extends SpecBase {
 
   "ManageAgentsController" - {
-
-    "GET agent-details/storn/:storn (getAgentDetails)" - {
-
-      "return OK with agent details when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(Some(testAgentDetailsAfterCreation)))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(testAgentDetailsAfterCreation)
-        verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier])
-      }
-
-      "return NOT_FOUND with message when service returns None" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(None))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe NOT_FOUND
-        (contentAsJson(result) \ "message").as[String] mustBe "Agent details not found"
-        verify(mockManageAgentsService).getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier])
-      }
-
-      "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe BAD_GATEWAY
-        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
-      }
-
-      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.getAgentDetails(eqTo("A-123"), eqTo("B-345"))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("unexpected")))
-
-        val result: Future[Result] = controller.getAgentDetails("A-123", "B-345")(fakeRequest)
-
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
-      }
-    }
     
     "POST /agent-details/submit (submitAgentDetails)" - {
 
       "return OK with agent details when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testAgentDetailsSuccessResponse))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
@@ -95,7 +50,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testAgentDetailsSuccessResponse))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(Json.obj())))
@@ -104,7 +59,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
@@ -114,7 +69,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.submitAgentDetails(any[AgentDetailsBeforeCreation])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
         val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
@@ -163,21 +118,24 @@ class ManageAgentsControllerSpec extends SpecBase {
       "return OK with organisation payload when service returns the organisation" in new BaseSetup {
         val testOrg = SdltOrganisationResponse(
           storn = "A-123",
-          version = 1,
-          isReturnUser = "1",
-          doNotDisplayWelcomePage = "No",
+          version = Some("1"),
+          isReturnUser = Some("1"),
+          doNotDisplayWelcomePage = Some("No"),
           agents = Seq(
-            AgentDetailsResponse(
-              agentReferenceNumber = "ARN001",
-              agentName = "Anderson Legal LLP",
+            CreatedAgent(
               agentId = Some("AGT001"),
-              addressLine1 = Some("10 Downing Street"),
-              addressLine2 = Some("Westminster"),
-              addressLine3 = Some("London"),
-              addressLine4 = Some("United Kingdom"),
+              storn = Some("A-123"),
+              name = Some("Anderson Legal LLP"),
+              houseNumber = None,
+              address1 = Some("10 Downing Street"),
+              address2 = Some("Westminster"),
+              address3 = Some("London"),
+              address4 = Some("United Kingdom"),
               postcode = Some("SW1A 2AA"),
               phone = Some("02079460001"),
-              email = Some("info@andersonlegal.co.uk")
+              email = Some("info@andersonlegal.co.uk"),
+              dxAddress = None,
+              agentResourceReference = Some("ARN001")
             )
           )
         )
@@ -195,9 +153,9 @@ class ManageAgentsControllerSpec extends SpecBase {
       "return OK with empty agents when service returns an organisation with no agents" in new BaseSetup {
         val emptyOrg = SdltOrganisationResponse(
           storn = "A-123",
-          version = 1,
-          isReturnUser = "1",
-          doNotDisplayWelcomePage = "No",
+          version = Some("1"),
+          isReturnUser = Some("1"),
+          doNotDisplayWelcomePage = Some("No"),
           agents = Nil
         )
 

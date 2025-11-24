@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{AgentDetailsRequest, AgentDetailsResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SubmitAgentDetailsResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -54,22 +54,9 @@ trait   SpecBase
       )
       .build()
 
-
-  val testAgentDetailsRequest: AgentDetailsRequest = AgentDetailsRequest(
+  val testAgentDetailsRequest: AgentDetailsBeforeCreation = AgentDetailsBeforeCreation(
+    storn = "STN001",
     agentName = "64Acme Property Agents Ltd",
-    addressLine1 = "Zoo Lane",
-    addressLine2 = Some("Westminster"),
-    addressLine3 = "London",
-    addressLine4 = None,
-    postcode = Some("SW1A 2AA"),
-    phone = Some("02079460000"),
-    email = "test@example.com"
-  )
-
-  val testAgentDetailsAfterCreation: AgentDetailsResponse = AgentDetailsResponse(
-    agentReferenceNumber = "ARN001",
-    agentName = "64 Acme Property Agents Ltd",
-    agentId = Some("AGT001"),
     addressLine1 = Some("Zoo Lane"),
     addressLine2 = Some("Westminster"),
     addressLine3 = Some("London"),
@@ -79,35 +66,58 @@ trait   SpecBase
     email = Some("test@example.com")
   )
 
-  val testAgentDetailsList: List[AgentDetailsResponse] = List(
-    AgentDetailsResponse(
-      agentReferenceNumber = "ARN001",
-      agentName = "64 Acme Property Agents Ltd",
-      agentId = Some("AGT001"),
-      addressLine1 = Some("Zoo Lane"),
-      addressLine2 = Some("Westminster"),
-      addressLine3 = Some("London"),
-      addressLine4 = None,
-      postcode = Some("SW1A 2AA"),
-      phone = Some("02079460000"),
-      email = Some("test@example.com")
+  val testAgentDetailsAfterCreation: CreatedAgent = CreatedAgent(
+    agentId                = Some("AGT001"),
+    storn                  = Some("STN001"),
+    name                   = Some("64 Acme Property Agents Ltd"),
+    houseNumber            = None,
+    address1               = Some("Zoo Lane"),
+    address2               = Some("Westminster"),
+    address3               = Some("London"),
+    address4               = None,
+    postcode               = Some("SW1A 2AA"),
+    phone                  = Some("02079460000"),
+    email                  = Some("test@example.com"),
+    dxAddress              = None,
+    agentResourceReference = Some("ARN001")
+  )
+
+  val testAgentDetailsList: List[CreatedAgent] = List(
+    CreatedAgent(
+      agentId                = Some("AGT001"),
+      storn                  = Some("STN001"),
+      name                   = Some("64 Acme Property Agents Ltd"),
+      houseNumber            = None,
+      address1               = Some("Zoo Lane"),
+      address2               = Some("Westminster"),
+      address3               = Some("London"),
+      address4               = None,
+      postcode               = Some("SW1A 2AA"),
+      phone                  = Some("02079460000"),
+      email                  = Some("test@example.com"),
+      dxAddress              = None,
+      agentResourceReference = Some("ARN001")
     ),
-    AgentDetailsResponse(
-      agentReferenceNumber = "ARN001",
-      agentName = "12B BrightHomes Estates",
-      agentId = Some("AGT001"),
-      addressLine1 = Some("Maple Street"),
-      addressLine2 = Some("Camden"),
-      addressLine3 = Some("London"),
-      addressLine4 = Some("Greater London"),
-      postcode = Some("NW1 5LE"),
-      phone = Some("02071234567"),
-      email = Some("info@brighthomes.co.uk")
+    CreatedAgent(
+      agentId                = Some("AGT001"),
+      storn                  = Some("STN001"),
+      name                   = Some("12B BrightHomes Estates"),
+      houseNumber            = None,
+      address1               = Some("Maple Street"),
+      address2               = Some("Camden"),
+      address3               = Some("London"),
+      address4               = Some("Greater London"),
+      postcode               = Some("NW1 5LE"),
+      phone                  = Some("02071234567"),
+      email                  = Some("info@brighthomes.co.uk"),
+      dxAddress              = None,
+      agentResourceReference = Some("ARN001")
     )
   )
 
   val testAgentDetailsSuccessResponse: SubmitAgentDetailsResponse = SubmitAgentDetailsResponse(
-    agentResourceRef = "some-id"
+    agentResourceRef = "some-id",
+    agentId = "4567"
   )
 
   val cc: ControllerComponents = stubControllerComponents()
