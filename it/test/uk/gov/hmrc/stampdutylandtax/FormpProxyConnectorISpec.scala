@@ -104,7 +104,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "message": "Agent deleted with reference number: ARN001" }"""))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "message": "Agent with reference number ARN001 deleted for user with storn STN001" }"""))
       )
 
       val result = connector.removeAgent(storn, arn).futureValue
