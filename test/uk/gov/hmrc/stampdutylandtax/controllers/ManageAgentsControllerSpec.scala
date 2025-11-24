@@ -88,7 +88,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.obj("message" -> "Agent Deleted")
+        contentAsJson(result) mustBe Json.obj("message" -> "Agent deleted with reference number: B-123")
         verify(mockManageAgentsService).removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier])
       }
 
