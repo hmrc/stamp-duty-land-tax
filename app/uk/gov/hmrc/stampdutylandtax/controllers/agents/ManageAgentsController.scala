@@ -52,9 +52,7 @@ class ManageAgentsController @Inject()(
 
   def removeAgent(storn: String, agentReferenceNumber: String): Action[AnyContent] = auth.async { implicit request =>
     service.removeAgent(storn, agentReferenceNumber) map { isRemoved =>
-      Ok(Json.toJson(
-        isRemoved
-      ))
+      Ok(Json.obj("message" -> s"Agent with reference number ${agentReferenceNumber} deleted for user with storn ${storn}"))
     } recover {
       case u: UpstreamErrorResponse =>
         Status(u.statusCode)(Json.obj("message" -> u.message))

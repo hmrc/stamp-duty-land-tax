@@ -34,7 +34,7 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp
       .getSdltOrganisation(storn)
 
-  def removeAgent(storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[Boolean] =
+  def removeAgent(storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[Unit] =
     formp
       .removeAgent(storn, agentReferenceNumber)
 }

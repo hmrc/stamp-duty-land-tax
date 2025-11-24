@@ -23,7 +23,7 @@ import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.net.URL
@@ -62,14 +62,18 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       }
 
   def removeAgent(storn: String, agentReferenceNumber: String)
-                 (implicit hc: HeaderCarrier): Future[Boolean] =
+                 (implicit hc: HeaderCarrier): Future[Unit] =
     val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/remove" else url"$formpPath/manage-agents/agent-details/remove"
     http.post(url)
       .withBody(Json.obj(
         "storn" -> storn,
         "agentReferenceNumber" -> agentReferenceNumber
       ))
-      .execute[Boolean]
+      .execute[HttpResponse]
+      .flatMap { response =>
+        if(response.status == 200) Future.unit
+        else Future.failed(UpstreamErrorResponse(response.body, response.status))
+      }
       .recover {
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][removeAgent]: ${e.getMessage}")
