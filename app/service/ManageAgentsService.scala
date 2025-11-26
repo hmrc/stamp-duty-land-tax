@@ -17,7 +17,8 @@
 package service
 
 import connectors.FormpProxyConnector
-import models.agent.{CreatePredefinedAgentRequest, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse, UpdateAgentDetailsRequest}
+import models.agent.*
+import play.api.mvc.Result
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}

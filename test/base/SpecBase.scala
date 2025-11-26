@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, CreatePredefinedAgentResponse, UpdateAgentDetailsRequest}
+import models.agent.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -29,8 +29,7 @@ import play.api.mvc.{AnyContentAsEmpty, ControllerComponents, PlayBodyParsers}
 import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.stampdutylandtax.controllers.actions.{FakeIdentifierAction, IdentifierAction}
-import play.api.inject.bind
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.FakeIdentifierAction
 
 import scala.concurrent.ExecutionContext
 
@@ -119,6 +118,7 @@ trait   SpecBase
     agentResourceRef = "some-id",
     agentId = "4567"
   )
+
 
   val testDeletePredefinedAgentRequest: DeletePredefinedAgentRequest = DeletePredefinedAgentRequest(
     storn = "STN001",

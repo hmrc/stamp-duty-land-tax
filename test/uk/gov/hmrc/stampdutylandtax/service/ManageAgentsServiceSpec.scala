@@ -82,24 +82,24 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should return 204 when the connector successfully updates an agent" in new BaseSetup {
 
-        when(mockFormp.updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier]))
+        when(mockFormp.updateAgentDetails(eqTo(testAgentDetailsAfterCreation))(any[HeaderCarrier]))
           .thenReturn(Future.successful(204))
 
-        val result = service.updateAgentDetails(testUpdateAgentDetailsRequest).futureValue
+        val result = service.updateAgentDetails(testAgentDetailsAfterCreation).futureValue
         result mustBe 204
-        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testAgentDetailsAfterCreation))(any[HeaderCarrier])
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
 
-        when(mockFormp.updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier]))
+        when(mockFormp.updateAgentDetails(eqTo(testAgentDetailsAfterCreation))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("boom")))
 
         val ex = intercept[RuntimeException] {
-          service.updateAgentDetails(testUpdateAgentDetailsRequest).futureValue
+          service.updateAgentDetails(testAgentDetailsAfterCreation).futureValue
         }
         ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testAgentDetailsAfterCreation))(any[HeaderCarrier])
       }
     }
 

@@ -100,7 +100,7 @@ class ManageAgentsController @Inject()(
           case u: UpstreamErrorResponse =>
             Status(u.statusCode)(Json.obj("message" -> u.message))
           case t: Throwable =>
-            logger.error("[ManageAgentsController][submitAgentDetails] failed", t)
+            logger.error("[ManageAgentsController][updateAgentDetails] failed", t)
             InternalServerError(Json.obj("message" -> "Unexpected error"))
         }
     )

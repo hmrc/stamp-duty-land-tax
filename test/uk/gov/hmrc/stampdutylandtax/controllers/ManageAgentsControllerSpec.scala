@@ -18,10 +18,9 @@ package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
 import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, UpdateAgentDetailsRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, UpdateAgentDetailsRequest}
-import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT, OK}
-import org.mockito.ArgumentMatchers.eq as eqTo
 import play.api.test.Helpers.{contentAsJson, status}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
 import play.api.libs.json.Json
 import play.api.mvc.Result
