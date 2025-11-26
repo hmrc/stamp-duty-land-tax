@@ -17,11 +17,10 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, UpdateAgentDetailsRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, UpdateAgentDetailsRequest}
-import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, NO_CONTENT, OK}
-import play.api.test.Helpers.{contentAsJson, status}
+import models.agent.*
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
+import play.api.http.Status.*
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import service.ManageAgentsService
@@ -78,42 +77,43 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
     }
 
-    "PUT /agent-details/update (updateAgentDetails)" - {
+    "POST /agent-details/update (updateAgentDetails)" - {
 
-      "return 204 NO_CONTENT when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdateAgentDetailsRequest])(any[HeaderCarrier]))
-          .thenReturn(Future.successful(204))
+      "return 200 OK when service returns agent details" in new BaseSetup {
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
+          .thenReturn(Future.unit)
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdateAgentDetailsRequest)))
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
 
-        status(result) mustBe NO_CONTENT
-        verify(mockManageAgentsService).updateAgentDetails(eqTo(testUpdateAgentDetailsRequest))(any[HeaderCarrier])
+        status(result) mustBe OK
+        verify(mockManageAgentsService).updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdateAgentDetailsRequest])(any[HeaderCarrier]))
-          .thenReturn(Future.successful(204))
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
+          .thenReturn(Future.unit)
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(Json.obj())))
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsList)))
 
         status(result) mustBe BAD_REQUEST
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdateAgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdateAgentDetailsRequest)))
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
 
         status(result) mustBe BAD_GATEWAY
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdateAgentDetailsRequest])(any[HeaderCarrier]))
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdateAgentDetailsRequest)))
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")

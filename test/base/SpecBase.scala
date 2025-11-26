@@ -80,6 +80,20 @@ trait   SpecBase
     dxAddress              = None,
     agentResourceReference = Some("ARN001")
   )
+  
+  val testUpdatePredefinedAgent: UpdatePredefinedAgent = UpdatePredefinedAgent (
+    agentResourceReference = "ARN001",
+    storn                  = "STN001",
+    agentName              = "64 Acme Property Agents Ltd",
+    houseNumber            = None,
+    addressLine1               = Some("Zoo Lane"),
+    addressLine2               = Some("Westminster"),
+    addressLine3               = Some("London"),
+    addressLine4               = None,
+    postcode               = Some("SW1A 2AA"),
+    phone                  = Some("02079460000"),
+    email                  = Some("test@example.com"),
+  )
 
   val testAgentDetailsList: List[CreatedAgent] = List(
     CreatedAgent(

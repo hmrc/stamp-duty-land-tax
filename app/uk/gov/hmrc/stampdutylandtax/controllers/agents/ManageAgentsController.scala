@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, UpdateAgentDetailsRequest}
-import models.auth.IdentifierRequest
+import models.agent.*
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
@@ -95,7 +94,7 @@ class ManageAgentsController @Inject()(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
       payload =>
         service.updateAgentDetails(payload) map { Response =>
-          Status(Response)
+          Ok(Json.obj("message" -> s"Agent with reference number ${payload.agentResourceReference} has been updated"))
         } recover {
           case u: UpstreamErrorResponse =>
             Status(u.statusCode)(Json.obj("message" -> u.message))
