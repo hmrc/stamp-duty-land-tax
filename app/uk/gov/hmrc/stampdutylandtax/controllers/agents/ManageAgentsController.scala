@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest}
 import models.auth.IdentifierRequest
 import play.api.Logging
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
 import service.ManageAgentsService
 import uk.gov.hmrc.http.UpstreamErrorResponse
@@ -50,17 +50,36 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def removeAgent(storn: String, agentReferenceNumber: String): Action[AnyContent] = auth.async { implicit request =>
-    service.removeAgent(storn, agentReferenceNumber) map { isRemoved =>
-      Ok(Json.obj("message" -> s"Agent with reference number ${agentReferenceNumber} deleted for user with storn ${storn}"))
-    } recover {
-      case u: UpstreamErrorResponse =>
-        Status(u.statusCode)(Json.obj("message" -> u.message))
-      case t: Throwable =>
-        logger.error("[ManageAgentsController][removeAgent] failed", t)
-        InternalServerError(Json.obj("message" -> "Unexpected error"))
+  def deletePredefinedAgent(): Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body
+      .validate[DeletePredefinedAgentRequest]
+      .fold(
+        errs =>
+          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+        body =>
+          service
+            .deletePredefinedAgent(body)
+            .map { result =>
+              Created(Json.toJson(result))
+            }
+            .recover {
+              case t: Throwable =>
+                logger.error("[ManageAgentsController][deletePredefinedAgent] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
     }
-  }
+
+//    service.removeAgent(storn, agentReferenceNumber) map { isRemoved =>
+//      Ok(Json.obj("message" -> s"Agent with reference number ${agentReferenceNumber} deleted for user with storn ${storn}"))
+//    } recover {
+//      case u: UpstreamErrorResponse =>
+//        Status(u.statusCode)(Json.obj("message" -> u.message))
+//      case t: Throwable =>
+//        logger.error("[ManageAgentsController][deletePredefinedAgent] failed", t)
+//        InternalServerError(Json.obj("message" -> "Unexpected error"))
+//    }
+//  }
 
   def submitAgentDetails: Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[AgentDetailsBeforeCreation].fold(
@@ -79,5 +98,5 @@ class ManageAgentsController @Inject()(
         }
     )
   }
-
 }
+  

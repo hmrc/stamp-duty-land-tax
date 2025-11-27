@@ -96,19 +96,19 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     }
   }
 
-  "removeAgent" should {
+  "deletePredefinedAgent" should {
 
-    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/remove"
+    val url = "/stamp-duty-land-tax-stub/manage-agents/delete/predefined-agent"
 
     "return Unit when BE returns OK with valid JSON object" in {
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "message": "Agent with reference number ARN001 deleted for user with storn STN001" }"""))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
       )
 
       val result = connector.removeAgent(storn, arn).futureValue
-      result mustBe ()
+      result mustBe DeletePredefinedAgentResponse(true)
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
