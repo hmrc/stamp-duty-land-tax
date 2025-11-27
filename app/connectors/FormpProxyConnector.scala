@@ -97,7 +97,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       }
 
   def updateAgentDetails(updateAgentDetails: UpdatePredefinedAgent)(implicit hc: HeaderCarrier): Future[Unit] =
-    val url: URL = if (stubFormPBool) url"$stubPath/manage-agents/agent-details/update" else url"$formpPath/manage-agents/agent-details/update"
+    val url: URL = if (stubFormPBool) url"$stubPath/manage-agents/agent-details/predefined-update" else url"$formpPath/manage-agents/agent-details/predefined-update"
     http.post(url)
       .withBody(Json.toJson(updateAgentDetails))
       .execute[HttpResponse]
