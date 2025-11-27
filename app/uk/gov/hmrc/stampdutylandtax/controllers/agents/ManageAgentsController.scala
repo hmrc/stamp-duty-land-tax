@@ -50,7 +50,7 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def deletePredefinedAgent(): Action[JsValue] = Action.async(parse.json) { implicit request =>
+  def deletePredefinedAgent: Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body
       .validate[DeletePredefinedAgentRequest]
       .fold(
@@ -63,23 +63,14 @@ class ManageAgentsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover {
+              case u: UpstreamErrorResponse =>
+                Status(u.statusCode)(Json.obj("message" -> u.message))
               case t: Throwable =>
                 logger.error("[ManageAgentsController][deletePredefinedAgent] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
     }
-
-//    service.removeAgent(storn, agentReferenceNumber) map { isRemoved =>
-//      Ok(Json.obj("message" -> s"Agent with reference number ${agentReferenceNumber} deleted for user with storn ${storn}"))
-//    } recover {
-//      case u: UpstreamErrorResponse =>
-//        Status(u.statusCode)(Json.obj("message" -> u.message))
-//      case t: Throwable =>
-//        logger.error("[ManageAgentsController][deletePredefinedAgent] failed", t)
-//        InternalServerError(Json.obj("message" -> "Unexpected error"))
-//    }
-//  }
 
   def submitAgentDetails: Action[JsValue] = Action.async(parse.json) { implicit request =>
     request.body.validate[AgentDetailsBeforeCreation].fold(

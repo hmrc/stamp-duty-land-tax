@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, SubmitAgentDetailsResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -118,6 +118,11 @@ trait   SpecBase
   val testAgentDetailsSuccessResponse: SubmitAgentDetailsResponse = SubmitAgentDetailsResponse(
     agentResourceRef = "some-id",
     agentId = "4567"
+  )
+
+  val testDeletePredefinedAgentRequest: DeletePredefinedAgentRequest = DeletePredefinedAgentRequest(
+    storn = "STN001",
+    agentReferenceNumber = "100001"
   )
 
   val cc: ControllerComponents = stubControllerComponents()
