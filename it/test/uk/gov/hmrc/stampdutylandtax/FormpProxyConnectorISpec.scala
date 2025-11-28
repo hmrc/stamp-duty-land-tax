@@ -18,7 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
@@ -98,7 +98,8 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "deletePredefinedAgent" should {
 
-    val url = "/stamp-duty-land-tax-stub/manage-agents/delete/predefined-agent"
+    val url = "/stamp-duty-land-tax-stub/delete/predefined-agent"
+    val req = DeletePredefinedAgentRequest(storn, arn)
 
     "return Unit when BE returns OK with valid JSON object" in {
       stubFor(
@@ -107,7 +108,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
       )
 
-      val result = connector.removeAgent(storn, arn).futureValue
+      val result = connector.deletePredefinedAgent(req).futureValue
       result mustBe DeletePredefinedAgentResponse(true)
     }
 
@@ -119,7 +120,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.removeAgent(storn, arn).futureValue
+        connector.deletePredefinedAgent(req).futureValue
       }
       ex.getMessage must include ("boom")
     }
