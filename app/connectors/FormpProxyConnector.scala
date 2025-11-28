@@ -40,7 +40,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   val stubFormPBool: Boolean = config.getBoolean("features.stub-formp-enabled")
 
   def submitAgentDetails(createPredefinedAgentRequest: CreatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[CreatePredefinedAgentResponse] =
-    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/submit" else url"$formpPath/create/predefined-agent"
+    val url: URL = if(stubFormPBool) url"$stubPath/create/predefined-agent" else url"$formpPath/create/predefined-agent"
     http.post(url)
       .withBody(Json.toJson(createPredefinedAgentRequest))
       .execute[CreatePredefinedAgentResponse]

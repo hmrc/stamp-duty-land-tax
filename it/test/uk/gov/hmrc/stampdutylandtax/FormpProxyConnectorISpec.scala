@@ -44,7 +44,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "submitAgentDetails" should {
 
-    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/submit"
+    val url = "/stamp-duty-land-tax-stub/create/predefined-agent"
 
     val payload = CreatePredefinedAgentRequest(
       storn       = "STN001",
