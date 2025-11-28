@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -32,8 +32,8 @@ class ManageAgentsServiceSpec extends SpecBase {
 
     "submitAgentDetails" - {
 
-      "should delegate to connector and successfully return SubmitAgentDetailsResponse" in new BaseSetup {
-        private val req = AgentDetailsBeforeCreation(
+      "should delegate to connector and successfully return CreatePredefinedAgentResponse" in new BaseSetup {
+        private val req = CreatePredefinedAgentRequest(
           storn        = "STN001",
           agentName    = "22A Harborview Estates",
           addressLine1 = Some("Queensway"),
@@ -44,7 +44,7 @@ class ManageAgentsServiceSpec extends SpecBase {
           phone        = Some("01214567890"),
           email        = Some("info@harborviewestates.co.uk")
         )
-        private val resp = SubmitAgentDetailsResponse("ARN123456", "07524")
+        private val resp = CreatePredefinedAgentResponse("ARN123456", "07524")
 
         when(mockFormp.submitAgentDetails(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.successful(resp))
@@ -55,7 +55,7 @@ class ManageAgentsServiceSpec extends SpecBase {
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
-        private val req = AgentDetailsBeforeCreation(
+        private val req = CreatePredefinedAgentRequest(
           storn        = "STN001",
           agentName    = "?? Bad Data Inc",
           addressLine1 = Some("Unknown"),

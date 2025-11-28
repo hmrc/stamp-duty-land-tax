@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse,CreatePredefinedAgentResponse }
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -39,11 +39,11 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
   private val formpPath = config.baseUrl("formp-proxy") + "/formp-proxy"
   val stubFormPBool: Boolean = config.getBoolean("features.stub-formp-enabled")
 
-  def submitAgentDetails(agentDetailsBeforeCreation: AgentDetailsBeforeCreation)(implicit hc: HeaderCarrier): Future[SubmitAgentDetailsResponse] =
-    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/submit" else url"$formpPath/manage-agents/agent-details/submit"
+  def submitAgentDetails(createPredefinedAgentRequest: CreatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[CreatePredefinedAgentResponse] =
+    val url: URL = if(stubFormPBool) url"$stubPath/create/predefined-agent" else url"$formpPath/create/predefined-agent"
     http.post(url)
-      .withBody(Json.toJson(agentDetailsBeforeCreation))
-      .execute[SubmitAgentDetailsResponse]
+      .withBody(Json.toJson(createPredefinedAgentRequest))
+      .execute[CreatePredefinedAgentResponse]
       .recover {
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][submitAgentDetails]: ${e.getMessage}")

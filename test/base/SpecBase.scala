@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, SubmitAgentDetailsResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, CreatePredefinedAgentResponse}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -54,7 +54,7 @@ trait   SpecBase
       )
       .build()
 
-  val testAgentDetailsRequest: AgentDetailsBeforeCreation = AgentDetailsBeforeCreation(
+  val testAgentDetailsRequest: CreatePredefinedAgentRequest = CreatePredefinedAgentRequest(
     storn = "STN001",
     agentName = "64Acme Property Agents Ltd",
     addressLine1 = Some("Zoo Lane"),
@@ -115,7 +115,7 @@ trait   SpecBase
     )
   )
 
-  val testAgentDetailsSuccessResponse: SubmitAgentDetailsResponse = SubmitAgentDetailsResponse(
+  val testAgentDetailsSuccessResponse: CreatePredefinedAgentResponse = CreatePredefinedAgentResponse(
     agentResourceRef = "some-id",
     agentId = "4567"
   )

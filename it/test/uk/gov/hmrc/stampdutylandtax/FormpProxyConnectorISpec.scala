@@ -18,7 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse}
 import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
@@ -44,9 +44,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "submitAgentDetails" should {
 
-    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/submit"
+    val url = "/stamp-duty-land-tax-stub/create/predefined-agent"
 
-    val payload = AgentDetailsBeforeCreation(
+    val payload = CreatePredefinedAgentRequest(
       storn       = "STN001",
       agentName   = "Acme Property Agents Ltd",
       addressLine1 = Some("42 High Street"),
@@ -58,7 +58,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       email        = Some("info@acmeagents.co.uk")
     )
 
-    "return SubmitAgentDetailsResponse when BE returns OK with valid JSON" in {
+    "return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
@@ -66,7 +66,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val result = connector.submitAgentDetails(payload).futureValue
-      result mustBe SubmitAgentDetailsResponse(agentResourceRef = "ARN4324234", agentId = "1234")
+      result mustBe CreatePredefinedAgentResponse(agentResourceRef = "ARN4324234", agentId = "1234")
     }
 
     "fail when BE returns OK with invalid JSON" in {

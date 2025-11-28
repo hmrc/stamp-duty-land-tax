@@ -1,6 +1,6 @@
 # microservice specific routes
 
-POST        /manage-agents/agent-details/submit             uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.submitAgentDetails
+POST        /create/predefined-agent                        uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.submitAgentDetails
 
 # Dummy response in line with formp schema
 GET         /manage-agents/get-sdlt-organisation            uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.getSdltOrganisation(storn: String)
