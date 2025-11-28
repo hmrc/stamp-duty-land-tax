@@ -18,7 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
 import itutil.ApplicationWithWiremock
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, SdltOrganisationResponse, CreatePredefinedAgentResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse}
 import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
@@ -96,19 +96,20 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     }
   }
 
-  "removeAgent" should {
+  "deletePredefinedAgent" should {
 
-    val url = "/stamp-duty-land-tax-stub/manage-agents/agent-details/remove"
+    val url = "/stamp-duty-land-tax-stub/delete/predefined-agent"
+    val req = DeletePredefinedAgentRequest(storn, arn)
 
     "return Unit when BE returns OK with valid JSON object" in {
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "message": "Agent with reference number ARN001 deleted for user with storn STN001" }"""))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
       )
 
-      val result = connector.removeAgent(storn, arn).futureValue
-      result mustBe ()
+      val result = connector.deletePredefinedAgent(req).futureValue
+      result mustBe DeletePredefinedAgentResponse(true)
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -119,7 +120,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val ex = intercept[Exception] {
-        connector.removeAgent(storn, arn).futureValue
+        connector.deletePredefinedAgent(req).futureValue
       }
       ex.getMessage must include ("boom")
     }

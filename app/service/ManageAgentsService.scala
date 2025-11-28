@@ -17,7 +17,7 @@
 package service
 
 import connectors.FormpProxyConnector
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, SdltOrganisationResponse, CreatePredefinedAgentResponse}
+import models.agent.{CreatePredefinedAgentRequest, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
@@ -34,7 +34,7 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp
       .getSdltOrganisation(storn)
 
-  def removeAgent(storn: String, agentReferenceNumber: String)(implicit hc: HeaderCarrier): Future[Unit] =
+  def deletePredefinedAgent(deletePredefinedAgentRequest: DeletePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[DeletePredefinedAgentResponse] =
     formp
-      .removeAgent(storn, agentReferenceNumber)
+      .deletePredefinedAgent(deletePredefinedAgentRequest)
 }
