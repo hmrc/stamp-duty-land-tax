@@ -19,7 +19,7 @@ package uk.gov.hmrc.stampdutylandtax.controllers
 import base.SpecBase
 import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
-import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, CREATED}
+import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
 import play.api.test.Helpers.{contentAsJson, status}
 import org.mockito.Mockito.{verify, when}
@@ -83,13 +83,13 @@ class ManageAgentsControllerSpec extends SpecBase {
 
       val req = DeletePredefinedAgentRequest("STN001", "100001")
 
-      "returns 201 Created when service runs successfully" in new BaseSetup {
+      "returns 200 Ok when service runs successfully" in new BaseSetup {
         when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.successful(DeletePredefinedAgentResponse(true)))
 
         val result: Future[Result] = controller.deletePredefinedAgent(fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest)))
 
-        status(result) mustBe CREATED
+        status(result) mustBe OK
         contentAsJson(result) mustBe Json.obj("deleted" -> true)
         verify(mockManageAgentsService).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
       }

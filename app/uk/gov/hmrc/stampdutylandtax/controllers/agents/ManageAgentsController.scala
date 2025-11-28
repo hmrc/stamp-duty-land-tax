@@ -60,7 +60,7 @@ class ManageAgentsController @Inject()(
           service
             .deletePredefinedAgent(body)
             .map { result =>
-              Created(Json.toJson(result))
+              Ok(Json.toJson(result))
             }
             .recover {
               case u: UpstreamErrorResponse =>
