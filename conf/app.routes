@@ -1,10 +1,10 @@
 # microservice specific routes
 
 POST        /manage-agents/agent-details/submit             uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.submitAgentDetails
-GET         /manage-agents/agent-details/remove             uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.removeAgent(storn: String, agentReferenceNumber: String)
 
 # Dummy response in line with formp schema
 GET         /manage-agents/get-sdlt-organisation            uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.getSdltOrganisation(storn: String)
+POST        /manage-agents/delete/predefined-agent          uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController.deletePredefinedAgent
 POST        /manage-returns/get-returns                     uk.gov.hmrc.stampdutylandtax.controllers.manage.ManageReturnsController.getReturns
 
 # Filing Routes

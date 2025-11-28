@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -78,32 +78,30 @@ class ManageAgentsServiceSpec extends SpecBase {
       }
     }
 
-    "removeAgent" - {
+    "deletePredefinedAgent" - {
 
-      "should return Unit when the connector successfully removes an agent" in new BaseSetup {
-        private val storn = "STN-DEL"
-        private val arn   = "ARN-DEL"
+      "should return JSON Boolean when the connector successfully removes an agent" in new BaseSetup {
+        private val req = DeletePredefinedAgentRequest("STN001", "100001")
 
-        when(mockFormp.removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
-          .thenReturn(Future.unit)
+        when(mockFormp.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(DeletePredefinedAgentResponse(true)))
 
-        val result: Unit = service.removeAgent(storn, arn).futureValue
-        result mustBe ()
-        verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
+        val result: DeletePredefinedAgentResponse = service.deletePredefinedAgent(req).futureValue
+        result mustBe DeletePredefinedAgentResponse(true)
+        verify(mockFormp, times(1)).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
-        private val storn = "STN-DEL-ERR"
-        private val arn   = "ARN-DEL-ERR"
+        private val req = DeletePredefinedAgentRequest("STN001-ERR", "100001-ERR")
 
-        when(mockFormp.removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier]))
+        when(mockFormp.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("boom")))
 
         val ex = intercept[RuntimeException] {
-          service.removeAgent(storn, arn).futureValue
+          service.deletePredefinedAgent(req).futureValue
         }
         ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).removeAgent(eqTo(storn), eqTo(arn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
       }
     }
     

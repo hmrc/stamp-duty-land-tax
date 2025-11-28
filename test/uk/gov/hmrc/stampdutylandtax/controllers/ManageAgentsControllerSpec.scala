@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse}
 import org.mockito.ArgumentMatchers.any
 import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
 import org.mockito.ArgumentMatchers.eq as eqTo
@@ -79,34 +79,36 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
     }
 
-    "GET agent-details/remove (removeAgentDetails)" - {
+    "POST /delete/predefined-agent (deletePredefinedAgent)" - {
 
-      "returns 200 OK when service runs successfully" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.unit)
+      val req = DeletePredefinedAgentRequest("STN001", "100001")
 
-        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
+      "returns 200 Ok when service runs successfully" in new BaseSetup {
+        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(DeletePredefinedAgentResponse(true)))
+
+        val result: Future[Result] = controller.deletePredefinedAgent(fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest)))
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.obj("message" -> "Agent with reference number B-123 deleted for user with storn A-123")
-        verify(mockManageAgentsService).removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier])
+        contentAsJson(result) mustBe Json.obj("deleted" -> true)
+        verify(mockManageAgentsService).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
 
-        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
+        val result: Future[Result] = controller.deletePredefinedAgent(fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest)))
 
         status(result) mustBe BAD_GATEWAY
         (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.removeAgent(eqTo("A-123"), eqTo("B-123"))(any[HeaderCarrier]))
+        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.removeAgent("A-123", "B-123")(fakeRequest)
+        val result: Future[Result] = controller.deletePredefinedAgent()(fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest)))
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")

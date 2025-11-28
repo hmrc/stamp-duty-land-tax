@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, SdltOrganisationResponse, SubmitAgentDetailsResponse}
+import models.agent.{AgentDetailsBeforeCreation, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, SubmitAgentDetailsResponse}
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -61,22 +61,18 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
-  def removeAgent(storn: String, agentReferenceNumber: String)
-                 (implicit hc: HeaderCarrier): Future[Unit] =
-    val url: URL = if(stubFormPBool) url"$stubPath/manage-agents/agent-details/remove" else url"$formpPath/manage-agents/agent-details/remove"
+  def deletePredefinedAgent(deletePredefinedAgentRequest: DeletePredefinedAgentRequest)
+                 (implicit hc: HeaderCarrier): Future[DeletePredefinedAgentResponse] =
+    val url: URL = if(stubFormPBool) url"$stubPath/delete/predefined-agent" else url"$formpPath/delete/predefined-agent"
     http.post(url)
-      .withBody(Json.obj(
-        "storn" -> storn,
-        "agentReferenceNumber" -> agentReferenceNumber
-      ))
-      .execute[HttpResponse]
-      .flatMap { response =>
-        if(response.status == 200) Future.unit
-        else Future.failed(UpstreamErrorResponse(response.body, response.status))
-      }
+      .withBody(Json.toJson(deletePredefinedAgentRequest))
+      .execute[DeletePredefinedAgentResponse]
       .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deletePredefinedAgent]: Upstream error - ${e.getMessage}")
+          throw e
         case e: Throwable =>
-          logger.error(s"[FormpProxyConnector][removeAgent]: ${e.getMessage}")
+          logger.error(s"[FormpProxyConnector][deletePredefinedAgent]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
 
