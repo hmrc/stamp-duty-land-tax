@@ -87,8 +87,11 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       .withBody(Json.toJson(request))
       .execute[Either[UpstreamErrorResponse, SdltReturnRecordResponse]]
       .flatMap {
-        case Right(resp) => Future.successful(resp)
-        case Left(error) => Future.failed(error)
+        case Right(resp) =>
+          logger.info(s"[FormpProxyConnector][getReturns] success ${request.storn}")
+          Future.successful(resp)
+        case Left(error) =>
+          Future.failed(error)
       }
       .recoverWith {
         case NonFatal(e) =>
