@@ -77,18 +77,24 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       }
 
   def getReturns(request: SdltReturnRecordRequest)
-                (implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] =
-    val url: URL = if(stubFormPBool) url"$stubPath/returns" else url"$formpPath/returns"
+                (implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] = {
+    val url: URL = if (stubFormPBool) url"$stubPath/returns" else url"$formpPath/returns"
     http.post(url)
       .withBody(Json.toJson(request))
       .execute[Either[UpstreamErrorResponse, SdltReturnRecordResponse]]
       .flatMap {
-        case Right(resp) => Future.successful(resp)
-        case Left(error) => Future.failed(error)
+        case Right(resp) =>
+          logger.info(s"[FormpProxyConnector][getReturns] - ${request}::response r/count: ${resp.returnSummaryCount}/${resp.returnSummaryList.length}")
+          Future.successful(resp)
+        case Left(error) =>
+          logger.error(s"[FormpProxyConnector][getReturns] - ${request.storn}::response errror: ${error}")
+          Future.failed(error)
       }
       .recoverWith {
         case NonFatal(e) =>
           logger.error(s"[FormpProxyConnector][getReturns] failed for storn ${request.storn}: ${e.getMessage}", e)
           Future.failed(e)
       }
+  }
+
 }
