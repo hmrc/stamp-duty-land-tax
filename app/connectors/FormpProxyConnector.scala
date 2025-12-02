@@ -84,7 +84,7 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       .execute[Either[UpstreamErrorResponse, SdltReturnRecordResponse]]
       .flatMap {
         case Right(resp) =>
-          logger.info(s"[FormpProxyConnector][getReturns] - ${request.storn}::response r/count: ${resp.returnSummaryCount}/${resp.returnSummaryList.length}")
+          logger.info(s"[FormpProxyConnector][getReturns] - ${request}::response r/count: ${resp.returnSummaryCount}/${resp.returnSummaryList.length}")
           Future.successful(resp)
         case Left(error) =>
           logger.error(s"[FormpProxyConnector][getReturns] - ${request.storn}::response errror: ${error}")
