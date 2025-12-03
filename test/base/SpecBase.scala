@@ -140,10 +140,10 @@ trait   SpecBase
   )
 
   //Update Agent Details Fixtures
-  val testUpdateAgentDetailsRequest: UpdateAgentDetailsRequest = UpdateAgentDetailsRequest(
-    agentReferenceNumber = "ARN001",
+  val testUpdateAgentDetailsRequest: UpdatePredefinedAgent = UpdatePredefinedAgent(
+    agentResourceReference = "ARN001",
     storn = "STN001",
-    name = "64 Acme Property Agents Ltd",
+    agentName = "64 Acme Property Agents Ltd",
     houseNumber = None,
     addressLine1 = Some("Zoo Lane"),
     addressLine2 = Some("Westminster"),

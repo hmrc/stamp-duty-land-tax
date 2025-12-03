@@ -23,6 +23,7 @@ import org.mockito.Mockito.{verify, when}
 import play.api.http.Status.*
 import play.api.libs.json.Json
 import play.api.mvc.Result
+import play.api.test.Helpers.{contentAsJson, status}
 import service.ManageAgentsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
