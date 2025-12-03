@@ -63,7 +63,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN99999",
-          |  "purchaserIsCompany": "Business",
+          |  "purchaserIsCompany": "Company",
           |  "surNameOrCompanyName": "ABC Property Ltd",
           |  "addressLine1": "Business Park",
           |  "transactionType": "otherTransaction"
@@ -102,12 +102,12 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
       model.purchaserIsCompany mustBe "NO"
     }
 
-    "handle conversion for Business to Y" in {
+    "handle conversion for Company to Y" in {
       val json = Json.parse(
         """
           |{
           |  "stornId": "STORN99999",
-          |  "purchaserIsCompany": "Business",
+          |  "purchaserIsCompany": "Company",
           |  "surNameOrCompanyName": "ABC Property Ltd",
           |  "addressLine1": "Business Park",
           |  "transactionType": "otherTransaction"
@@ -217,7 +217,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
     "write object with None optional fields as missing JSON fields (not null)" in {
       val model = CreateReturnRequest(
         stornId = "STORN77777",
-        purchaserIsCompany = "Business",
+        purchaserIsCompany = "Company",
         surNameOrCompanyName = "Test Corp",
         houseNumber = None,
         addressLine1 = "Main Road",
@@ -334,7 +334,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
         """
           |{
           |  "stornId": "STORN55555",
-          |  "purchaserIsCompany": "Business",
+          |  "purchaserIsCompany": "Company",
           |  "surNameOrCompanyName": "Global Property Holdings Ltd",
           |  "houseNumber": 250,
           |  "addressLine1": "Corporate Drive",
