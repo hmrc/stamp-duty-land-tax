@@ -90,7 +90,7 @@ class ManageAgentsController @Inject()(
   }
 
   def updateAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body.validate[UpdateAgentDetailsRequest].fold(
+    request.body.validate[UpdatePredefinedAgent].fold(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
       payload =>
         service.updateAgentDetails(payload) map { Response =>

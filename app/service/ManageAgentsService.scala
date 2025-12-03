@@ -31,7 +31,7 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
     formp
       .submitAgentDetails(createPredefinedAgentRequest)
 
-  def updateAgentDetails(agentDetails: UpdateAgentDetailsRequest)(implicit hc: HeaderCarrier): Future[Int] =
+  def updateAgentDetails(agentDetails: UpdatePredefinedAgent)(implicit hc: HeaderCarrier): Future[Unit] =
     formp
       .updateAgentDetails(agentDetails)
 

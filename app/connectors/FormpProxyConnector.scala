@@ -95,9 +95,9 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][getReturns] failed for storn ${request.storn}: ${e.getMessage}", e)
           Future.failed(e)
       }
-
-  def updateAgentDetails(updateAgentDetails: UpdatePredefinedAgent)(implicit hc: HeaderCarrier): Future[Unit] =
-    val url: URL = if (stubFormPBool) url"$stubPath/manage-agents/agent-details/predefined-update" else url"$formpPath/manage-agents/agent-details/predefined-update"
+  }
+  def updateAgentDetails(updateAgentDetails: UpdatePredefinedAgent)(implicit hc: HeaderCarrier): Future[Unit] = 
+    val url: URL = if (stubFormPBool) url"$stubPath/update/predefined-agent" else url"$formpPath/update/predefined-agent"
     http.post(url)
       .withBody(Json.toJson(updateAgentDetails))
       .execute[HttpResponse]
@@ -112,5 +112,6 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][UpdateAgent]: ${e.getMessage} the payload is:\n \n ${Json.toJson(updateAgentDetails)}")
           throw new RuntimeException(e.getMessage)
       }
+    
 
 }
