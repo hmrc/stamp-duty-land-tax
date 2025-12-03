@@ -19,7 +19,7 @@ package models.agent
 import play.api.libs.json.{Json, OFormat}
 
 case class UpdatePredefinedAgent (
-                                   agentResourceReference      : String, 
+                                   agentResourceReference      : String,
                                    storn                       : String,
                                    agentName                   : String,
                                    houseNumber                 : Option[String],
@@ -29,7 +29,8 @@ case class UpdatePredefinedAgent (
                                    addressLine4                : Option[String],
                                    postcode                    : Option[String],
                                    phone                       : Option[String],
-                                   email                       : Option[String]
+                                   email                       : Option[String],
+                                   dxAddress                   : Option[String]
                                      )
 object UpdatePredefinedAgent {
   implicit val format: OFormat[UpdatePredefinedAgent] = Json.format[UpdatePredefinedAgent]

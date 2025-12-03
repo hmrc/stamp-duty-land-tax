@@ -93,6 +93,7 @@ trait   SpecBase
     postcode               = Some("SW1A 2AA"),
     phone                  = Some("02079460000"),
     email                  = Some("test@example.com"),
+    dxAddress             = None
   )
 
   val testAgentDetailsList: List[CreatedAgent] = List(
@@ -151,7 +152,8 @@ trait   SpecBase
     addressLine4 = None,
     postcode = Some("SW1A 2AA"),
     phone = Some("02079460000"),
-    email = Some("test@example.com")
+    email = Some("test@example.com"),
+    dxAddress = None
   )
 
   val cc: ControllerComponents = stubControllerComponents()
