@@ -39,7 +39,7 @@ object CreateReturnRequest {
     (JsPath \ "stornId").read[String] and
       (JsPath \ "purchaserIsCompany").read[String].map {
         case "Individual" => "NO"
-        case "Business" => "YES"
+        case "Company" => "YES"
         case other => other
       } and
       (JsPath \ "surNameOrCompanyName").read[String] and
