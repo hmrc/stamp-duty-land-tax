@@ -81,7 +81,7 @@ trait   SpecBase
     agentResourceReference = Some("ARN001")
   )
   
-  val testUpdatePredefinedAgent: UpdatePredefinedAgent = UpdatePredefinedAgent (
+  val testUpdatePredefinedAgent: UpdatePredefinedAgentRequest = UpdatePredefinedAgentRequest (
     agentResourceReference = "ARN001",
     storn                  = "STN001",
     agentName              = "64 Acme Property Agents Ltd",
@@ -141,7 +141,7 @@ trait   SpecBase
   )
 
   //Update Agent Details Fixtures
-  val testUpdateAgentDetailsRequest: UpdatePredefinedAgent = UpdatePredefinedAgent(
+  val testUpdateAgentDetailsRequest: UpdatePredefinedAgentRequest = UpdatePredefinedAgentRequest(
     agentResourceReference = "ARN001",
     storn = "STN001",
     agentName = "64 Acme Property Agents Ltd",

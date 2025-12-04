@@ -18,7 +18,7 @@ package models.agent
 
 import play.api.libs.json.{Json, OFormat}
 
-case class UpdatePredefinedAgent (
+case class UpdatePredefinedAgentRequest (
                                    agentResourceReference      : String,
                                    storn                       : String,
                                    agentName                   : String,
@@ -32,6 +32,14 @@ case class UpdatePredefinedAgent (
                                    email                       : Option[String],
                                    dxAddress                   : Option[String]
                                      )
-object UpdatePredefinedAgent {
-  implicit val format: OFormat[UpdatePredefinedAgent] = Json.format[UpdatePredefinedAgent]
+object UpdatePredefinedAgentRequest {
+  implicit val format: OFormat[UpdatePredefinedAgentRequest] = Json.format[UpdatePredefinedAgentRequest]
+}
+
+case class UpdatePredefinedAgentResponse(
+                                          updated: Boolean
+                                        )
+
+object UpdatePredefinedAgentResponse {
+  implicit val format: OFormat[UpdatePredefinedAgentResponse] = Json.format[UpdatePredefinedAgentResponse]
 }

@@ -90,11 +90,13 @@ class ManageAgentsController @Inject()(
   }
 
   def updateAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body.validate[UpdatePredefinedAgent].fold(
+    request.body.validate[UpdatePredefinedAgentRequest].fold(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
       payload =>
-        service.updateAgentDetails(payload) map { Response =>
-          Ok(Json.obj("message" -> s"Agent with reference number ${payload.agentResourceReference} has been updated"))
+        service.updateAgentDetails(payload) map { response =>
+          Ok(Json.toJson(
+            response
+          ))
         } recover {
           case u: UpstreamErrorResponse =>
             Status(u.statusCode)(Json.obj("message" -> u.message))

@@ -96,22 +96,19 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           Future.failed(e)
       }
   }
-  def updateAgentDetails(updateAgentDetails: UpdatePredefinedAgent)(implicit hc: HeaderCarrier): Future[Unit] = 
+  def updateAgentDetails(updateAgentDetails: UpdatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[UpdatePredefinedAgentResponse] =
     val url: URL = if (stubFormPBool) url"$stubPath/update/predefined-agent" else url"$formpPath/update/predefined-agent"
     http.post(url)
       .withBody(Json.toJson(updateAgentDetails))
-      .execute[HttpResponse]
-      .flatMap { response =>
-        if(response.status == 200) {
-          logger.info(s"[FormpProxyConnector][UpdateAgent]: Successfully updated")
-          Future.unit
-        } else Future.failed(UpstreamErrorResponse(response.body, response.status))
-      }
+      .execute[UpdatePredefinedAgentResponse]
       .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updatePredefinedAgent]: Upstream error - ${e.getMessage}")
+          throw e
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][UpdateAgent]: ${e.getMessage} the payload is:\n \n ${Json.toJson(updateAgentDetails)}")
           throw new RuntimeException(e.getMessage)
       }
-    
+
 
 }

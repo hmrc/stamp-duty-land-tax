@@ -81,8 +81,8 @@ class ManageAgentsControllerSpec extends SpecBase {
     "POST /agent-details/update (updateAgentDetails)" - {
 
       "return 200 OK when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
-          .thenReturn(Future.unit)
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.successful(UpdatePredefinedAgentResponse(true)))
 
         val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
 
@@ -91,7 +91,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
           .thenReturn(Future.unit)
 
         val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsList)))
@@ -100,7 +100,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
 
         val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
@@ -111,7 +111,7 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgent])(any[HeaderCarrier]))
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
         val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
