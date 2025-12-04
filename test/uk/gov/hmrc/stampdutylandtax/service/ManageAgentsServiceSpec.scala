@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatePredefinedAgentResponse, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, UpdatePredefinedAgentResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -75,6 +75,31 @@ class ManageAgentsServiceSpec extends SpecBase {
         }
         ex.getMessage must include("kaboom")
         verify(mockFormp, times(1)).submitAgentDetails(eqTo(req))(any[HeaderCarrier])
+      }
+    }
+
+    "updateAgent" - {
+
+      "should return Unit when the connector successfully updates an agent" in new BaseSetup {
+
+        when(mockFormp.updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(UpdatePredefinedAgentResponse(true)))
+
+        val result = service.updateAgentDetails(testUpdatePredefinedAgent).futureValue
+        result mustBe UpdatePredefinedAgentResponse(true)
+        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier])
+      }
+
+      "should propagate exceptions from the connector" in new BaseSetup {
+
+        when(mockFormp.updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("boom")))
+
+        val ex = intercept[RuntimeException] {
+          service.updateAgentDetails(testUpdatePredefinedAgent).futureValue
+        }
+        ex.getMessage must include("boom")
+        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier])
       }
     }
 

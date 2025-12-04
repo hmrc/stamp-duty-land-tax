@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest}
-import models.auth.IdentifierRequest
+import models.agent.*
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
@@ -85,6 +84,24 @@ class ManageAgentsController @Inject()(
             Status(u.statusCode)(Json.obj("message" -> u.message))
           case t: Throwable =>
             logger.error("[ManageAgentsController][submitAgentDetails] failed", t)
+            InternalServerError(Json.obj("message" -> "Unexpected error"))
+        }
+    )
+  }
+
+  def updateAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
+    request.body.validate[UpdatePredefinedAgentRequest].fold(
+      invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
+      payload =>
+        service.updateAgentDetails(payload) map { response =>
+          Ok(Json.toJson(
+            response
+          ))
+        } recover {
+          case u: UpstreamErrorResponse =>
+            Status(u.statusCode)(Json.obj("message" -> u.message))
+          case t: Throwable =>
+            logger.error("[ManageAgentsController][updateAgentDetails] failed", t)
             InternalServerError(Json.obj("message" -> "Unexpected error"))
         }
     )

@@ -17,7 +17,8 @@
 package service
 
 import connectors.FormpProxyConnector
-import models.agent.{CreatePredefinedAgentRequest, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse}
+import models.agent.*
+import play.api.mvc.Result
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
@@ -29,6 +30,10 @@ class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
   def submitAgentDetails(createPredefinedAgentRequest: CreatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[CreatePredefinedAgentResponse] =
     formp
       .submitAgentDetails(createPredefinedAgentRequest)
+
+  def updateAgentDetails(agentDetails: UpdatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[UpdatePredefinedAgentResponse] =
+    formp
+      .updateAgentDetails(agentDetails)
 
   def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
     formp

@@ -16,7 +16,7 @@
 
 package base
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, CreatePredefinedAgentResponse}
+import models.agent.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -29,8 +29,7 @@ import play.api.mvc.{AnyContentAsEmpty, ControllerComponents, PlayBodyParsers}
 import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.stampdutylandtax.controllers.actions.{FakeIdentifierAction, IdentifierAction}
-import play.api.inject.bind
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.FakeIdentifierAction
 
 import scala.concurrent.ExecutionContext
 
@@ -81,6 +80,21 @@ trait   SpecBase
     dxAddress              = None,
     agentResourceReference = Some("ARN001")
   )
+  
+  val testUpdatePredefinedAgent: UpdatePredefinedAgentRequest = UpdatePredefinedAgentRequest (
+    agentResourceReference = "ARN001",
+    storn                  = "STN001",
+    agentName              = "64 Acme Property Agents Ltd",
+    houseNumber            = None,
+    addressLine1               = Some("Zoo Lane"),
+    addressLine2               = Some("Westminster"),
+    addressLine3               = Some("London"),
+    addressLine4               = None,
+    postcode               = Some("SW1A 2AA"),
+    phone                  = Some("02079460000"),
+    email                  = Some("test@example.com"),
+    dxAddress             = None
+  )
 
   val testAgentDetailsList: List[CreatedAgent] = List(
     CreatedAgent(
@@ -120,9 +134,26 @@ trait   SpecBase
     agentId = "4567"
   )
 
+
   val testDeletePredefinedAgentRequest: DeletePredefinedAgentRequest = DeletePredefinedAgentRequest(
     storn = "STN001",
     agentReferenceNumber = "100001"
+  )
+
+  //Update Agent Details Fixtures
+  val testUpdateAgentDetailsRequest: UpdatePredefinedAgentRequest = UpdatePredefinedAgentRequest(
+    agentResourceReference = "ARN001",
+    storn = "STN001",
+    agentName = "64 Acme Property Agents Ltd",
+    houseNumber = None,
+    addressLine1 = Some("Zoo Lane"),
+    addressLine2 = Some("Westminster"),
+    addressLine3 = Some("London"),
+    addressLine4 = None,
+    postcode = Some("SW1A 2AA"),
+    phone = Some("02079460000"),
+    email = Some("test@example.com"),
+    dxAddress = None
   )
 
   val cc: ControllerComponents = stubControllerComponents()

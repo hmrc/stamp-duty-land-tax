@@ -16,7 +16,7 @@
 
 package connectors
 
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse,CreatePredefinedAgentResponse }
+import models.agent.*
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -96,5 +96,19 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           Future.failed(e)
       }
   }
+  def updateAgentDetails(updateAgentDetails: UpdatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[UpdatePredefinedAgentResponse] =
+    val url: URL = if (stubFormPBool) url"$stubPath/update/predefined-agent" else url"$formpPath/update/predefined-agent"
+    http.post(url)
+      .withBody(Json.toJson(updateAgentDetails))
+      .execute[UpdatePredefinedAgentResponse]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updatePredefinedAgent]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][UpdateAgent]: ${e.getMessage} the payload is:\n \n ${Json.toJson(updateAgentDetails)}")
+          throw new RuntimeException(e.getMessage)
+      }
+
 
 }

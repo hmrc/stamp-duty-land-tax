@@ -17,14 +17,13 @@
 package uk.gov.hmrc.stampdutylandtax.controllers
 
 import base.SpecBase
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse}
-import org.mockito.ArgumentMatchers.any
-import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK}
-import org.mockito.ArgumentMatchers.eq as eqTo
-import play.api.test.Helpers.{contentAsJson, status}
+import models.agent.*
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
+import play.api.http.Status.*
 import play.api.libs.json.Json
 import play.api.mvc.Result
+import play.api.test.Helpers.{contentAsJson, status}
 import service.ManageAgentsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
@@ -79,6 +78,49 @@ class ManageAgentsControllerSpec extends SpecBase {
       }
     }
 
+    "POST /agent-details/update (updateAgentDetails)" - {
+
+      "return 200 OK when service returns agent details" in new BaseSetup {
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.successful(UpdatePredefinedAgentResponse(true)))
+
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
+
+        status(result) mustBe OK
+        verify(mockManageAgentsService).updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier])
+      }
+
+      "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.unit)
+
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsList)))
+
+        status(result) mustBe BAD_REQUEST
+      }
+
+      "propagate UpstreamErrorResponse status & message" in new BaseSetup {
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
+
+        status(result) mustBe BAD_GATEWAY
+        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+
+      }
+
+      "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
+        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("unexpected")))
+
+        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+      }
+    }
+
     "POST /delete/predefined-agent (deletePredefinedAgent)" - {
 
       val req = DeletePredefinedAgentRequest("STN001", "100001")
@@ -114,7 +156,7 @@ class ManageAgentsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
       }
     }
-    
+
     "GET organisation/storn/:storn (getSdltOrganisation)" - {
 
       "return OK with organisation payload when service returns the organisation" in new BaseSetup {
