@@ -102,8 +102,7 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][deleteVendor]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
-
-
+  
   def createReturnAgent(createReturnAgentRequest: CreateReturnAgentRequest)(implicit hc: HeaderCarrier): Future[CreateReturnAgentReturn] =
     http.post(url"$formpPath/filing/create/return-agent")
       .withBody(Json.toJson(createReturnAgentRequest))
@@ -154,6 +153,88 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           throw e
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][updateReturnVersioning]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+
+
+  def createPurchaser(createPurchaserRequest: CreatePurchaserRequest)(implicit hc: HeaderCarrier): Future[CreatePurchaserReturn] =
+    http.post(url"$formpPath/filing/create/purchaser")
+      .withBody(Json.toJson(createPurchaserRequest))
+      .execute[CreatePurchaserReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createPurchaser]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createPurchaser]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def updatePurchaser(updatePurchaserRequest: UpdatePurchaserRequest)(implicit hc: HeaderCarrier): Future[UpdatePurchaserReturn] =
+    http.post(url"$formpPath/filing/update/purchaser")
+      .withBody(Json.toJson(updatePurchaserRequest))
+      .execute[UpdatePurchaserReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updatePurchaser]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updatePurchaser]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def deletePurchaser(deletePurchaserRequest: DeletePurchaserRequest)(implicit hc: HeaderCarrier): Future[DeletePurchaserReturn] =
+    http.post(url"$formpPath/filing/delete/purchaser")
+      .withBody(Json.toJson(deletePurchaserRequest))
+      .execute[DeletePurchaserReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deletePurchaser]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deletePurchaser]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+
+
+  def createCompanyDetails(createCompanyDetailsRequest: CreateCompanyDetailsRequest)(implicit hc: HeaderCarrier): Future[CreateCompanyDetailsReturn] =
+    http.post(url"$formpPath/filing/create/company-details")
+      .withBody(Json.toJson(createCompanyDetailsRequest))
+      .execute[CreateCompanyDetailsReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createCompanyDetails]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createCompanyDetails]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def updateCompanyDetails(updateCompanyDetailsRequest: UpdateCompanyDetailsRequest)(implicit hc: HeaderCarrier): Future[UpdateCompanyDetailsReturn] =
+    http.post(url"$formpPath/filing/update/company-details")
+      .withBody(Json.toJson(updateCompanyDetailsRequest))
+      .execute[UpdateCompanyDetailsReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateCompanyDetails]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateCompanyDetails]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def deleteCompanyDetails(deleteCompanyDetailsRequest: DeleteCompanyDetailsRequest)(implicit hc: HeaderCarrier): Future[DeleteCompanyDetailsReturn] =
+    http.post(url"$formpPath/filing/delete/company-details")
+      .withBody(Json.toJson(deleteCompanyDetailsRequest))
+      .execute[DeleteCompanyDetailsReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deleteCompanyDetails]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deleteCompanyDetails]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
 }

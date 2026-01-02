@@ -47,7 +47,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
 
     val payload = CreateReturnRequest(
       stornId = stornId,
-      purchaserIsCompany = "N",
+      purchaserIsCompany = "NO",
       surNameOrCompanyName = "Smith",
       houseNumber = Some(42),
       addressLine1 = "High Street",
@@ -82,7 +82,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
 
     "return CreateReturnResult for company purchaser" in {
       val companyPayload = payload.copy(
-        purchaserIsCompany = "Y",
+        purchaserIsCompany = "YES",
         surNameOrCompanyName = "ABC Property Ltd",
         transactionType = "NON_RESIDENTIAL"
       )
@@ -233,7 +233,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
                    |  "stornId": "$stornId",
                    |  "returnResourceRef": "$returnResourceRef",
                    |  "sdltOrganisation": {
-                   |    "isReturnUser": "Y",
+                   |    "isReturnUser": "YES",
                    |    "storn": "$stornId"
                    |  },
                    |  "returnInfo": {
@@ -1057,6 +1057,652 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
         connector.updateReturnVersioning(payload).futureValue
       }
       ex.getMessage must include("409")
+    }
+  }
+
+  "createPurchaser" should {
+
+    val url = "/formp-proxy/filing/create/purchaser"
+
+    val payload = CreatePurchaserRequest(
+      stornId = stornId,
+      returnResourceRef = returnResourceRef,
+      isCompany = "NO",
+      isTrustee = "NO",
+      isConnectedToVendor = "NO",
+      isRepresentedByAgent = "YES",
+      title = Some("Mr"),
+      surname = Some("Jones"),
+      forename1 = Some("David"),
+      forename2 = Some("Michael"),
+      companyName = None,
+      houseNumber = Some("25"),
+      address1 = "Park Avenue",
+      address2 = Some("Flat 3"),
+      address3 = Some("Central District"),
+      address4 = Some("London"),
+      postcode = Some("SW1A 2AA"),
+      phone = Some("02012345678"),
+      nino = Some("AB123456C"),
+      isUkCompany = None,
+      hasNino = Some("YES"),
+      dateOfBirth = Some("1980-01-15"),
+      registrationNumber = None,
+      placeOfRegistration = None
+    )
+
+    "return CreatePurchaserReturn when BE returns OK with valid JSON" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                s"""{
+                   |  "purchaserResourceRef": "PRF-001",
+                   |  "purchaserId": "PID-001"
+                   |}""".stripMargin
+              )
+          )
+      )
+
+      val result = connector.createPurchaser(payload).futureValue
+
+      result mustBe CreatePurchaserReturn(purchaserResourceRef = "PRF-001", purchaserId = "PID-001")
+    }
+
+    "return CreatePurchaserReturn for company purchaser" in {
+      val companyPayload = payload.copy(
+        isCompany = "YES",
+        title = None,
+        surname = None,
+        forename1 = None,
+        forename2 = None,
+        companyName = Some("XYZ Properties Ltd"),
+        nino = None,
+        hasNino = None,
+        dateOfBirth = None,
+        isUkCompany = Some("YES"),
+        registrationNumber = Some("12345678"),
+        placeOfRegistration = Some("England and Wales")
+      )
+      val payloadJson = Json.toJson(companyPayload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "purchaserResourceRef": "PRF-002", "purchaserId": "PID-002" }""")
+          )
+      )
+
+      val result = connector.createPurchaser(companyPayload).futureValue
+      result mustBe CreatePurchaserReturn(purchaserResourceRef = "PRF-002", purchaserId = "PID-002")
+    }
+
+    "return CreatePurchaserReturn for minimal request" in {
+      val minimalPayload = payload.copy(
+        title = None,
+        surname = None,
+        forename1 = None,
+        forename2 = None,
+        houseNumber = None,
+        address2 = None,
+        address3 = None,
+        address4 = None,
+        postcode = None,
+        phone = None,
+        nino = None,
+        hasNino = None,
+        dateOfBirth = None
+      )
+      val payloadJson = Json.toJson(minimalPayload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "purchaserResourceRef": "PRF-003", "purchaserId": "PID-003" }""")
+          )
+      )
+
+      val result = connector.createPurchaser(minimalPayload).futureValue
+      result.purchaserResourceRef mustBe "PRF-003"
+      result.purchaserId mustBe "PID-003"
+    }
+
+    "handle different flag combinations" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "purchaserResourceRef": "PRF-001", "purchaserId": "PID-001" }""")
+          )
+      )
+
+      val trusteePayload = payload.copy(isTrustee = "YES")
+      val connectedPayload = payload.copy(isConnectedToVendor = "YES")
+      val noAgentPayload = payload.copy(isRepresentedByAgent = "NO")
+
+      connector.createPurchaser(trusteePayload).futureValue.purchaserId mustBe "PID-001"
+      connector.createPurchaser(connectedPayload).futureValue.purchaserId mustBe "PID-001"
+      connector.createPurchaser(noAgentPayload).futureValue.purchaserId mustBe "PID-001"
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createPurchaser(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createPurchaser(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "updatePurchaser" should {
+
+    val url = "/formp-proxy/filing/update/purchaser"
+
+    val payload = UpdatePurchaserRequest(
+      stornId = stornId,
+      returnResourceRef = returnResourceRef,
+      purchaserResourceRef = "PRF-001",
+      isCompany = "NO",
+      isTrustee = "NO",
+      isConnectedToVendor = "NO",
+      isRepresentedByAgent = "YES",
+      title = Some("Mr"),
+      surname = Some("Jones Updated"),
+      forename1 = Some("David"),
+      forename2 = Some("Michael"),
+      companyName = None,
+      houseNumber = Some("25"),
+      address1 = "Park Avenue",
+      address2 = Some("Flat 3"),
+      address3 = Some("Central District"),
+      address4 = Some("London"),
+      postcode = Some("SW1A 2AA"),
+      phone = Some("02012345678"),
+      nino = Some("AB123456C"),
+      nextPurchaserId = Some("PID-002"),
+      isUkCompany = None,
+      hasNino = Some("YES"),
+      dateOfBirth = Some("1980-01-15"),
+      registrationNumber = None,
+      placeOfRegistration = None
+    )
+
+    "return UpdatePurchaserReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdatePurchaserReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updatePurchaser(payload).futureValue
+
+      result mustBe UpdatePurchaserReturn(updated = true)
+    }
+
+    "return UpdatePurchaserReturn with updated=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdatePurchaserReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updatePurchaser(payload).futureValue
+
+      result mustBe UpdatePurchaserReturn(updated = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updatePurchaser(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updatePurchaser(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "deletePurchaser" should {
+
+    val url = "/formp-proxy/filing/delete/purchaser"
+
+    val payload = DeletePurchaserRequest(
+      storn = stornId,
+      purchaserResourceRef = "PRF-001",
+      returnResourceRef = returnResourceRef
+    )
+
+    "return DeletePurchaserReturn with deleted=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(DeletePurchaserReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deletePurchaser(payload).futureValue
+
+      result mustBe DeletePurchaserReturn(deleted = true)
+    }
+
+    "return DeletePurchaserReturn with deleted=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(DeletePurchaserReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deletePurchaser(payload).futureValue
+
+      result mustBe DeletePurchaserReturn(deleted = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deletePurchaser(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deletePurchaser(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "createCompanyDetails" should {
+
+    val url = "/formp-proxy/filing/create/company-details"
+
+    val payload = CreateCompanyDetailsRequest(
+      stornId = stornId,
+      returnResourceRef = returnResourceRef,
+      purchaserResourceRef = "PRF-001",
+      utr = Some("1234567890"),
+      vatReference = Some("GB123456789"),
+      compTypeBank = Some("YES"),
+      compTypeBuilder = Some("NO"),
+      compTypeBuildsoc = Some("NO"),
+      compTypeCentgov = Some("NO"),
+      compTypeIndividual = Some("NO"),
+      compTypeInsurance = Some("NO"),
+      compTypeLocalauth = Some("NO"),
+      compTypeOcharity = Some("NO"),
+      compTypeOcompany = Some("NO"),
+      compTypeOfinancial = Some("NO"),
+      compTypePartship = Some("NO"),
+      compTypeProperty = Some("NO"),
+      compTypePubliccorp = Some("NO"),
+      compTypeSoletrader = Some("NO"),
+      compTypePenfund = Some("NO")
+    )
+
+    "return CreateCompanyDetailsReturn when BE returns OK with valid JSON" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "companyDetailsId": "CID-001" }""")
+          )
+      )
+
+      val result = connector.createCompanyDetails(payload).futureValue
+
+      result mustBe CreateCompanyDetailsReturn(companyDetailsId = "CID-001")
+    }
+
+    "return CreateCompanyDetailsReturn for minimal request" in {
+      val minimalPayload = payload.copy(
+        utr = None,
+        vatReference = None,
+        compTypeBank = None,
+        compTypeBuilder = None,
+        compTypeBuildsoc = None,
+        compTypeCentgov = None,
+        compTypeIndividual = None,
+        compTypeInsurance = None,
+        compTypeLocalauth = None,
+        compTypeOcharity = None,
+        compTypeOcompany = None,
+        compTypeOfinancial = None,
+        compTypePartship = None,
+        compTypeProperty = None,
+        compTypePubliccorp = None,
+        compTypeSoletrader = None,
+        compTypePenfund = None
+      )
+      val payloadJson = Json.toJson(minimalPayload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "companyDetailsId": "CID-002" }""")
+          )
+      )
+
+      val result = connector.createCompanyDetails(minimalPayload).futureValue
+      result.companyDetailsId mustBe "CID-002"
+    }
+
+    "handle different company type combinations" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "companyDetailsId": "CID-001" }""")
+          )
+      )
+
+      val propertyPayload = payload.copy(compTypeBank = Some("NO"), compTypeProperty = Some("YES"))
+      val charityPayload = payload.copy(compTypeBank = Some("NO"), compTypeOcharity = Some("YES"))
+      val partnershipPayload = payload.copy(compTypeBank = Some("NO"), compTypePartship = Some("YES"))
+
+      connector.createCompanyDetails(propertyPayload).futureValue.companyDetailsId mustBe "CID-001"
+      connector.createCompanyDetails(charityPayload).futureValue.companyDetailsId mustBe "CID-001"
+      connector.createCompanyDetails(partnershipPayload).futureValue.companyDetailsId mustBe "CID-001"
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createCompanyDetails(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createCompanyDetails(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "updateCompanyDetails" should {
+
+    val url = "/formp-proxy/filing/update/company-details"
+
+    val payload = UpdateCompanyDetailsRequest(
+      stornId = stornId,
+      returnResourceRef = returnResourceRef,
+      purchaserResourceRef = "PRF-001",
+      utr = Some("9876543210"),
+      vatReference = Some("GB987654321"),
+      compTypeBank = Some("NO"),
+      compTypeBuilder = Some("YES"),
+      compTypeBuildsoc = Some("NO"),
+      compTypeCentgov = Some("NO"),
+      compTypeIndividual = Some("NO"),
+      compTypeInsurance = Some("NO"),
+      compTypeLocalauth = Some("NO"),
+      compTypeOcharity = Some("NO"),
+      compTypeOcompany = Some("NO"),
+      compTypeOfinancial = Some("NO"),
+      compTypePartship = Some("NO"),
+      compTypeProperty = Some("NO"),
+      compTypePubliccorp = Some("NO"),
+      compTypeSoletrader = Some("NO"),
+      compTypePenfund = Some("NO")
+    )
+
+    "return UpdateCompanyDetailsReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateCompanyDetailsReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateCompanyDetails(payload).futureValue
+
+      result mustBe UpdateCompanyDetailsReturn(updated = true)
+    }
+
+    "return UpdateCompanyDetailsReturn with updated=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateCompanyDetailsReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateCompanyDetails(payload).futureValue
+
+      result mustBe UpdateCompanyDetailsReturn(updated = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateCompanyDetails(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateCompanyDetails(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "deleteCompanyDetails" should {
+
+    val url = "/formp-proxy/filing/delete/company-details"
+
+    val payload = DeleteCompanyDetailsRequest(
+      storn = stornId,
+      returnResourceRef = returnResourceRef
+    )
+
+    "return DeleteCompanyDetailsReturn with deleted=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(DeleteCompanyDetailsReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deleteCompanyDetails(payload).futureValue
+
+      result mustBe DeleteCompanyDetailsReturn(deleted = true)
+    }
+
+    "return DeleteCompanyDetailsReturn with deleted=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(DeleteCompanyDetailsReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deleteCompanyDetails(payload).futureValue
+
+      result mustBe DeleteCompanyDetailsReturn(deleted = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteCompanyDetails(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteCompanyDetails(payload).futureValue
+      }
+      ex.getMessage must include("404")
     }
   }
 }

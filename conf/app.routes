@@ -22,3 +22,12 @@ POST        /filing/update/return-agent                     uk.gov.hmrc.stampdut
 POST        /filing/delte/return-agent                      uk.gov.hmrc.stampdutylandtax.controllers.filing.ReturnAgentController.deleteReturnAgent()
 
 POST        /filing/update/return-version                   uk.gov.hmrc.stampdutylandtax.controllers.filing.ReturnVersioningController.updateReturnVersion()
+
+POST        /filing/create/purchaser                        uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.createPurchaser()
+POST        /filing/update/purchaser                        uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.updatePurchaser()
+POST        /filing/delete/purchaser                        uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.deletePurchaser()
+
+
+POST        /filing/create/company-details                  uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.createCompanyDetails()
+POST        /filing/update/company-details                  uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.updateCompanyDetails()
+POST        /filing/delete/company-details                  uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.deleteCompanyDetails()
