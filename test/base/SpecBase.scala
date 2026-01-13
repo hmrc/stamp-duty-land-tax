@@ -17,7 +17,7 @@
 package base
 
 import models.agent.*
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -40,9 +40,11 @@ trait   SpecBase
     with ScalaFutures
     with FakeApplicationFactory
     with BaseOneAppPerSuite
-    with MockitoSugar 
-    with BeforeAndAfterEach{
+    with MockitoSugar
+    with OptionValues
+    with BeforeAndAfterEach {
 
+  // TODO: do we need this if this is not in use???
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .configure(
@@ -53,6 +55,14 @@ trait   SpecBase
       )
       .build()
 
+
+  protected def applicationBuilder(): GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+//      .overrides(
+//        bind[IdentifierAction].to[FakeIdentifierAction],
+//        bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers))
+//      )
+  
   val testAgentDetailsRequest: CreatePredefinedAgentRequest = CreatePredefinedAgentRequest(
     storn = "STN001",
     agentName = "64Acme Property Agents Ltd",

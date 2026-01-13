@@ -20,14 +20,17 @@ import com.google.inject.Inject
 import models.auth.IdentifierRequest
 import play.api.Logging
 import play.api.mvc.*
+import play.api.mvc.Results.{Forbidden}
 import uk.gov.hmrc.auth.core.*
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
 import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import scala.concurrent.{ExecutionContext, Future}
 
+import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.auth.core.retrieve.~
 
 class AuthenticatedIdentifierAction @Inject()(
                                                override val authConnector: AuthConnector,
@@ -35,13 +38,15 @@ class AuthenticatedIdentifierAction @Inject()(
                                              )
                                              (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
 
+  private val orgEnrollment: String = "IR-SDLT-ORG"
+  private val agentEnrollment: String = "IR-SDLT-AGENT"
+
   override def invokeBlock[A](request: Request[A],
                               block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
 
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
     val defaultPredicate: Predicate = AuthProviders(GovernmentGateway)
 
-    // We expect one to one mapping between AffinityGroup and corresponding Enrollment
     authorised(defaultPredicate)
       .retrieve(
         Retrievals.internalId and
@@ -49,13 +54,20 @@ class AuthenticatedIdentifierAction @Inject()(
           Retrievals.affinityGroup and
           Retrievals.credentialRole
       ) {
-        _ =>
-          logger.info("[AuthenticatedIdentifierAction][authorised] - user authenticated")
+        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.exists(_.key == orgEnrollment) =>
           block(IdentifierRequest(request, "internalId", "storn"))
-      }.recoverWith{
-        case _: MissingBearerToken => // Auth is disabled for the time been
-          logger.info("[AuthenticatedIdentifierAction][authorised] - MissingBearerToken ...")
+
+        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.exists(_.key == agentEnrollment) =>
           block(IdentifierRequest(request, "internalId", "storn"))
+
+        case _ ~ _ ~ _ ~ _ => // All other scenarios to fail
+          throw InternalError("Not found:: any :: internalId | enrolment | affinity | credentialRole")
+
+      }.recoverWith {
+        case ex => // Auth is disabled for the time been
+          logger.error("[AuthenticatedIdentifierAction][authorised] - Authentication failed")
+          Future.successful(Forbidden)
+          //block(IdentifierRequest(request, "internalId", "storn"))
       }
   }
 
