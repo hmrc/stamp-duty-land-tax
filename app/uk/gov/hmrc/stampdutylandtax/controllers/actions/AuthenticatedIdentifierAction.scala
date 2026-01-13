@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import models.auth.IdentifierRequest
 import play.api.Logging
 import play.api.mvc.*
-import play.api.mvc.Results.{Forbidden}
+import play.api.mvc.Results.Forbidden
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
@@ -44,6 +44,8 @@ class AuthenticatedIdentifierAction @Inject()(
   override def invokeBlock[A](request: Request[A],
                               block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
 
+    println(s"HEADERS::${request.headers}")
+
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
     val defaultPredicate: Predicate = AuthProviders(GovernmentGateway)
 
@@ -55,10 +57,10 @@ class AuthenticatedIdentifierAction @Inject()(
           Retrievals.credentialRole
       ) {
         case Some(internalId) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(_.isActivated) =>
-          block(IdentifierRequest(request, "internalId", "storn"))
+          block(IdentifierRequest(request, internalId))
 
         case Some(internalId) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(_.isActivated) =>
-          block(IdentifierRequest(request, "internalId", "storn"))
+          block(IdentifierRequest(request, internalId))
 
         case _ ~ _ ~ _ ~ _ => // All other scenarios to fail
           throw InternalError("Not found:: any :: internalId | enrolment | affinity | credentialRole")
