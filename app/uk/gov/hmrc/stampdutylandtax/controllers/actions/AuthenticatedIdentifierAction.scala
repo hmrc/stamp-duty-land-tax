@@ -54,20 +54,19 @@ class AuthenticatedIdentifierAction @Inject()(
           Retrievals.affinityGroup and
           Retrievals.credentialRole
       ) {
-        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.exists(_.key == orgEnrollment) =>
+        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(_.isActivated) =>
           block(IdentifierRequest(request, "internalId", "storn"))
 
-        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.exists(_.key == agentEnrollment) =>
+        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(_.isActivated) =>
           block(IdentifierRequest(request, "internalId", "storn"))
 
         case _ ~ _ ~ _ ~ _ => // All other scenarios to fail
           throw InternalError("Not found:: any :: internalId | enrolment | affinity | credentialRole")
 
       }.recoverWith {
-        case ex => // Auth is disabled for the time been
-          logger.error("[AuthenticatedIdentifierAction][authorised] - Authentication failed")
+        case ex =>
+          logger.error(s"[AuthenticatedIdentifierAction][authorised] - Authentication failed: ${ex.getCause}-${ex.getMessage}")
           Future.successful(Forbidden)
-          //block(IdentifierRequest(request, "internalId", "storn"))
       }
   }
 

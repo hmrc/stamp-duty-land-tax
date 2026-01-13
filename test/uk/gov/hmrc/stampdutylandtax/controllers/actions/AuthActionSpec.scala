@@ -25,7 +25,7 @@ import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.*
 import play.api.test.Helpers.*
 import uk.gov.hmrc.auth.core.*
-import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.controllers.actions.TestAuthRetrievals.Ops
 
@@ -58,6 +58,39 @@ class AuthActionSpec extends SpecBase {
       "activated",
       None
     )
+
+    val agentActiveEnrollment: Enrolment = Enrolment(
+      "IR-SDLT-AGENT",
+      Seq(
+        EnrolmentIdentifier("STORN", testStorn)
+      ),
+      "activated",
+      None
+    )
+
+    val agentNotActiveEnrollment: Enrolment = Enrolment(
+      "IR-SDLT-AGENT",
+      Seq(
+        EnrolmentIdentifier("STORN", testStorn)
+      ),
+      "inactivated",
+      None
+    )
+
+    val orgActiveNotActiveEnrollment: Enrolment = Enrolment(
+      "IR-SDLT-ORG",
+      Seq(
+        EnrolmentIdentifier("STORN", testStorn)
+      ),
+      "inactivated",
+      None
+    )
+
+    val orgEnrollments: Enrolments = Enrolments(Set(orgActiveEnrollment))
+    val agentEnrollments: Enrolments = Enrolments(Set(agentActiveEnrollment))
+
+    val orgEnrollmentsNotActive: Enrolments = Enrolments(Set(orgActiveNotActiveEnrollment))
+    val agentEnrollmentsNotActive: Enrolments = Enrolments(Set(agentNotActiveEnrollment))
   }
 
   class Harness(authAction: IdentifierAction) {
@@ -66,12 +99,10 @@ class AuthActionSpec extends SpecBase {
 
     "Authentication Action " - {
 
-      "Incoming request contains:: enrollment | affinityGroup | credentialRole " - {
-        "must process request and return 200:OK " in new Fixture  {
-
-          val enrollments: Enrolments = Enrolments(Set(orgActiveEnrollment))
+      "Incoming request contains expected:: enrollments | affinityGroup | credentialRole " - {
+        "must process request with OrgEnrollments :: return 200:OK " in new Fixture  {
           when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
-            .thenReturn( Future.successful( Some(id) ~ enrollments ~ Some(Organisation) ~ Some(User) ) )
+            .thenReturn( Future.successful( Some(id) ~ orgEnrollments ~ Some(Organisation) ~ Some(User) ) )
 
           running(application) {
             val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
@@ -80,11 +111,49 @@ class AuthActionSpec extends SpecBase {
 
             status(result) mustBe OK
           }
-
         }
+        "must process request with AgentEnrollments :: return 200:OK " in new Fixture {
+          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
+            .thenReturn(Future.successful(Some(id) ~ agentEnrollments ~ Some(Agent) ~ Some(User)))
+
+          running(application) {
+            val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
+            val controller = new Harness(authAction)
+            val result = controller.onPageLoad()(FakeRequest())
+
+            status(result) mustBe OK
+          }
+        }
+
+        "must NOT process request with inactive AgentEnrollments :: return 403:Forbidden " in new Fixture {
+          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
+            .thenReturn(Future.successful(Some(id) ~ agentEnrollmentsNotActive ~ Some(Agent) ~ Some(User)))
+
+          running(application) {
+            val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
+            val controller = new Harness(authAction)
+            val result = controller.onPageLoad()(FakeRequest())
+
+            status(result) mustBe FORBIDDEN
+          }
+        }
+
+        "must NOT process request with inactive OrgEnrollments :: return 403:Forbidden " in new Fixture {
+          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
+            .thenReturn(Future.successful(Some(id) ~ orgEnrollmentsNotActive ~ Some(Agent) ~ Some(User)))
+
+          running(application) {
+            val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
+            val controller = new Harness(authAction)
+            val result = controller.onPageLoad()(FakeRequest())
+
+            status(result) mustBe FORBIDDEN
+          }
+        }
+
       }
 
-      "Enrollment is missing:: ?? and any other" - new Fixture  {
+      "General case:: missing bearer token" - new Fixture  {
         "must return 403:Forbidden" in {
           running(application) {
             val authAction = new AuthenticatedIdentifierAction(new FakeFailingAuthConnector(new MissingBearerToken), bodyParsers)
