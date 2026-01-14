@@ -99,7 +99,7 @@ class AuthActionSpec extends SpecBase {
 
     "Authentication Action " - {
 
-      "Incoming request contains expected:: enrollments | affinityGroup | credentialRole " - {
+      "Request contains expected:: enrollments | affinityGroup | credentialRole " - {
         "must process request with OrgEnrollments :: return 200:OK " in new Fixture  {
           when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
             .thenReturn( Future.successful( Some(id) ~ orgEnrollments ~ Some(Organisation) ~ Some(User) ) )
@@ -140,7 +140,33 @@ class AuthActionSpec extends SpecBase {
 
         "must NOT process request with inactive OrgEnrollments :: return 403:Forbidden " in new Fixture {
           when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
-            .thenReturn(Future.successful(Some(id) ~ orgEnrollmentsNotActive ~ Some(Agent) ~ Some(User)))
+            .thenReturn(Future.successful(Some(id) ~ orgEnrollmentsNotActive ~ Some(Organisation) ~ Some(User)))
+
+          running(application) {
+            val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
+            val controller = new Harness(authAction)
+            val result = controller.onPageLoad()(FakeRequest())
+
+            status(result) mustBe FORBIDDEN
+          }
+        }
+
+        "must NOT process request with OrgEnrollments and role Agent:: return 403:Forbidden " in new Fixture {
+          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
+            .thenReturn(Future.successful(Some(id) ~ orgEnrollments ~ Some(Agent) ~ Some(User)))
+
+          running(application) {
+            val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
+            val controller = new Harness(authAction)
+            val result = controller.onPageLoad()(FakeRequest())
+
+            status(result) mustBe FORBIDDEN
+          }
+        }
+
+        "must NOT process request with AgentEnrollments and role Agent:: return 403:Forbidden " in new Fixture {
+          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
+            .thenReturn(Future.successful(Some(id) ~ agentEnrollments ~ Some(Organisation) ~ Some(User)))
 
           running(application) {
             val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
