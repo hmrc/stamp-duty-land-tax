@@ -43,13 +43,9 @@ class AuthenticatedIdentifierAction @Inject()(
 
   override def invokeBlock[A](request: Request[A],
                               block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
+    given hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    println(s"HEADERS::${request.headers}")
-
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
-    val defaultPredicate: Predicate = AuthProviders(GovernmentGateway)
-
-    authorised(defaultPredicate)
+    authorised()
       .retrieve(
         Retrievals.internalId and
           Retrievals.allEnrolments and
