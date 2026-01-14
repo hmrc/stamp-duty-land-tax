@@ -23,14 +23,12 @@ import play.api.mvc.*
 import play.api.mvc.Results.Forbidden
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
-import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.auth.core.retrieve.~
 
 class AuthenticatedIdentifierAction @Inject()(
                                                override val authConnector: AuthConnector,
@@ -52,14 +50,14 @@ class AuthenticatedIdentifierAction @Inject()(
           Retrievals.affinityGroup and
           Retrievals.credentialRole
       ) {
-        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(_.isActivated) =>
-          block(IdentifierRequest(request, internalId))
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(_.isActivated) =>
+          block(IdentifierRequest(request))
 
-        case Some(internalId) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(_.isActivated) =>
-          block(IdentifierRequest(request, internalId))
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(_.isActivated) =>
+          block(IdentifierRequest(request))
 
-        case _ ~ _ ~ _ ~ _ => // All other scenarios to fail
-          throw InternalError("Not found:: any :: internalId | enrolment | affinity | credentialRole")
+        case _ ~ _ ~ _ ~ _ =>
+          throw InternalError("Authentication error: expected enrollments and/or affinity group not found")
 
       }.recoverWith {
         case ex =>

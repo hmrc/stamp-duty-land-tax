@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.stampdutylandtax
 
-import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module as AppModule}
+import play.api.{Configuration, Environment}
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
 
 import java.time.Clock
