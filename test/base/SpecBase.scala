@@ -44,7 +44,7 @@ trait   SpecBase
     with OptionValues
     with BeforeAndAfterEach {
 
-  // TODO: do we need this if this is not in use???
+  // TODO: NOT IN USE :: shall we drop this function??
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .configure(
@@ -56,13 +56,10 @@ trait   SpecBase
       .build()
 
 
-  protected def applicationBuilder(): GuiceApplicationBuilder =
+  protected def applicationBuilder(): GuiceApplicationBuilder = {
     new GuiceApplicationBuilder()
-//      .overrides(
-//        bind[IdentifierAction].to[FakeIdentifierAction],
-//        bind[DataRetrievalAction].toInstance(new FakeDataRetrievalAction(userAnswers))
-//      )
-  
+  }
+
   val testAgentDetailsRequest: CreatePredefinedAgentRequest = CreatePredefinedAgentRequest(
     storn = "STN001",
     agentName = "64Acme Property Agents Ltd",
