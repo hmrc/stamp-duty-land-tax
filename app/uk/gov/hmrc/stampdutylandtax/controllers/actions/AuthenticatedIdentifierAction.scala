@@ -38,7 +38,6 @@ class AuthenticatedIdentifierAction @Inject()(
 
   private val orgEnrollment: String = "IR-SDLT-ORG"
   private val agentEnrollment: String = "IR-SDLT-AGENT"
-  private val permittedEnrollmentStates : Set[String] = Set("activated", "notyetactivated")
 
   override def invokeBlock[A](request: Request[A],
                               block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
@@ -51,10 +50,10 @@ class AuthenticatedIdentifierAction @Inject()(
           Retrievals.affinityGroup and
           Retrievals.credentialRole
       ) {
-        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(s => permittedEnrollmentStates.contains(s.state.toLowerCase)) =>
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(_.isActivated) =>
           block(IdentifierRequest(request))
 
-        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(e => permittedEnrollmentStates.contains(e.state.toLowerCase())) =>
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(_.isActivated) =>
           block(IdentifierRequest(request))
 
         case _ ~ _ ~ _ ~ _ =>

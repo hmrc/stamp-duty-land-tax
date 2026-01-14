@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import models.filing.{CreateReturnRequest, GetReturnByRefRequest, UpdateReturnRequest}
+import models.filing.{CreateReturnRequest, GetReturnByRefRequest}
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
@@ -67,25 +67,6 @@ class FilingReturnsController @Inject()(
             }
             .recover { case t =>
               logger.error("[createReturn] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
-  }
-
-  def updateReturnInfo(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdateReturnRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updateReturnInfo(body)
-            .map { result =>
-              Ok(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[updateReturnInfo] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )

@@ -77,15 +77,6 @@ class AuthActionSpec extends SpecBase {
       None
     )
 
-    val agentNotYetActiveEnrollment: Enrolment = Enrolment(
-      "IR-SDLT-AGENT",
-      Seq(
-        EnrolmentIdentifier("STORN", testStorn)
-      ),
-      "notyetactivated",
-      None
-    )
-
     val orgActiveNotActiveEnrollment: Enrolment = Enrolment(
       "IR-SDLT-ORG",
       Seq(
@@ -95,23 +86,11 @@ class AuthActionSpec extends SpecBase {
       None
     )
 
-    val orgActiveNotYetActiveEnrollment: Enrolment = Enrolment(
-      "IR-SDLT-ORG",
-      Seq(
-        EnrolmentIdentifier("STORN", testStorn)
-      ),
-      "notyetactivated",
-      None
-    )
-
     val orgEnrollments: Enrolments = Enrolments(Set(orgActiveEnrollment))
-    val orgEnrollmentsNotActive: Enrolments = Enrolments(Set(orgActiveNotActiveEnrollment))
-    val orgEnrollmentsNotYetActive: Enrolments = Enrolments(Set(orgActiveNotYetActiveEnrollment))
-
-
     val agentEnrollments: Enrolments = Enrolments(Set(agentActiveEnrollment))
+
+    val orgEnrollmentsNotActive: Enrolments = Enrolments(Set(orgActiveNotActiveEnrollment))
     val agentEnrollmentsNotActive: Enrolments = Enrolments(Set(agentNotActiveEnrollment))
-    val agentEnrollmentsNotYetActive: Enrolments = Enrolments(Set(agentNotYetActiveEnrollment))
   }
 
   class Harness(authAction: IdentifierAction) {
@@ -159,20 +138,6 @@ class AuthActionSpec extends SpecBase {
           }
         }
 
-        "must process request with NOT YET ACTIVE AgentEnrollments :: return 200:OK " in new Fixture {
-          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
-            .thenReturn(Future.successful(Some(id) ~ agentEnrollmentsNotYetActive ~ Some(Agent) ~ Some(User)))
-
-          running(application) {
-            val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
-            val controller = new Harness(authAction)
-            val result = controller.onPageLoad()(FakeRequest())
-
-            status(result) mustBe OK
-          }
-        }
-
-
         "must NOT process request with inactive OrgEnrollments :: return 403:Forbidden " in new Fixture {
           when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
             .thenReturn(Future.successful(Some(id) ~ orgEnrollmentsNotActive ~ Some(Organisation) ~ Some(User)))
@@ -198,20 +163,6 @@ class AuthActionSpec extends SpecBase {
             status(result) mustBe FORBIDDEN
           }
         }
-
-        "must process request with NOT YET ACTIVE OrgEnrollments:: return 200:OK " in new Fixture {
-          when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
-            .thenReturn(Future.successful(Some(id) ~ orgEnrollmentsNotYetActive ~ Some(Organisation) ~ Some(User)))
-
-          running(application) {
-            val authAction = new AuthenticatedIdentifierAction(mockAuthConnector, bodyParsers)
-            val controller = new Harness(authAction)
-            val result = controller.onPageLoad()(FakeRequest())
-
-            status(result) mustBe OK
-          }
-        }
-
 
         "must NOT process request with AgentEnrollments and role Agent:: return 403:Forbidden " in new Fixture {
           when(mockAuthConnector.authorise[RetrievalsType](any(), any())(any(), any()))
