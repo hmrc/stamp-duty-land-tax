@@ -19,7 +19,7 @@ package uk.gov.hmrc.stampdutylandtax.controllers.agents
 import models.agent.*
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.ManageAgentsService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
@@ -36,6 +36,8 @@ class ManageAgentsController @Inject()(
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async { implicit request =>
+    
+
     service.getSdltOrganisation(storn) map { sdltOrganisation =>
       Ok(Json.toJson(
         sdltOrganisation

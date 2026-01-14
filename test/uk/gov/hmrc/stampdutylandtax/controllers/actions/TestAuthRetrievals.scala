@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,12 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.actions
 
-import models.auth.IdentifierRequest
-import play.api.mvc.*
+package controllers.actions
 
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.auth.core.retrieve.~
 
-class FakeIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends IdentifierAction {
-
-  override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] =
-    block(IdentifierRequest(request))
-
-  override def parser: BodyParser[AnyContent] =
-    bodyParsers.default
-
-  override protected def executionContext: ExecutionContext =
-    scala.concurrent.ExecutionContext.Implicits.global
+object TestAuthRetrievals {
+  implicit class Ops[A](a: A) {
+    def ~[B](b: B): A ~ B = new ~(a, b)
+  }
 }

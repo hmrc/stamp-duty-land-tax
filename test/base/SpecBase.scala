@@ -17,7 +17,7 @@
 package base
 
 import models.agent.*
-import org.scalatest.BeforeAndAfterEach
+import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
@@ -40,9 +40,11 @@ trait   SpecBase
     with ScalaFutures
     with FakeApplicationFactory
     with BaseOneAppPerSuite
-    with MockitoSugar 
-    with BeforeAndAfterEach{
+    with MockitoSugar
+    with OptionValues
+    with BeforeAndAfterEach {
 
+  // TODO: NOT IN USE :: shall we drop this function??
   override def fakeApplication(): Application =
     new GuiceApplicationBuilder()
       .configure(
@@ -52,6 +54,11 @@ trait   SpecBase
         "microservice.services.rds-datacache-proxy.port" -> 11111
       )
       .build()
+
+
+  protected def applicationBuilder(): GuiceApplicationBuilder = {
+    new GuiceApplicationBuilder()
+  }
 
   val testAgentDetailsRequest: CreatePredefinedAgentRequest = CreatePredefinedAgentRequest(
     storn = "STN001",

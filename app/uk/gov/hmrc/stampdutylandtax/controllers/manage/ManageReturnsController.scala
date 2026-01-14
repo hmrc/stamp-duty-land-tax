@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.manage
 
-import models.auth.IdentifierRequest
 import models.manage.SdltReturnRecordRequest
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
-import play.api.mvc.{Action, ActionBuilder, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, ControllerComponents}
 import service.ManageReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction

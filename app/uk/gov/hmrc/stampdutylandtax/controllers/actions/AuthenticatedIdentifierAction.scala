@@ -20,14 +20,15 @@ import com.google.inject.Inject
 import models.auth.IdentifierRequest
 import play.api.Logging
 import play.api.mvc.*
+import play.api.mvc.Results.Forbidden
 import uk.gov.hmrc.auth.core.*
-import uk.gov.hmrc.auth.core.AuthProvider.GovernmentGateway
-import uk.gov.hmrc.auth.core.authorise.Predicate
+import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import scala.concurrent.{ExecutionContext, Future}
 
+import scala.concurrent.{ExecutionContext, Future}
 
 class AuthenticatedIdentifierAction @Inject()(
                                                override val authConnector: AuthConnector,
@@ -35,27 +36,33 @@ class AuthenticatedIdentifierAction @Inject()(
                                              )
                                              (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
 
+  private val orgEnrollment: String = "IR-SDLT-ORG"
+  private val agentEnrollment: String = "IR-SDLT-AGENT"
+
   override def invokeBlock[A](request: Request[A],
                               block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
+    given hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
-    val defaultPredicate: Predicate = AuthProviders(GovernmentGateway)
-
-    // We expect one to one mapping between AffinityGroup and corresponding Enrollment
-    authorised(defaultPredicate)
+    authorised()
       .retrieve(
         Retrievals.internalId and
           Retrievals.allEnrolments and
           Retrievals.affinityGroup and
           Retrievals.credentialRole
       ) {
-        _ =>
-          logger.info("[AuthenticatedIdentifierAction][authorised] - user authenticated")
-          block(IdentifierRequest(request, "internalId", "storn"))
-      }.recoverWith{
-        case _: MissingBearerToken => // Auth is disabled for the time been
-          logger.info("[AuthenticatedIdentifierAction][authorised] - MissingBearerToken ...")
-          block(IdentifierRequest(request, "internalId", "storn"))
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(_.isActivated) =>
+          block(IdentifierRequest(request))
+
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(_.isActivated) =>
+          block(IdentifierRequest(request))
+
+        case _ ~ _ ~ _ ~ _ =>
+          throw InternalError("Authentication error: expected enrollments and/or affinity group not found")
+
+      }.recoverWith {
+        case ex =>
+          logger.error(s"[AuthenticatedIdentifierAction][authorised] - Authentication failed: ${ex.getCause}-${ex.getMessage}")
+          Future.successful(Forbidden)
       }
   }
 
