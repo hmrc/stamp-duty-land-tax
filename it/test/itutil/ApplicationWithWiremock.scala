@@ -16,12 +16,16 @@
 
 package itutil
 
+import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.Application
+import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.ws.WSClient
+import play.api.libs.json.Json
+import play.api.libs.ws.{WSClient, WSRequest}
+import play.api.{Application, Environment, Mode}
 
 trait ApplicationWithWiremock
   extends AnyWordSpec
@@ -46,11 +50,22 @@ trait ApplicationWithWiremock
     )
   }
 
+//  given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("testSessionId")))
+//  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+
   override lazy val app: Application = new GuiceApplicationBuilder()
+    .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfig)
     .build()
 
   lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
+
+  def buildClient(path: String): WSRequest = {
+    wsClient
+      .url(s"http://localhost:${WireMockConstants.stubPort}/$path")
+      .withHttpHeaders("Authorization" -> "Bearer123")
+     // .withFollowRedirects(false)
+  }
 
   override protected def beforeAll(): Unit =
     wireMock.start()
@@ -60,7 +75,77 @@ trait ApplicationWithWiremock
     wireMock.resetAll()
     super.beforeEach()
 
-  override def afterAll(): Unit =
+  override def afterAll(): Unit = {
     wireMock.stop()
     super.afterAll()
+  }
+
+  def stubGet(url: String, status: Integer, body: String): StubMapping =
+    stubFor(get(urlEqualTo(url))
+      .willReturn(
+        aResponse().
+          withStatus(status).
+          withBody(body)
+      )
+    )
+
+  def stubPost(url: String, status: Integer, responseBody: String): StubMapping =
+    stubFor(post(urlMatching(url))
+      .willReturn(
+        aResponse().
+          withStatus(status).
+          withBody(responseBody)
+      )
+    )
+
+  val postAuthoriseUrl = "/auth/authorise"
+
+  val allEnrolmentsJson = Json.obj(
+    "allEnrolments" ->
+      Json.obj(
+        "key" -> "IR-SDLT-ORG",
+        "identifiers" -> Seq(
+          Json.obj(
+            "key" -> "NINO",
+            "value" -> ""
+          )
+        ),
+        "state" -> "Activated",
+        "confidenceLevel" -> 200
+      )
+
+  )
+
+  private val authoriseBodyWithOrgEnrolmentsRetrieval: String =
+    """{
+      |  "authorise": [{"confidenceLevel": 200}],
+      |  "retrieve": ["allEnrolments"],
+      |  "credId": "credId",
+      |  "individualEnrolments":{"sa":"1111111111"},
+      |  "allEnrolments": [
+      |               {
+      |                 "key":"IR-SDLT-ORG",
+      |                 "identifiers": [
+      |                    {
+      |                       "key":"IR-SDLT-ORG",
+      |                       "value": "value"
+      |                    }
+      |                   ],
+      |                "state": "Activated"
+      |              }
+      |  ],
+      |  "affinityGroup": "Organisation",
+      |  "credentialRole": "User",
+      |  "internalId": "internalId"
+      |}""".stripMargin
+
+  def stubAuthorised(): Unit = {
+    println("AUTHORISED::TRACE")
+    stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrieval )
+  }
+
+  def stubUnauthorised(): Unit = {
+    stubPost(postAuthoriseUrl, Status.UNAUTHORIZED, "{}")
+  }
+
 }
