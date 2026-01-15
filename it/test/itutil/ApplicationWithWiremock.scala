@@ -23,9 +23,9 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsObject, Json}
-import play.api.libs.ws.{WSClient, WSRequest}
+import play.api.libs.ws.WSClient
 import play.api.{Application, Environment, Mode}
+
 
 trait ApplicationWithWiremock
   extends AnyWordSpec
@@ -90,22 +90,6 @@ trait ApplicationWithWiremock
 
   private val postAuthoriseUrl = "/auth/authorise"
 
-  private val allEnrolmentsJson: JsObject = Json.obj(
-    "allEnrolments" ->
-      Json.obj(
-        "key" -> "IR-SDLT-ORG",
-        "identifiers" -> Seq(
-          Json.obj(
-            "key" -> "NINO",
-            "value" -> ""
-          )
-        ),
-        "state" -> "Activated",
-        "confidenceLevel" -> 200
-      )
-
-  )
-
   private val authoriseBodyWithOrgEnrolmentsRetrieval: String =
     """{
       |  "authorise": [{"confidenceLevel": 200}],
@@ -128,7 +112,6 @@ trait ApplicationWithWiremock
       |  "credentialRole": "User",
       |  "internalId": "internalId"
       |}""".stripMargin
-
 
 
   def stubAuthorised(): Unit = {
