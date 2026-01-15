@@ -23,7 +23,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import play.api.libs.ws.{WSClient, WSRequest}
 import play.api.{Application, Environment, Mode}
 
@@ -96,7 +96,7 @@ trait ApplicationWithWiremock
 
   val postAuthoriseUrl = "/auth/authorise"
 
-  val allEnrolmentsJson = Json.obj(
+  val allEnrolmentsJson: JsObject = Json.obj(
     "allEnrolments" ->
       Json.obj(
         "key" -> "IR-SDLT-ORG",

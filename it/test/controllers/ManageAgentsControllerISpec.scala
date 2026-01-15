@@ -18,7 +18,7 @@ package controllers
 
 import base.BaseSpec
 import itutil.ApplicationWithWiremock
-import models.agent.{DeletePredefinedAgentRequest, DeletePredefinedAgentResponse}
+import models.agent.{CreatePredefinedAgentRequest, CreatePredefinedAgentResponse, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status.{FORBIDDEN, OK}
 import play.api.http.Status
@@ -30,6 +30,8 @@ class ManageAgentsControllerISpec extends BaseSpec
 
   lazy val getOrganisationUrl = s"http://localhost:$port/stamp-duty-land-tax/manage-agents/get-sdlt-organisation?storn=1001"
   lazy val deleteAgentUrl = s"http://localhost:$port/stamp-duty-land-tax/manage-agents/delete/predefined-agent"
+  lazy val createAgentUrl = s"http://localhost:$port/stamp-duty-land-tax/create/predefined-agent"
+
 
   def stubGetOrgResponse(): Unit = {
     stubPost("/stamp-duty-land-tax-stub/organisation", Status.OK, getOrgJsonBodyResponse)
@@ -38,6 +40,15 @@ class ManageAgentsControllerISpec extends BaseSpec
   def stubDeleteAgentResponse(): Unit = {
     stubPost("/stamp-duty-land-tax-stub/delete/predefined-agent", Status.OK,
       Json.toJson(DeletePredefinedAgentResponse(deleted = true)).toString)
+  }
+
+  def stubSubmitAgentDetailsResponse(): Unit = {
+    stubPost("/stamp-duty-land-tax-stub/create/predefined-agent", Status.OK,
+      Json.toJson(
+        CreatePredefinedAgentResponse(
+          agentResourceRef = "agentRef", agentId = "agentId"
+        )
+      ).toString)
   }
 
   private val getOrgJsonBodyResponse: String =
@@ -91,6 +102,47 @@ class ManageAgentsControllerISpec extends BaseSpec
         stubDeleteAgentResponse()
         val jsonBody = Json.toJson(DeletePredefinedAgentRequest(storn = "storn", agentReferenceNumber = "agentRef"))
         val result = wsClient.url(deleteAgentUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .post(jsonBody)
+
+        result.status shouldBe FORBIDDEN
+      }
+
+    }
+
+    "call submitAgentDetails" when {
+
+      "return a 200:OK:: authorised request" in {
+        stubAuthorised()
+        stubSubmitAgentDetailsResponse()
+        val jsonBody = Json.toJson(
+          CreatePredefinedAgentRequest(storn = "storn", agentName = "agentName",
+            addressLine1 = None, addressLine2 = None, addressLine3 = None, addressLine4 = None, postcode = None, phone = None, email = None)
+        )
+        val result = wsClient.url(createAgentUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .post(jsonBody)
+
+        result.status shouldBe OK
+      }
+
+      "return a 404:Forbidden:: unauthorised request" in {
+        stubUnauthorised()
+        stubSubmitAgentDetailsResponse()
+        val jsonBody = Json.toJson(
+          CreatePredefinedAgentRequest(
+            storn = "storn",
+            agentName = "SomeAgentName",
+            addressLine1 = None,
+            addressLine2 = None,
+            addressLine3 = None,
+            addressLine4 = None,
+            postcode = None,
+            phone = None,
+            email = None
+          )
+        )
+        val result = wsClient.url(createAgentUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
