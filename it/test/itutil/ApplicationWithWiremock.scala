@@ -61,7 +61,6 @@ trait ApplicationWithWiremock
     wsClient
       .url(s"http://localhost:${WireMockConstants.stubPort}/$path")
       .withHttpHeaders("Authorization" -> "Bearer123")
-     // .withFollowRedirects(false)
   }
 
   override protected def beforeAll(): Unit =
