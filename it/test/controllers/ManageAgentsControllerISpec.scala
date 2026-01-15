@@ -40,9 +40,9 @@ class ManageAgentsControllerISpec extends BaseSpec
 
   "Organisation" should {
 
-    "call get-sdlt-organisation" when {
+    "call GetOrganisation" when {
 
-      "return a 404:Forbidden when no auth in scope" in {
+      "return a 404:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         val result = wsClient.url(getOrganisation)
           .get()
@@ -50,7 +50,7 @@ class ManageAgentsControllerISpec extends BaseSpec
         result.status shouldBe FORBIDDEN
       }
 
-      "return a 200:OK when no auth in scope2" in {
+      "return a 200:OK:: authorised request" in {
         stubAuthorised()
         stubGetOrg()
         val result = wsClient.url(getOrganisation)
