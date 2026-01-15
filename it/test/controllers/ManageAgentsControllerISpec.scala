@@ -18,17 +18,26 @@ package controllers
 
 import base.BaseSpec
 import itutil.ApplicationWithWiremock
+import models.agent.{DeletePredefinedAgentRequest, DeletePredefinedAgentResponse}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status.{FORBIDDEN, OK}
 import play.api.http.Status
+import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-class ManageAgentsControllerISpec extends BaseSpec 
+class ManageAgentsControllerISpec extends BaseSpec
   with GuiceOneServerPerSuite with ApplicationWithWiremock {
 
-  lazy val getOrganisation = s"http://localhost:$port/stamp-duty-land-tax/manage-agents/get-sdlt-organisation?storn=1001"
+  lazy val getOrganisationUrl = s"http://localhost:$port/stamp-duty-land-tax/manage-agents/get-sdlt-organisation?storn=1001"
+  lazy val deleteAgentUrl = s"http://localhost:$port/stamp-duty-land-tax/manage-agents/delete/predefined-agent"
 
-  def stubGetOrg(): Unit = {
+  def stubGetOrgResponse(): Unit = {
     stubPost("/stamp-duty-land-tax-stub/organisation", Status.OK, getOrgJsonBodyResponse)
+  }
+
+  def stubDeleteAgentResponse(): Unit = {
+    stubPost("/stamp-duty-land-tax-stub/delete/predefined-agent", Status.OK,
+      Json.toJson(DeletePredefinedAgentResponse(deleted = true)).toString)
   }
 
   private val getOrgJsonBodyResponse: String =
@@ -44,7 +53,7 @@ class ManageAgentsControllerISpec extends BaseSpec
 
       "return a 404:Forbidden:: unauthorised request" in {
         stubUnauthorised()
-        val result = wsClient.url(getOrganisation)
+        val result = wsClient.url(getOrganisationUrl)
           .get()
 
         result.status shouldBe FORBIDDEN
@@ -52,14 +61,44 @@ class ManageAgentsControllerISpec extends BaseSpec
 
       "return a 200:OK:: authorised request" in {
         stubAuthorised()
-        stubGetOrg()
-        val result = wsClient.url(getOrganisation)
+        stubGetOrgResponse()
+        val result = wsClient.url(getOrganisationUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .get()
 
         result.status shouldBe OK
       }
     }
+  }
+
+  "Agent" should {
+
+    "call DeletePredefinedAgent" when {
+
+      "return a 200:OK:: authorised request" in {
+        stubAuthorised()
+        stubDeleteAgentResponse()
+        val jsonBody = Json.toJson(DeletePredefinedAgentRequest(storn = "storn", agentReferenceNumber = "agentRef"))
+        val result = wsClient.url(deleteAgentUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .post(jsonBody)
+
+        result.status shouldBe OK
+      }
+
+      "return a 404:Forbidden:: unauthorised request" in {
+        stubUnauthorised()
+        stubDeleteAgentResponse()
+        val jsonBody = Json.toJson(DeletePredefinedAgentRequest(storn = "storn", agentReferenceNumber = "agentRef"))
+        val result = wsClient.url(deleteAgentUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .post(jsonBody)
+
+        result.status shouldBe FORBIDDEN
+      }
+
+    }
+
   }
 
 }
