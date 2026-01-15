@@ -20,11 +20,23 @@ import base.BaseSpec
 import itutil.ApplicationWithWiremock
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status.{FORBIDDEN, OK}
+import play.api.http.Status
 
 class ManageAgentsControllerISpec extends BaseSpec 
   with GuiceOneServerPerSuite with ApplicationWithWiremock {
 
   lazy val getOrganisation = s"http://localhost:$port/stamp-duty-land-tax/manage-agents/get-sdlt-organisation?storn=1001"
+
+  def stubGetOrg(): Unit = {
+    stubPost("/stamp-duty-land-tax-stub/organisation", Status.OK, getOrgJsonBodyResponse)
+  }
+
+  private val getOrgJsonBodyResponse: String =
+    """{
+      |  "storn": "storn",
+      |  "version": "1",
+      |  "agents": []
+      |}""".stripMargin
 
   "Organisation" should {
 
@@ -40,6 +52,7 @@ class ManageAgentsControllerISpec extends BaseSpec
 
       "return a 200:OK when no auth in scope2" in {
         stubAuthorised()
+        stubGetOrg()
         val result = wsClient.url(getOrganisation)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .get()

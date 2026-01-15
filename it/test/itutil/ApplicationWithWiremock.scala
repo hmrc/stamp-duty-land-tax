@@ -50,9 +50,6 @@ trait ApplicationWithWiremock
     )
   }
 
-//  given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("testSessionId")))
-//  implicit val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
-
   override lazy val app: Application = new GuiceApplicationBuilder()
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfig)
@@ -139,8 +136,9 @@ trait ApplicationWithWiremock
       |  "internalId": "internalId"
       |}""".stripMargin
 
+
+
   def stubAuthorised(): Unit = {
-    println("AUTHORISED::TRACE")
     stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrieval )
   }
 
