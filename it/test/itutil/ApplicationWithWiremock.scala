@@ -57,12 +57,6 @@ trait ApplicationWithWiremock
 
   lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
-  def buildClient(path: String): WSRequest = {
-    wsClient
-      .url(s"http://localhost:${WireMockConstants.stubPort}/$path")
-      .withHttpHeaders("Authorization" -> "Bearer123")
-  }
-
   override protected def beforeAll(): Unit =
     wireMock.start()
     super.beforeAll()
@@ -94,9 +88,9 @@ trait ApplicationWithWiremock
       )
     )
 
-  val postAuthoriseUrl = "/auth/authorise"
+  private val postAuthoriseUrl = "/auth/authorise"
 
-  val allEnrolmentsJson: JsObject = Json.obj(
+  private val allEnrolmentsJson: JsObject = Json.obj(
     "allEnrolments" ->
       Json.obj(
         "key" -> "IR-SDLT-ORG",
