@@ -51,7 +51,7 @@ class ManageAgentsController @Inject()(
     }
   }
 
-  def deletePredefinedAgent: Action[JsValue] = Action.async(parse.json) { implicit request =>
+  def deletePredefinedAgent: Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
       .validate[DeletePredefinedAgentRequest]
       .fold(
@@ -73,7 +73,7 @@ class ManageAgentsController @Inject()(
       )
     }
 
-  def submitAgentDetails: Action[JsValue] = Action.async(parse.json) { implicit request =>
+  def submitAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body.validate[CreatePredefinedAgentRequest].fold(
       invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
       payload =>
