@@ -28,7 +28,7 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 class ManageAgentsControllerISpec extends BaseSpec
   with GuiceOneServerPerSuite with ApplicationWithWiremock {
 
-  val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax/"
+  val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
   lazy val getOrganisationUrl = s"$servicePrefix/manage-agents/get-sdlt-organisation?storn=1001"
   lazy val deleteAgentUrl = s"$servicePrefix/manage-agents/delete/predefined-agent"
   lazy val createAgentUrl = s"$servicePrefix/create/predefined-agent"
