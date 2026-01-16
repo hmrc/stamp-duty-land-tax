@@ -28,11 +28,11 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 class ManageAgentsControllerISpec extends BaseSpec
   with GuiceOneServerPerSuite with ApplicationWithWiremock {
 
-  val servicePrefix = s"http://localhost:$port"
-  lazy val getOrganisationUrl = s"$servicePrefix/stamp-duty-land-tax/manage-agents/get-sdlt-organisation?storn=1001"
-  lazy val deleteAgentUrl = s"$servicePrefix/stamp-duty-land-tax/manage-agents/delete/predefined-agent"
-  lazy val createAgentUrl = s"$servicePrefix/stamp-duty-land-tax/create/predefined-agent"
-  lazy val updateAgentUrl = s"$servicePrefix/stamp-duty-land-tax/manage-agents/update/predefined-agent"
+  val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax/"
+  lazy val getOrganisationUrl = s"$servicePrefix/manage-agents/get-sdlt-organisation?storn=1001"
+  lazy val deleteAgentUrl = s"$servicePrefix/manage-agents/delete/predefined-agent"
+  lazy val createAgentUrl = s"$servicePrefix/create/predefined-agent"
+  lazy val updateAgentUrl = s"$servicePrefix/manage-agents/update/predefined-agent"
 
   def stubGetOrgResponse(): Unit = {
     stubPost("/stamp-duty-land-tax-stub/organisation", Status.OK, getOrgJsonBodyResponse)
