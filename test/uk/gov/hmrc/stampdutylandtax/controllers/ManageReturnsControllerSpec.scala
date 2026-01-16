@@ -28,7 +28,6 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 import service.ManageReturnsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import uk.gov.hmrc.stampdutylandtax.controllers.actions.{FakeIdentifierAction, IdentifierAction}
 import uk.gov.hmrc.stampdutylandtax.controllers.manage.ManageReturnsController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -80,7 +79,6 @@ class ManageReturnsControllerSpec extends SpecBase {
       }
 
       "return INTERNAL_SERVER_ERROR with Unexpected error on upstream failure" in new BaseSetup {
-        private val storn = "STN-BADGATE"
 
         when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
           .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
@@ -97,7 +95,6 @@ class ManageReturnsControllerSpec extends SpecBase {
       }
 
       "return INTERNAL_SERVER_ERROR with Unexpected error on unknown exception" in new BaseSetup {
-        private val storn = "STN-ERR"
 
         when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))

@@ -57,20 +57,6 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
     "address1" -> "Park Avenue"
   )
 
-  private val validCreatePurchaserRequestJsonCompany = Json.obj(
-    "stornId" -> "STORN12345",
-    "returnResourceRef" -> "RRF-2024-001",
-    "isCompany" -> "YES",
-    "isTrustee" -> "NO",
-    "isConnectedToVendor" -> "NO",
-    "isRepresentedByAgent" -> "YES",
-    "companyName" -> "XYZ Properties Ltd",
-    "address1" -> "Park Avenue",
-    "isUkCompany" -> "YES",
-    "registrationNumber" -> "12345678",
-    "placeOfRegistration" -> "England and Wales"
-  )
-
   private val completeCreatePurchaserRequest = CreatePurchaserRequest(
     stornId = "STORN12345",
     returnResourceRef = "RRF-2024-001",
@@ -219,7 +205,6 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
   private val validDeletePurchaserReturnJsonTrue = Json.obj("deleted" -> true)
   private val validDeletePurchaserReturnJsonFalse = Json.obj("deleted" -> false)
   private val deletePurchaserReturnTrue = DeletePurchaserReturn(deleted = true)
-  private val deletePurchaserReturnFalse = DeletePurchaserReturn(deleted = false)
 
   // CreateCompanyDetailsRequest test data
   private val validCreateCompanyDetailsRequestJsonComplete = Json.obj(
@@ -337,17 +322,10 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
     compTypePenfund = Some("NO")
   )
 
-  private val minimalUpdateCompanyDetailsRequest = UpdateCompanyDetailsRequest(
-    stornId = "STORN12345",
-    returnResourceRef = "RRF-2024-001",
-    purchaserResourceRef = "PRF-001"
-  )
-
   // UpdateCompanyDetailsReturn test data
   private val validUpdateCompanyDetailsReturnJsonTrue = Json.obj("updated" -> true)
   private val validUpdateCompanyDetailsReturnJsonFalse = Json.obj("updated" -> false)
   private val updateCompanyDetailsReturnTrue = UpdateCompanyDetailsReturn(updated = true)
-  private val updateCompanyDetailsReturnFalse = UpdateCompanyDetailsReturn(updated = false)
 
   // DeleteCompanyDetailsRequest test data
   private val validDeleteCompanyDetailsRequestJson = Json.obj(
@@ -364,7 +342,6 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
   private val validDeleteCompanyDetailsReturnJsonTrue = Json.obj("deleted" -> true)
   private val validDeleteCompanyDetailsReturnJsonFalse = Json.obj("deleted" -> false)
   private val deleteCompanyDetailsReturnTrue = DeleteCompanyDetailsReturn(deleted = true)
-  private val deleteCompanyDetailsReturnFalse = DeleteCompanyDetailsReturn(deleted = false)
 
   "CreatePurchaserRequest" - {
 
