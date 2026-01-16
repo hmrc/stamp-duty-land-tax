@@ -16,12 +16,16 @@
 
 package itutil
 
+import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.Application
+import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
+import play.api.{Application, Environment, Mode}
+
 
 trait ApplicationWithWiremock
   extends AnyWordSpec
@@ -47,6 +51,7 @@ trait ApplicationWithWiremock
   }
 
   override lazy val app: Application = new GuiceApplicationBuilder()
+    .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfig)
     .build()
 
@@ -60,7 +65,61 @@ trait ApplicationWithWiremock
     wireMock.resetAll()
     super.beforeEach()
 
-  override def afterAll(): Unit =
+  override def afterAll(): Unit = {
     wireMock.stop()
     super.afterAll()
+  }
+
+  def stubGet(url: String, status: Integer, body: String): StubMapping =
+    stubFor(get(urlEqualTo(url))
+      .willReturn(
+        aResponse().
+          withStatus(status).
+          withBody(body)
+      )
+    )
+
+  def stubPost(url: String, status: Integer, responseBody: String): StubMapping =
+    stubFor(post(urlMatching(url))
+      .willReturn(
+        aResponse().
+          withStatus(status).
+          withBody(responseBody)
+      )
+    )
+
+  private val postAuthoriseUrl = "/auth/authorise"
+
+  private val authoriseBodyWithOrgEnrolmentsRetrieval: String =
+    """{
+      |  "authorise": [{"confidenceLevel": 200}],
+      |  "retrieve": ["allEnrolments"],
+      |  "credId": "credId",
+      |  "individualEnrolments":{"sa":"1111111111"},
+      |  "allEnrolments": [
+      |               {
+      |                 "key":"IR-SDLT-ORG",
+      |                 "identifiers": [
+      |                    {
+      |                       "key":"IR-SDLT-ORG",
+      |                       "value": "value"
+      |                    }
+      |                   ],
+      |                "state": "Activated"
+      |              }
+      |  ],
+      |  "affinityGroup": "Organisation",
+      |  "credentialRole": "User",
+      |  "internalId": "internalId"
+      |}""".stripMargin
+
+
+  def stubAuthorised(): Unit = {
+    stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrieval )
+  }
+
+  def stubUnauthorised(): Unit = {
+    stubPost(postAuthoriseUrl, Status.UNAUTHORIZED, "{}")
+  }
+
 }
