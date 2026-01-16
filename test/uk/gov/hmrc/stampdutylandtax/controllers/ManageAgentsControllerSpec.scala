@@ -26,7 +26,6 @@ import play.api.mvc.Result
 import play.api.test.Helpers.{contentAsJson, status}
 import service.ManageAgentsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 import uk.gov.hmrc.stampdutylandtax.controllers.agents.ManageAgentsController
 
 import scala.concurrent.{ExecutionContext, Future}
