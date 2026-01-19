@@ -81,7 +81,17 @@ class ManageAgentsControllerISpec extends BaseSpec
       }
 
       "return a 200:OK:: authorised request" in {
-        stubAuthorised()
+        stubAuthorisedAsActivated()
+        stubGetOrgResponse()
+        val result = wsClient.url(getOrganisationUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .get()
+
+        result.status shouldBe OK
+      }
+
+      "return a 200:OK:: authorised request with not yet activated enrollment" in {
+        stubAuthorisedAsNotYetActivated()
         stubGetOrgResponse()
         val result = wsClient.url(getOrganisationUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
@@ -97,7 +107,18 @@ class ManageAgentsControllerISpec extends BaseSpec
     "call DeletePredefinedAgent" when {
 
       "return a 200:OK:: authorised request" in {
-        stubAuthorised()
+        stubAuthorisedAsActivated()
+        stubDeleteAgentResponse()
+        val jsonBody = Json.toJson(DeletePredefinedAgentRequest(storn = "storn", agentReferenceNumber = "agentRef"))
+        val result = wsClient.url(deleteAgentUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .post(jsonBody)
+
+        result.status shouldBe OK
+      }
+
+      "return a 200:OK:: authorised request with not yet activated enrollment" in {
+        stubAuthorisedAsNotYetActivated()
         stubDeleteAgentResponse()
         val jsonBody = Json.toJson(DeletePredefinedAgentRequest(storn = "storn", agentReferenceNumber = "agentRef"))
         val result = wsClient.url(deleteAgentUrl)
@@ -123,7 +144,7 @@ class ManageAgentsControllerISpec extends BaseSpec
     "call submitAgentDetails" when {
 
       "return a 200:OK:: authorised request" in {
-        stubAuthorised()
+        stubAuthorisedAsActivated()
         stubSubmitAgentDetailsResponse()
         val jsonBody = Json.toJson(
           CreatePredefinedAgentRequest(storn = "storn", agentName = "agentName",
@@ -164,7 +185,7 @@ class ManageAgentsControllerISpec extends BaseSpec
     "call updateAgentDetails" when {
 
       "return a 200:OK:: authorised request" in {
-        stubAuthorised()
+        stubAuthorisedAsActivated()
         stubUpdateAgentDetailsResponse()
         val jsonBody = Json.toJson(
           UpdatePredefinedAgentRequest(agentResourceReference = "agentRef", storn = "storn",

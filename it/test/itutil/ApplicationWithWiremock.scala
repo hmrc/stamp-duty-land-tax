@@ -90,7 +90,7 @@ trait ApplicationWithWiremock
 
   private val postAuthoriseUrl = "/auth/authorise"
 
-  private val authoriseBodyWithOrgEnrolmentsRetrieval: String =
+  private val authoriseBodyWithOrgEnrolmentsRetrievalAsActivated: String =
     """{
       |  "authorise": [{"confidenceLevel": 200}],
       |  "retrieve": ["allEnrolments"],
@@ -113,9 +113,36 @@ trait ApplicationWithWiremock
       |  "internalId": "internalId"
       |}""".stripMargin
 
+  private val authoriseBodyWithOrgEnrolmentsRetrievalAsNotYetActivated: String =
+      """{
+        |  "authorise": [{"confidenceLevel": 200}],
+        |  "retrieve": ["allEnrolments"],
+        |  "credId": "credId",
+        |  "individualEnrolments":{"sa":"1111111111"},
+        |  "allEnrolments": [
+        |               {
+        |                 "key":"IR-SDLT-ORG",
+        |                 "identifiers": [
+        |                    {
+        |                       "key":"IR-SDLT-ORG",
+        |                       "value": "value"
+        |                    }
+        |                   ],
+        |                "state": "NotYetActivated"
+        |              }
+        |  ],
+        |  "affinityGroup": "Organisation",
+        |  "credentialRole": "User",
+        |  "internalId": "internalId"
+        |}""".stripMargin
 
-  def stubAuthorised(): Unit = {
-    stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrieval )
+
+  def stubAuthorisedAsActivated(): Unit = {
+    stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrievalAsActivated )
+  }
+
+  def stubAuthorisedAsNotYetActivated(): Unit = {
+    stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrievalAsNotYetActivated)
   }
 
   def stubUnauthorised(): Unit = {
