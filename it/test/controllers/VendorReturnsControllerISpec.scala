@@ -18,8 +18,7 @@ package controllers
 
 import base.BaseSpec
 import itutil.ApplicationWithWiremock
-import models.filing.{CreateVendorRequest, CreateVendorReturn, ReturnVersionUpdateRequest, ReturnVersionUpdateReturn, UpdateVendorRequest, UpdateVendorReturn}
-import org.apache.pekko.http.scaladsl.model.HttpHeader.ParsingResult.Ok
+import models.filing.*
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status
 import play.api.http.Status.{CREATED, FORBIDDEN}
@@ -32,6 +31,7 @@ class VendorReturnsControllerISpec extends BaseSpec
   val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
   lazy val createVendorUrl = s"$servicePrefix/filing/create/vendor"
   lazy val updateVendorUrl = s"$servicePrefix/filing/update/vendor"
+  lazy val deleteVendorUrl = s"$servicePrefix/filing/delete/vendor "
 
   def stubCreateVendorResponse(): Unit = {
     stubPost("/formp-proxy/filing/create/vendor", Status.CREATED,
@@ -43,11 +43,16 @@ class VendorReturnsControllerISpec extends BaseSpec
       Json.toJson(UpdateVendorReturn(updated = true)).toString)
   }
 
+  def stubDeleteVendorResponse(): Unit = {
+    stubPost("/formp-proxy/filing/delete/vendor", Status.CREATED,
+      Json.toJson(DeleteVendorReturn(deleted = true)).toString)
+  }
+
   "VendorReturns" should {
 
     "call createVendor" when {
 
-      "return a 403:Forbidden:: authorised request" in {
+      "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubCreateVendorResponse()
         val jsonBody = Json.toJson(
@@ -64,7 +69,7 @@ class VendorReturnsControllerISpec extends BaseSpec
         result.status shouldBe FORBIDDEN
       }
 
-      "return a 200:OK:: authorised request" in {
+      "return a 201:Created:: authorised request" in {
         stubAuthorisedAsActivated()
         stubCreateVendorResponse()
         val jsonBody = Json.toJson(
@@ -85,7 +90,7 @@ class VendorReturnsControllerISpec extends BaseSpec
 
     "call updateVendor" when {
 
-      "return a 403:Forbidden:: authorised request" in {
+      "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubUpdateVendorResponse()
         val jsonBody = Json.toJson(
@@ -103,7 +108,7 @@ class VendorReturnsControllerISpec extends BaseSpec
         result.status shouldBe FORBIDDEN
       }
 
-      "return a 200:OK:: authorised request" in {
+      "return a 201:Created:: authorised request" in {
         stubAuthorisedAsActivated()
         stubUpdateVendorResponse()
         val jsonBody = Json.toJson(
@@ -122,6 +127,37 @@ class VendorReturnsControllerISpec extends BaseSpec
       }
 
     }
+
+    "call deleteVendor" when {
+
+      "return a 403:Forbidden:: unauthorised request" in {
+        stubUnauthorised()
+        stubDeleteVendorResponse()
+        val jsonBody = Json.toJson(
+          DeleteVendorRequest(storn = "storn", vendorResourceRef = "ref", returnResourceRef = "ref"))
+
+        val result = wsClient.url(deleteVendorUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .post(jsonBody)
+
+        result.status shouldBe FORBIDDEN
+      }
+
+      "return a 201:Created:: authorised request" in {
+        stubAuthorisedAsActivated()
+        stubDeleteVendorResponse()
+        val jsonBody = Json.toJson(
+          DeleteVendorRequest(storn = "storn", vendorResourceRef = "ref", returnResourceRef = "ref"))
+
+        val result = wsClient.url(deleteVendorUrl)
+          .withHttpHeaders("Authorization" -> "Bearer123")
+          .post(jsonBody)
+
+        result.status shouldBe CREATED
+      }
+
+    }
+
   }
 
 }
