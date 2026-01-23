@@ -40,7 +40,7 @@ class ReturnVersioningControllerISpec extends BaseSpec
 
     "call updateReturnVersion" when {
 
-      "return a 403:Forbidden:: authorised request" in {
+      "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubUpdateReturnVersionResponse()
         val jsonBody = Json.toJson(ReturnVersionUpdateRequest(storn = "storn", returnResourceRef = "Ref", currentVersion = "2"))
