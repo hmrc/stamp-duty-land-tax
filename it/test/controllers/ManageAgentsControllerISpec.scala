@@ -72,7 +72,7 @@ class ManageAgentsControllerISpec extends BaseSpec
 
     "call GetOrganisation" when {
 
-      "return a 404:Forbidden:: unauthorised request" in {
+      "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         val result = wsClient.url(getOrganisationUrl)
           .get()
@@ -128,7 +128,7 @@ class ManageAgentsControllerISpec extends BaseSpec
         result.status shouldBe OK
       }
 
-      "return a 404:Forbidden:: unauthorised request" in {
+      "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubDeleteAgentResponse()
         val jsonBody = Json.toJson(DeletePredefinedAgentRequest(storn = "storn", agentReferenceNumber = "agentRef"))
@@ -199,7 +199,7 @@ class ManageAgentsControllerISpec extends BaseSpec
         result.status shouldBe OK
       }
 
-      "return a 404:Forbidden:: unauthorised request" in {
+      "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubUpdateAgentDetailsResponse()
         val jsonBody = Json.toJson(
