@@ -29,7 +29,7 @@ class ReturnAgentControllerISpec extends BaseSpec
   with GuiceOneServerPerSuite with ApplicationWithWiremock {
 
   val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
-  lazy val deleteReturnAgent = s"$servicePrefix/filing/delete/return-agent"
+  lazy val deleteReturnAgent = s"$servicePrefix/filing/delte/return-agent"
   lazy val createReturnAgent = s"$servicePrefix/filing/create/return-agent"
   lazy val updateReturnAgent = s"$servicePrefix/filing/update/return-agent"
 
@@ -108,15 +108,15 @@ class ReturnAgentControllerISpec extends BaseSpec
             returnResourceRef = "returnResourceRef",
             agentType = "agentType",
             name = "name",
-            houseNumber= None, 
-            addressLine1 = "addressLine1", 
-            addressLine2= None, 
-            addressLine3 = None, 
-            addressLine4= None, 
-            postcode = "postcode", 
-            phoneNumber= None, 
-            email = None, 
-            agentReference = None, 
+            houseNumber= None,
+            addressLine1 = "addressLine1",
+            addressLine2= None,
+            addressLine3 = None,
+            addressLine4= None,
+            postcode = "postcode",
+            phoneNumber= None,
+            email = None,
+            agentReference = None,
             isAuthorised = None
           )
         )

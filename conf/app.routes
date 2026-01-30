@@ -19,7 +19,7 @@ POST        /filing/delete/vendor                           uk.gov.hmrc.stampdut
 
 POST        /filing/create/return-agent                     uk.gov.hmrc.stampdutylandtax.controllers.filing.ReturnAgentController.createReturnAgent()
 POST        /filing/update/return-agent                     uk.gov.hmrc.stampdutylandtax.controllers.filing.ReturnAgentController.updateReturnAgent()
-POST        /filing/delete/return-agent                      uk.gov.hmrc.stampdutylandtax.controllers.filing.ReturnAgentController.deleteReturnAgent()
+POST        /filing/delte/return-agent                      uk.gov.hmrc.stampdutylandtax.controllers.filing.ReturnAgentController.deleteReturnAgent()
 
 POST        /filing/update/return-version                   uk.gov.hmrc.stampdutylandtax.controllers.filing.ReturnVersioningController.updateReturnVersion()
 
