@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import models.filing.{CreateReturnRequest, GetReturnByRefRequest, UpdateReturnRequest}
+import models.filing.{CreateLandRequest, DeleteLandRequest, UpdateLandRequest}
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
-import service.filing.FilingReturnsService
+import service.filing.{FilingLandService, FilingReturnsService}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
@@ -28,64 +28,64 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class FilingReturnsController @Inject()(
-                                         cc: ControllerComponents,
-                                         service: FilingReturnsService,
-                                         auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class LandReturnsController @Inject()(
+                                       cc: ControllerComponents,
+                                       service: FilingLandService,
+                                       auth: IdentifierAction
+                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
-  def createReturn(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+  def createLand(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
-      .validate[CreateReturnRequest]
+      .validate[CreateLandRequest]
       .fold(
         errs =>
           Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
         body =>
           service
-            .createReturn(body)
+            .createLand(body)
             .map { result =>
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createReturn] failed", t)
+              logger.error("[createLand] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
   }
 
-  def getFullReturn(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+  def updateLand(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
-      .validate[GetReturnByRefRequest]
+      .validate[UpdateLandRequest]
       .fold(
         errs =>
           Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
         body =>
           service
-            .getFullReturn(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[createReturn] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
-  }
-
-  def updateReturnInfo(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdateReturnRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updateReturnInfo(body)
+            .updateLand(body)
             .map { result =>
               Ok(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updateReturnInfo] failed", t)
+              logger.error("[updateLand] failed", t)
+              InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
+  }
+
+  def deleteLand(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+    request.body
+      .validate[DeleteLandRequest]
+      .fold(
+        errs =>
+          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+        body =>
+          service
+            .deleteLand(body)
+            .map { result =>
+              Ok(Json.toJson(result))
+            }
+            .recover { case t =>
+              logger.error("[deleteLand] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )

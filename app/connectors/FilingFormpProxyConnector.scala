@@ -61,6 +61,19 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
+  def updateReturnInfo(updateReturnRequest: UpdateReturnRequest)(implicit hc: HeaderCarrier): Future[UpdateReturnReturn] =
+    http.post(url"$formpPath/filing/update/return-info")
+      .withBody(Json.toJson(updateReturnRequest))
+      .execute[UpdateReturnReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateReturnInfo]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateReturnInfo]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
   def createVendor(createVendorRequest: CreateVendorRequest)(implicit hc: HeaderCarrier): Future[CreateVendorReturn] =
     http.post(url"$formpPath/filing/create/vendor")
       .withBody(Json.toJson(createVendorRequest))
@@ -232,6 +245,46 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           throw e
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][deleteCompanyDetails]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+
+  def createLand(createLandRequest: CreateLandRequest)(implicit hc: HeaderCarrier): Future[CreateLandReturn] =
+    http.post(url"$formpPath/filing/create/land")
+      .withBody(Json.toJson(createLandRequest))
+      .execute[CreateLandReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createLand]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createLand]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def updateLand(updateLandRequest: UpdateLandRequest)(implicit hc: HeaderCarrier): Future[UpdateLandReturn] =
+    http.post(url"$formpPath/filing/update/land")
+      .withBody(Json.toJson(updateLandRequest))
+      .execute[UpdateLandReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateLand]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateLand]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def deleteLand(deleteLandRequest: DeleteLandRequest)(implicit hc: HeaderCarrier): Future[DeleteLandReturn] =
+    http.post(url"$formpPath/filing/delete/land")
+      .withBody(Json.toJson(deleteLandRequest))
+      .execute[DeleteLandReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deleteLand]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deleteLand]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
 }

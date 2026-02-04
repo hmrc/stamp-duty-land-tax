@@ -20,7 +20,7 @@ import base.SpecBase
 import models.filing.*
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
-import play.api.http.Status.{BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR}
+import play.api.http.Status.{BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, OK}
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Result
 import play.api.test.Helpers.{contentAsJson, status}
@@ -202,6 +202,267 @@ class FilingReturnsControllerSpec extends SpecBase {
         status(result3) mustBe CREATED
       }
     }
+
+    "POST /update-return (updateReturnInfo)" - {
+
+      "return OK with update response when service returns successfully" in new BaseSetup {
+        when(mockFilingReturnsService.updateReturnInfo(eqTo(testUpdateReturnRequest))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testUpdateReturnResponse))
+
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(testUpdateReturnRequest)))
+
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(testUpdateReturnResponse)
+        verify(mockFilingReturnsService).updateReturnInfo(eqTo(testUpdateReturnRequest))(any[HeaderCarrier])
+      }
+
+      "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+        (contentAsJson(result) \ "errors").isDefined mustBe true
+      }
+
+      "return BAD_REQUEST when storn is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "returnResourceRef" -> "100001",
+          "mainPurchaserId" -> "1",
+          "mainVendorId" -> "1",
+          "mainLandId" -> "1",
+          "irmarkGenerated" -> "IRMark123456",
+          "landCertForEachProp" -> "Y",
+          "declaration" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when returnResourceRef is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "storn" -> "STORN123456",
+          "mainPurchaserId" -> "1",
+          "mainVendorId" -> "1",
+          "mainLandId" -> "1",
+          "irmarkGenerated" -> "IRMark123456",
+          "landCertForEachProp" -> "Y",
+          "declaration" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when mainPurchaserId is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "storn" -> "STORN123456",
+          "returnResourceRef" -> "100001",
+          "mainVendorId" -> "1",
+          "mainLandId" -> "1",
+          "irmarkGenerated" -> "IRMark123456",
+          "landCertForEachProp" -> "Y",
+          "declaration" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when mainVendorId is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "storn" -> "STORN123456",
+          "returnResourceRef" -> "100001",
+          "mainPurchaserId" -> "1",
+          "mainLandId" -> "1",
+          "irmarkGenerated" -> "IRMark123456",
+          "landCertForEachProp" -> "Y",
+          "declaration" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when mainLandId is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "storn" -> "STORN123456",
+          "returnResourceRef" -> "100001",
+          "mainPurchaserId" -> "1",
+          "mainVendorId" -> "1",
+          "irmarkGenerated" -> "IRMark123456",
+          "landCertForEachProp" -> "Y",
+          "declaration" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when irmarkGenerated is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "storn" -> "STORN123456",
+          "returnResourceRef" -> "100001",
+          "mainPurchaserId" -> "1",
+          "mainVendorId" -> "1",
+          "mainLandId" -> "1",
+          "landCertForEachProp" -> "Y",
+          "declaration" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when landCertForEachProp is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "storn" -> "STORN123456",
+          "returnResourceRef" -> "100001",
+          "mainPurchaserId" -> "1",
+          "mainVendorId" -> "1",
+          "mainLandId" -> "1",
+          "irmarkGenerated" -> "IRMark123456",
+          "declaration" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when declaration is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj(
+          "storn" -> "STORN123456",
+          "returnResourceRef" -> "100001",
+          "mainPurchaserId" -> "1",
+          "mainVendorId" -> "1",
+          "mainLandId" -> "1",
+          "irmarkGenerated" -> "IRMark123456",
+          "landCertForEachProp" -> "Y"
+        )
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return BAD_REQUEST when all fields are missing" in new BaseSetup {
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.obj()))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
+      }
+
+      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+        when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("unexpected")))
+
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(testUpdateReturnRequest)))
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
+      }
+
+      "return 500 when service fails with exception" in new BaseSetup {
+        when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new Exception("Service failure")))
+
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(testUpdateReturnRequest)))
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
+      }
+
+      "handle valid payload with Y values for boolean fields" in new BaseSetup {
+        val request: UpdateReturnRequest = testUpdateReturnRequest.copy(
+          landCertForEachProp = "Y",
+          declaration = "Y"
+        )
+        when(mockFilingReturnsService.updateReturnInfo(eqTo(request))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testUpdateReturnResponse))
+
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request)))
+
+        status(result) mustBe OK
+        verify(mockFilingReturnsService).updateReturnInfo(eqTo(request))(any[HeaderCarrier])
+      }
+
+      "handle valid payload with N values for boolean fields" in new BaseSetup {
+        val request: UpdateReturnRequest = testUpdateReturnRequest.copy(
+          landCertForEachProp = "N",
+          declaration = "N"
+        )
+        when(mockFilingReturnsService.updateReturnInfo(eqTo(request))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testUpdateReturnResponse))
+
+        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request)))
+
+        status(result) mustBe OK
+        verify(mockFilingReturnsService).updateReturnInfo(eqTo(request))(any[HeaderCarrier])
+      }
+
+      "handle different entity IDs" in new BaseSetup {
+        val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(
+          mainPurchaserId = "1",
+          mainVendorId = "1",
+          mainLandId = "1"
+        )
+        val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(
+          mainPurchaserId = "100",
+          mainVendorId = "200",
+          mainLandId = "300"
+        )
+
+        when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testUpdateReturnResponse))
+
+        val result1: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request2)))
+
+        status(result1) mustBe OK
+        status(result2) mustBe OK
+      }
+
+      "handle different IRMark formats" in new BaseSetup {
+        val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(irmarkGenerated = "IRMark123456")
+        val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(irmarkGenerated = "IRMark-ABC-123")
+        val request3: UpdateReturnRequest = testUpdateReturnRequest.copy(irmarkGenerated = "12345678")
+
+        when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testUpdateReturnResponse))
+
+        val result1: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request3)))
+
+        status(result1) mustBe OK
+        status(result2) mustBe OK
+        status(result3) mustBe OK
+      }
+
+      "handle different return resource reference formats" in new BaseSetup {
+        val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(returnResourceRef = "100001")
+        val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(returnResourceRef = "RRF-2024-001")
+        val request3: UpdateReturnRequest = testUpdateReturnRequest.copy(returnResourceRef = "999999")
+
+        when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testUpdateReturnResponse))
+
+        val result1: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.toJson(request3)))
+
+        status(result1) mustBe OK
+        status(result2) mustBe OK
+        status(result3) mustBe OK
+      }
+    }
   }
 
   private trait BaseSetup {
@@ -209,6 +470,22 @@ class FilingReturnsControllerSpec extends SpecBase {
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
     val controller = new FilingReturnsController(cc, mockFilingReturnsService, fakeIdentifierAction)
+
+
+    val testUpdateReturnRequest: UpdateReturnRequest = UpdateReturnRequest(
+      storn = "STORN123456",
+      returnResourceRef = "100001",
+      mainPurchaserId = "1",
+      mainVendorId = "1",
+      mainLandId = "1",
+      irmarkGenerated = "IRMark123456",
+      landCertForEachProp = "Y",
+      declaration = "Y"
+    )
+
+    val testUpdateReturnResponse: UpdateReturnReturn = UpdateReturnReturn(
+      updated = true
+    )
 
     val testCreateReturnRequest: CreateReturnRequest = CreateReturnRequest(
       stornId = "STORN123456",
