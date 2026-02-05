@@ -12,6 +12,7 @@ POST        /manage-returns/get-returns                     uk.gov.hmrc.stampdut
 
 POST        /filing/create/return                           uk.gov.hmrc.stampdutylandtax.controllers.filing.FilingReturnsController.createReturn()
 POST        /filing/receive/full-return                     uk.gov.hmrc.stampdutylandtax.controllers.filing.FilingReturnsController.getFullReturn()
+POST        /filing/update/return-info                      uk.gov.hmrc.stampdutylandtax.controllers.filing.FilingReturnsController.updateReturnInfo()
 
 POST        /filing/create/vendor                           uk.gov.hmrc.stampdutylandtax.controllers.filing.VendorReturnsController.createVendor()
 POST        /filing/update/vendor                           uk.gov.hmrc.stampdutylandtax.controllers.filing.VendorReturnsController.updateVendor()
@@ -27,7 +28,10 @@ POST        /filing/create/purchaser                        uk.gov.hmrc.stampdut
 POST        /filing/update/purchaser                        uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.updatePurchaser()
 POST        /filing/delete/purchaser                        uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.deletePurchaser()
 
-
 POST        /filing/create/company-details                  uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.createCompanyDetails()
 POST        /filing/update/company-details                  uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.updateCompanyDetails()
 POST        /filing/delete/company-details                  uk.gov.hmrc.stampdutylandtax.controllers.filing.PurchaserReturnsController.deleteCompanyDetails()
+
+POST       /filing/create/land                              uk.gov.hmrc.stampdutylandtax.controllers.filing.LandReturnsController.createLand()
+POST       /filing/update/land                              uk.gov.hmrc.stampdutylandtax.controllers.filing.LandReturnsController.updateLand()
+POST       /filing/delete/land                              uk.gov.hmrc.stampdutylandtax.controllers.filing.LandReturnsController.deleteLand()

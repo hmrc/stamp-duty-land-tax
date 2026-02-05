@@ -1705,4 +1705,579 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       ex.getMessage must include("404")
     }
   }
+
+  "updateReturnInfo" should {
+
+    val url = "/formp-proxy/filing/update/return-info"
+
+    val payload = UpdateReturnRequest(
+      storn = stornId,
+      returnResourceRef = "100001",
+      mainPurchaserId = "1",
+      mainVendorId = "1",
+      mainLandId = "1",
+      irmarkGenerated = "IRMark123456",
+      landCertForEachProp = "YES",
+      declaration = "YES"
+    )
+
+    "return UpdateReturnReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateReturnInfo(payload).futureValue
+
+      result mustBe UpdateReturnReturn(updated = true)
+    }
+
+    "return UpdateReturnReturn with updated=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateReturnInfo(payload).futureValue
+
+      result mustBe UpdateReturnReturn(updated = true)
+    }
+
+    "handle update with Y values for boolean fields" in {
+      val yPayload = payload.copy(landCertForEachProp = "Y", declaration = "Y")
+      val payloadJson = Json.toJson(yPayload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateReturnInfo(yPayload).futureValue
+      result.updated mustBe true
+    }
+
+    "handle update with N values for boolean fields" in {
+      val nPayload = payload.copy(landCertForEachProp = "N", declaration = "N")
+      val payloadJson = Json.toJson(nPayload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateReturnInfo(nPayload).futureValue
+      result.updated mustBe true
+    }
+
+    "handle different IRMark formats" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+          )
+      )
+
+      val payload1 = payload.copy(irmarkGenerated = "IRMark123456")
+      val payload2 = payload.copy(irmarkGenerated = "IRMark-ABC-123")
+      val payload3 = payload.copy(irmarkGenerated = "12345678")
+
+      connector.updateReturnInfo(payload1).futureValue.updated mustBe true
+      connector.updateReturnInfo(payload2).futureValue.updated mustBe true
+      connector.updateReturnInfo(payload3).futureValue.updated mustBe true
+    }
+
+    "handle different entity IDs" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+          )
+      )
+
+      val payload1 = payload.copy(mainPurchaserId = "1", mainVendorId = "1", mainLandId = "1")
+      val payload2 = payload.copy(mainPurchaserId = "100", mainVendorId = "200", mainLandId = "300")
+
+      connector.updateReturnInfo(payload1).futureValue.updated mustBe true
+      connector.updateReturnInfo(payload2).futureValue.updated mustBe true
+    }
+
+    "handle different return resource reference formats" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+          )
+      )
+
+      val payload1 = payload.copy(returnResourceRef = "100001")
+      val payload2 = payload.copy(returnResourceRef = "RRF-2024-001")
+      val payload3 = payload.copy(returnResourceRef = "999999")
+
+      connector.updateReturnInfo(payload1).futureValue.updated mustBe true
+      connector.updateReturnInfo(payload2).futureValue.updated mustBe true
+      connector.updateReturnInfo(payload3).futureValue.updated mustBe true
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateReturnInfo(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateReturnInfo(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateReturnInfo(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "createLand" should {
+
+    val url = "/formp-proxy/filing/create/land"
+
+    val payload = CreateLandRequest(
+      stornId = stornId,
+      returnResourceRef = "100001",
+      propertyType = "RESIDENTIAL",
+      interestTransferredCreated = "FREEHOLD",
+      houseNumber = Some("42"),
+      addressLine1 = "High Street",
+      addressLine2 = Some("Kensington"),
+      addressLine3 = Some("London"),
+      addressLine4 = None,
+      postcode = Some("SW1A 1AA"),
+      landArea = Some("500"),
+      areaUnit = Some("SQUARE_METERS"),
+      localAuthorityNumber = Some("LA12345"),
+      mineralRights = Some("YES"),
+      nlpgUprn = Some("100012345678"),
+      willSendPlansByPost = Some("NO"),
+      titleNumber = Some("TN123456")
+    )
+
+    "return CreateLandReturn when BE returns OK with valid JSON" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                s"""{
+                   |  "landResourceRef": "100001",
+                   |  "landId": "1"
+                   |}""".stripMargin
+              )
+          )
+      )
+
+      val result = connector.createLand(payload).futureValue
+
+      result mustBe CreateLandReturn(landResourceRef = "100001", landId = "1")
+    }
+
+    "return CreateLandReturn for minimal request" in {
+      val minimalPayload = payload.copy(
+        houseNumber = None,
+        addressLine2 = None,
+        addressLine3 = None,
+        addressLine4 = None,
+        postcode = None,
+        landArea = None,
+        areaUnit = None,
+        localAuthorityNumber = None,
+        mineralRights = None,
+        nlpgUprn = None,
+        willSendPlansByPost = None,
+        titleNumber = None
+      )
+      val payloadJson = Json.toJson(minimalPayload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "landResourceRef": "100002", "landId": "2" }""")
+          )
+      )
+
+      val result = connector.createLand(minimalPayload).futureValue
+      result.landResourceRef mustBe "100002"
+      result.landId mustBe "2"
+    }
+
+    "handle different property types" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "landResourceRef": "100001", "landId": "1" }""")
+          )
+      )
+
+      val residentialPayload = payload.copy(propertyType = "RESIDENTIAL")
+      val nonResidentialPayload = payload.copy(propertyType = "NON_RESIDENTIAL")
+      val mixedPayload = payload.copy(propertyType = "MIXED")
+
+      connector.createLand(residentialPayload).futureValue.landId mustBe "1"
+      connector.createLand(nonResidentialPayload).futureValue.landId mustBe "1"
+      connector.createLand(mixedPayload).futureValue.landId mustBe "1"
+    }
+
+    "handle different interest types" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "landResourceRef": "100001", "landId": "1" }""")
+          )
+      )
+
+      val freeholdPayload = payload.copy(interestTransferredCreated = "FREEHOLD")
+      val leaseholdPayload = payload.copy(interestTransferredCreated = "LEASEHOLD")
+
+      connector.createLand(freeholdPayload).futureValue.landId mustBe "1"
+      connector.createLand(leaseholdPayload).futureValue.landId mustBe "1"
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createLand(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createLand(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "updateLand" should {
+
+    val url = "/formp-proxy/filing/update/land"
+
+    val payload = UpdateLandRequest(
+      stornId = stornId,
+      returnResourceRef = "100001",
+      landResourceRef = "100001",
+      propertyType = "RESIDENTIAL",
+      interestTransferredCreated = "FREEHOLD",
+      houseNumber = Some("42"),
+      addressLine1 = "High Street",
+      addressLine2 = Some("Kensington"),
+      addressLine3 = Some("London"),
+      addressLine4 = None,
+      postcode = Some("SW1A 1AA"),
+      landArea = Some("500"),
+      areaUnit = Some("SQUARE_METERS"),
+      localAuthorityNumber = Some("LA12345"),
+      mineralRights = Some("YES"),
+      nlpgUprn = Some("100012345678"),
+      willSendPlansByPost = Some("NO"),
+      titleNumber = Some("TN123456"),
+      nextLandId = Some("100002")
+    )
+
+    "return UpdateLandReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateLand(payload).futureValue
+
+      result mustBe UpdateLandReturn(updated = true)
+    }
+
+    "return UpdateLandReturn with updated=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateLand(payload).futureValue
+
+      result mustBe UpdateLandReturn(updated = true)
+    }
+
+    "handle update with minimal fields" in {
+      val minimalPayload = payload.copy(
+        houseNumber = None,
+        addressLine2 = None,
+        addressLine3 = None,
+        addressLine4 = None,
+        postcode = None,
+        landArea = None,
+        areaUnit = None,
+        localAuthorityNumber = None,
+        mineralRights = None,
+        nlpgUprn = None,
+        willSendPlansByPost = None,
+        titleNumber = None,
+        nextLandId = None
+      )
+      val payloadJson = Json.toJson(minimalPayload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateLand(minimalPayload).futureValue
+      result.updated mustBe true
+    }
+
+    "handle different property types" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+          )
+      )
+
+      val residentialPayload = payload.copy(propertyType = "RESIDENTIAL")
+      val nonResidentialPayload = payload.copy(propertyType = "NON_RESIDENTIAL")
+      val mixedPayload = payload.copy(propertyType = "MIXED")
+
+      connector.updateLand(residentialPayload).futureValue.updated mustBe true
+      connector.updateLand(nonResidentialPayload).futureValue.updated mustBe true
+      connector.updateLand(mixedPayload).futureValue.updated mustBe true
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateLand(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateLand(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "deleteLand" should {
+
+    val url = "/formp-proxy/filing/delete/land"
+
+    val payload = DeleteLandRequest(
+      storn = stornId,
+      returnResourceRef = "100001",
+      landResourceRef = "100001"
+    )
+
+    "return DeleteLandReturn with deleted=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(DeleteLandReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deleteLand(payload).futureValue
+
+      result mustBe DeleteLandReturn(deleted = true)
+    }
+
+    "return DeleteLandReturn with deleted=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(DeleteLandReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deleteLand(payload).futureValue
+
+      result mustBe DeleteLandReturn(deleted = true)
+    }
+
+    "handle different resource reference formats" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(DeleteLandReturn(deleted = true))))
+          )
+      )
+
+      val payload1 = payload.copy(landResourceRef = "100001")
+      val payload2 = payload.copy(landResourceRef = "999999")
+      val payload3 = payload.copy(landResourceRef = "LRF-2024-001")
+
+      connector.deleteLand(payload1).futureValue.deleted mustBe true
+      connector.deleteLand(payload2).futureValue.deleted mustBe true
+      connector.deleteLand(payload3).futureValue.deleted mustBe true
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteLand(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteLand(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
 }
