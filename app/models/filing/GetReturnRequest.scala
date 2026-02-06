@@ -16,22 +16,7 @@
 
 package models.filing
 
-/*
- * Copyright 2025 HM Revenue & Customs
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json._
 
 case class SdltOrganisation(
                              isReturnUser: Option[String] = None,
@@ -88,9 +73,9 @@ case class Purchaser(
                       nino: Option[String] = None,
                       purchaserResourceRef: Option[String] = None,
                       nextPurchaserID: Option[String] = None,
-                      lMigrated: Option[String] = None, // Used in backend
-                      createDate: Option[String] = None, // Used in backend
-                      lastUpdateDate: Option[String] = None, // Used in backend
+                      lMigrated: Option[String] = None,
+                      createDate: Option[String] = None,
+                      lastUpdateDate: Option[String] = None,
                       isUkCompany: Option[String] = None,
                       hasNino: Option[String] = None,
                       dateOfBirth: Option[String] = None,
@@ -99,7 +84,29 @@ case class Purchaser(
                     )
 
 object Purchaser {
-  implicit val format: OFormat[Purchaser] = Json.format[Purchaser]
+  private val baseFormat: OFormat[Purchaser] = Json.format[Purchaser]
+
+  private def normalizeYesNo(value: Option[String]): Option[String] =
+    value.map(_.toUpperCase)
+
+  implicit val format: OFormat[Purchaser] = new OFormat[Purchaser] {
+    override def reads(json: JsValue): JsResult[Purchaser] = {
+      baseFormat.reads(json).map { purchaser =>
+        purchaser.copy(
+          isCompany = normalizeYesNo(purchaser.isCompany),
+          isTrustee = normalizeYesNo(purchaser.isTrustee),
+          isConnectedToVendor = normalizeYesNo(purchaser.isConnectedToVendor),
+          isRepresentedByAgent = normalizeYesNo(purchaser.isRepresentedByAgent),
+          isUkCompany = normalizeYesNo(purchaser.isUkCompany),
+          hasNino = normalizeYesNo(purchaser.hasNino)
+        )
+      }
+    }
+
+    override def writes(purchaser: Purchaser): JsObject = {
+      baseFormat.writes(purchaser)
+    }
+  }
 }
 
 case class CompanyDetails(
@@ -148,7 +155,24 @@ case class Vendor(
                  )
 
 object Vendor {
-  implicit val format: OFormat[Vendor] = Json.format[Vendor]
+  private val baseFormat: OFormat[Vendor] = Json.format[Vendor]
+
+  private def normalizeYesNo(value: Option[String]): Option[String] =
+    value.map(_.toUpperCase)
+
+  implicit val format: OFormat[Vendor] = new OFormat[Vendor] {
+    override def reads(json: JsValue): JsResult[Vendor] = {
+      baseFormat.reads(json).map { vendor =>
+        vendor.copy(
+          isRepresentedByAgent = normalizeYesNo(vendor.isRepresentedByAgent)
+        )
+      }
+    }
+
+    override def writes(vendor: Vendor): JsObject = {
+      baseFormat.writes(vendor)
+    }
+  }
 }
 
 case class Land(
@@ -423,4 +447,3 @@ case class GetReturnRequest(
 object GetReturnRequest {
   implicit val format: OFormat[GetReturnRequest] = Json.format[GetReturnRequest]
 }
-
