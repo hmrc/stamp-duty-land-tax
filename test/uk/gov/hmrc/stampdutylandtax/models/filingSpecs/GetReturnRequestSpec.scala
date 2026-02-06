@@ -26,7 +26,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
 
   private val validSdltOrganisationJson = Json.obj(
     "isReturnUser"            -> "true",
-    "doNotDisplayWelcomePage" -> "false",
+    "doNotDisplayWelcomePage" -> "yes",
     "storn"                   -> "STORN123456",
     "version"                 -> "1.0"
   )
@@ -45,7 +45,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
   private val validPurchaserJson = Json.obj(
     "purchaserID" -> "PUR001",
     "returnID"    -> "RET123456789",
-    "isCompany"   -> "false",
+    "isCompany"   -> "yes",
     "surname"     -> "Smith",
     "forename1"   -> "John"
   )
@@ -110,7 +110,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
 
   private val validResidencyJson = Json.obj(
     "residencyID"      -> "RES001",
-    "isNonUkResidents" -> "false"
+    "isNonUkResidents" -> "yes"
   )
 
   private val validGetReturnRequestJson = Json.obj(
@@ -216,7 +216,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
         val result = Json.fromJson[Purchaser](validPurchaserJson).asEither.value
 
         result.purchaserID mustBe Some("PUR001")
-        result.isCompany mustBe Some("false")
+        result.isCompany mustBe Some("YES")
         result.surname mustBe Some("Smith")
       }
 
@@ -616,7 +616,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
         val result = Json.fromJson[Residency](validResidencyJson).asEither.value
 
         result.residencyID mustBe Some("RES001")
-        result.isNonUkResidents mustBe Some("false")
+        result.isNonUkResidents mustBe Some("yes")
       }
     }
 
