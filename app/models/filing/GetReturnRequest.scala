@@ -436,7 +436,7 @@ case class GetReturnRequest(
                              land: Option[Seq[Land]] = None,
                              transaction: Option[Transaction] = None,
                              returnAgent: Option[Seq[ReturnAgent]] = None,
-                             agent: Option[Agent] = None,
+                             agent: Option[Seq[Agent]] = None,
                              lease: Option[Lease] = None,
                              taxCalculation: Option[TaxCalculation] = None,
                              submission: Option[Submission] = None,
