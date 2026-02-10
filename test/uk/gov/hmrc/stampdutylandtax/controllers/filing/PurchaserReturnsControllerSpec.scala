@@ -91,81 +91,6 @@ class PurchaserReturnsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
-      "return BAD_REQUEST when isCompany is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "stornId" -> "STORN12345",
-          "returnResourceRef" -> "RRF-2024-001",
-          "isTrustee" -> "NO",
-          "isConnectedToVendor" -> "NO",
-          "isRepresentedByAgent" -> "YES",
-          "address1" -> "Park Avenue"
-        )
-        val result: Future[Result] = controller.createPurchaser()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when isTrustee is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "stornId" -> "STORN12345",
-          "returnResourceRef" -> "RRF-2024-001",
-          "isCompany" -> "NO",
-          "isConnectedToVendor" -> "NO",
-          "isRepresentedByAgent" -> "YES",
-          "address1" -> "Park Avenue"
-        )
-        val result: Future[Result] = controller.createPurchaser()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when isConnectedToVendor is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "stornId" -> "STORN12345",
-          "returnResourceRef" -> "RRF-2024-001",
-          "isCompany" -> "NO",
-          "isTrustee" -> "NO",
-          "isRepresentedByAgent" -> "YES",
-          "address1" -> "Park Avenue"
-        )
-        val result: Future[Result] = controller.createPurchaser()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when isRepresentedByAgent is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "stornId" -> "STORN12345",
-          "returnResourceRef" -> "RRF-2024-001",
-          "isCompany" -> "NO",
-          "isTrustee" -> "NO",
-          "isConnectedToVendor" -> "NO",
-          "address1" -> "Park Avenue"
-        )
-        val result: Future[Result] = controller.createPurchaser()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when address1 is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "stornId" -> "STORN12345",
-          "returnResourceRef" -> "RRF-2024-001",
-          "isCompany" -> "NO",
-          "isTrustee" -> "NO",
-          "isConnectedToVendor" -> "NO",
-          "isRepresentedByAgent" -> "YES"
-        )
-        val result: Future[Result] = controller.createPurchaser()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
         when(mockPurchaserReturnsService.createPurchaser(any[CreatePurchaserRequest])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
@@ -220,9 +145,9 @@ class PurchaserReturnsControllerSpec extends SpecBase {
       }
 
       "handle different flag combinations" in new BaseSetup {
-        val trusteeRequest: CreatePurchaserRequest = testCreatePurchaserRequest.copy(isTrustee = "YES")
-        val connectedRequest: CreatePurchaserRequest = testCreatePurchaserRequest.copy(isConnectedToVendor = "YES")
-        val noAgentRequest: CreatePurchaserRequest = testCreatePurchaserRequest.copy(isRepresentedByAgent = "NO")
+        val trusteeRequest: CreatePurchaserRequest = testCreatePurchaserRequest.copy(isTrustee = Some("YES"))
+        val connectedRequest: CreatePurchaserRequest = testCreatePurchaserRequest.copy(isConnectedToVendor = Some("YES"))
+        val noAgentRequest: CreatePurchaserRequest = testCreatePurchaserRequest.copy(isRepresentedByAgent = Some("NO"))
 
         when(mockPurchaserReturnsService.createPurchaser(any[CreatePurchaserRequest])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testCreatePurchaserReturn))
@@ -845,17 +770,17 @@ class PurchaserReturnsControllerSpec extends SpecBase {
     val testCreatePurchaserRequest: CreatePurchaserRequest = CreatePurchaserRequest(
       stornId = "STORN12345",
       returnResourceRef = "RRF-2024-001",
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones"),
       forename1 = Some("David"),
       forename2 = Some("Michael"),
       companyName = None,
       houseNumber = Some("25"),
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = Some("Flat 3"),
       address3 = Some("Central District"),
       address4 = Some("London"),
@@ -872,17 +797,17 @@ class PurchaserReturnsControllerSpec extends SpecBase {
     val testCreatePurchaserRequestMinimal: CreatePurchaserRequest = CreatePurchaserRequest(
       stornId = "STORN12345",
       returnResourceRef = "RRF-2024-001",
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = None,
       surname = None,
       forename1 = None,
       forename2 = None,
       companyName = None,
       houseNumber = None,
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = None,
       address3 = None,
       address4 = None,
@@ -899,17 +824,17 @@ class PurchaserReturnsControllerSpec extends SpecBase {
     val testCreatePurchaserRequestCompany: CreatePurchaserRequest = CreatePurchaserRequest(
       stornId = "STORN12345",
       returnResourceRef = "RRF-2024-001",
-      isCompany = "YES",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("YES"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = None,
       surname = None,
       forename1 = None,
       forename2 = None,
       companyName = Some("XYZ Properties Ltd"),
       houseNumber = Some("25"),
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = Some("Flat 3"),
       address3 = Some("Central District"),
       address4 = Some("London"),
@@ -932,17 +857,17 @@ class PurchaserReturnsControllerSpec extends SpecBase {
       stornId = "STORN12345",
       returnResourceRef = "RRF-2024-001",
       purchaserResourceRef = "PRF-001",
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones Updated"),
       forename1 = Some("David"),
       forename2 = Some("Michael"),
       companyName = None,
       houseNumber = Some("25"),
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = Some("Flat 3"),
       address3 = Some("Central District"),
       address4 = Some("London"),
@@ -961,17 +886,17 @@ class PurchaserReturnsControllerSpec extends SpecBase {
       stornId = "STORN12345",
       returnResourceRef = "RRF-2024-001",
       purchaserResourceRef = "PRF-001",
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = None,
       surname = None,
       forename1 = None,
       forename2 = None,
       companyName = None,
       houseNumber = None,
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = None,
       address3 = None,
       address4 = None,

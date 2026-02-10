@@ -1067,17 +1067,17 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     val payload = CreatePurchaserRequest(
       stornId = stornId,
       returnResourceRef = returnResourceRef,
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor =  Some("NO"),
+      isRepresentedByAgent =  Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones"),
       forename1 = Some("David"),
       forename2 = Some("Michael"),
       companyName = None,
       houseNumber = Some("25"),
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = Some("Flat 3"),
       address3 = Some("Central District"),
       address4 = Some("London"),
@@ -1116,7 +1116,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
 
     "return CreatePurchaserReturn for company purchaser" in {
       val companyPayload = payload.copy(
-        isCompany = "YES",
+        isCompany = Some("YES"),
         title = None,
         surname = None,
         forename1 = None,
@@ -1188,9 +1188,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val trusteePayload = payload.copy(isTrustee = "YES")
-      val connectedPayload = payload.copy(isConnectedToVendor = "YES")
-      val noAgentPayload = payload.copy(isRepresentedByAgent = "NO")
+      val trusteePayload = payload.copy(isTrustee = Some("YES"))
+      val connectedPayload = payload.copy(isConnectedToVendor = Some("YES"))
+      val noAgentPayload = payload.copy(isRepresentedByAgent = Some("NO"))
 
       connector.createPurchaser(trusteePayload).futureValue.purchaserId mustBe "PID-001"
       connector.createPurchaser(connectedPayload).futureValue.purchaserId mustBe "PID-001"
@@ -1236,17 +1236,17 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stornId = stornId,
       returnResourceRef = returnResourceRef,
       purchaserResourceRef = "PRF-001",
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee =  Some("NO"),
+      isConnectedToVendor =  Some("NO"),
+      isRepresentedByAgent =  Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones Updated"),
       forename1 = Some("David"),
       forename2 = Some("Michael"),
       companyName = None,
       houseNumber = Some("25"),
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = Some("Flat 3"),
       address3 = Some("Central District"),
       address4 = Some("London"),
