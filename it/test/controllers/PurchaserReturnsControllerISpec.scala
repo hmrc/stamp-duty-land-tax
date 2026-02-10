@@ -131,11 +131,11 @@ class PurchaserReturnsControllerISpec extends BaseSpec
           CreatePurchaserRequest(
             stornId = "storn",
             returnResourceRef = "returnResourceRef",
-            isCompany = "true",
-            isTrustee = "true",
-            isConnectedToVendor = "true",
-            isRepresentedByAgent = "true",
-            address1 = "address1"
+            isCompany = Some("YES"),
+            isTrustee = Some("YES"),
+            isConnectedToVendor = Some("YES"),
+            isRepresentedByAgent = Some("YES"),
+            address1 = Some("address1")
           )
         )
         val result = wsClient.url(createPurchaser)
@@ -152,11 +152,11 @@ class PurchaserReturnsControllerISpec extends BaseSpec
           CreatePurchaserRequest(
             stornId = "storn",
             returnResourceRef = "returnResourceRef",
-            isCompany = "true",
-            isTrustee = "true",
-            isConnectedToVendor = "true",
-            isRepresentedByAgent = "true",
-            address1 = "address1"
+            isCompany = Some("YES"),
+            isTrustee = Some("YES"),
+            isConnectedToVendor = Some("YES"),
+            isRepresentedByAgent = Some("YES"),
+            address1 = Some("address1")
           )
         )
         val result = wsClient.url(createPurchaser)
@@ -177,11 +177,11 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             stornId = "storn",
             returnResourceRef = "returnResourceRef",
             purchaserResourceRef = "purchaserResourceRef",
-            isCompany = "true",
-            isTrustee = "true",
-            isConnectedToVendor = "true",
-            isRepresentedByAgent = "true",
-            address1 = "address1"
+            isCompany = Some("YES"),
+            isTrustee = Some("YES"),
+            isConnectedToVendor = Some("YES"),
+            isRepresentedByAgent = Some("YES"),
+            address1 = Some("address1")
           )
         )
         val result = wsClient.url(updatePurchaser)
@@ -199,11 +199,11 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             stornId = "storn",
             returnResourceRef = "returnResourceRef",
             purchaserResourceRef = "purchaserResourceRef",
-            isCompany = "true",
-            isTrustee = "true",
-            isConnectedToVendor = "true",
-            isRepresentedByAgent = "true",
-            address1 = "address1"
+            isCompany = Some("YES"),
+            isTrustee = Some("YES"),
+            isConnectedToVendor = Some("YES"),
+            isRepresentedByAgent = Some("YES"),
+            address1 = Some("address1")
           )
         )
         val result = wsClient.url(updatePurchaser)

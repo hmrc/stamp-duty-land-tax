@@ -35,17 +35,17 @@ final class PurchaserReturnsServiceSpec extends SpecBase {
     CreatePurchaserRequest(
       stornId = stornId,
       returnResourceRef = returnResourceRef,
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones"),
       forename1 = Some("David"),
       forename2 = Some("Michael"),
       companyName = None,
       houseNumber = Some("25"),
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = Some("Flat 3"),
       address3 = Some("Central District"),
       address4 = Some("London"),
@@ -77,17 +77,17 @@ final class PurchaserReturnsServiceSpec extends SpecBase {
       stornId = stornId,
       returnResourceRef = returnResourceRef,
       purchaserResourceRef = purchaserResourceRef,
-      isCompany = "NO",
-      isTrustee = "NO",
-      isConnectedToVendor = "NO",
-      isRepresentedByAgent = "YES",
+      isCompany = Some("NO"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones Updated"),
       forename1 = Some("David"),
       forename2 = Some("Michael"),
       companyName = None,
       houseNumber = Some("25"),
-      address1 = "Park Avenue",
+      address1 = Some("Park Avenue"),
       address2 = Some("Flat 3"),
       address3 = Some("Central District"),
       address4 = Some("London"),
@@ -284,7 +284,7 @@ final class PurchaserReturnsServiceSpec extends SpecBase {
       val connector                     = mock[FilingFormpProxyConnector]
       val service                       = new PurchaserReturnsService(connector)
       val request: CreatePurchaserRequest  = mkCreatePurchaserRequest().copy(
-        isCompany = "YES",
+        isCompany = Some("YES"),
         title = None,
         surname = None,
         forename1 = None,
@@ -312,9 +312,9 @@ final class PurchaserReturnsServiceSpec extends SpecBase {
     "must handle different flag combinations" in {
       val connector                            = mock[FilingFormpProxyConnector]
       val service                              = new PurchaserReturnsService(connector)
-      val trusteeRequest: CreatePurchaserRequest    = mkCreatePurchaserRequest().copy(isTrustee = "YES")
-      val connectedRequest: CreatePurchaserRequest  = mkCreatePurchaserRequest().copy(isConnectedToVendor = "YES")
-      val noAgentRequest: CreatePurchaserRequest    = mkCreatePurchaserRequest().copy(isRepresentedByAgent = "NO")
+      val trusteeRequest: CreatePurchaserRequest    = mkCreatePurchaserRequest().copy(isTrustee = Some("YES"))
+      val connectedRequest: CreatePurchaserRequest  = mkCreatePurchaserRequest().copy(isConnectedToVendor = Some("YES"))
+      val noAgentRequest: CreatePurchaserRequest    = mkCreatePurchaserRequest().copy(isRepresentedByAgent = Some("NO"))
       implicit val hc: HeaderCarrier           = HeaderCarrier()
 
       when(connector.createPurchaser(eqTo(trusteeRequest))(any[HeaderCarrier]))
