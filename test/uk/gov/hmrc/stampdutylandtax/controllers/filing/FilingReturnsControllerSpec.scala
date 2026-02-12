@@ -227,10 +227,10 @@ class FilingReturnsControllerSpec extends SpecBase {
       "return BAD_REQUEST when storn is missing" in new BaseSetup {
         val invalidRequest: JsObject = Json.obj(
           "returnResourceRef" -> "100001",
-          "mainPurchaserId" -> "1",
-          "mainVendorId" -> "1",
-          "mainLandId" -> "1",
-          "irmarkGenerated" -> "IRMark123456",
+          "mainPurchaserID" -> "1",
+          "mainVendorID" -> "1",
+          "mainLandID" -> "1",
+          "IRMarkGenerated" -> "IRMark123456",
           "landCertForEachProp" -> "Y",
           "declaration" -> "Y"
         )
@@ -243,10 +243,10 @@ class FilingReturnsControllerSpec extends SpecBase {
       "return BAD_REQUEST when returnResourceRef is missing" in new BaseSetup {
         val invalidRequest: JsObject = Json.obj(
           "storn" -> "STORN123456",
-          "mainPurchaserId" -> "1",
-          "mainVendorId" -> "1",
-          "mainLandId" -> "1",
-          "irmarkGenerated" -> "IRMark123456",
+          "mainPurchaserID" -> "1",
+          "mainVendorID" -> "1",
+          "mainLandID" -> "1",
+          "IRMarkGenerated" -> "IRMark123456",
           "landCertForEachProp" -> "Y",
           "declaration" -> "Y"
         )
@@ -256,13 +256,13 @@ class FilingReturnsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
-      "return BAD_REQUEST when mainPurchaserId is missing" in new BaseSetup {
+      "return BAD_REQUEST when mainPurchaserID is missing" in new BaseSetup {
         val invalidRequest: JsObject = Json.obj(
           "storn" -> "STORN123456",
           "returnResourceRef" -> "100001",
-          "mainVendorId" -> "1",
-          "mainLandId" -> "1",
-          "irmarkGenerated" -> "IRMark123456",
+          "mainVendorID" -> "1",
+          "mainLandID" -> "1",
+          "IRMarkGenerated" -> "IRMark123456",
           "landCertForEachProp" -> "Y",
           "declaration" -> "Y"
         )
@@ -272,13 +272,13 @@ class FilingReturnsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
-      "return BAD_REQUEST when mainVendorId is missing" in new BaseSetup {
+      "return BAD_REQUEST when mainVendorID is missing" in new BaseSetup {
         val invalidRequest: JsObject = Json.obj(
           "storn" -> "STORN123456",
           "returnResourceRef" -> "100001",
-          "mainPurchaserId" -> "1",
-          "mainLandId" -> "1",
-          "irmarkGenerated" -> "IRMark123456",
+          "mainPurchaserID" -> "1",
+          "mainLandID" -> "1",
+          "IRMarkGenerated" -> "IRMark123456",
           "landCertForEachProp" -> "Y",
           "declaration" -> "Y"
         )
@@ -288,13 +288,13 @@ class FilingReturnsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
-      "return BAD_REQUEST when mainLandId is missing" in new BaseSetup {
+      "return BAD_REQUEST when mainLandID is missing" in new BaseSetup {
         val invalidRequest: JsObject = Json.obj(
           "storn" -> "STORN123456",
           "returnResourceRef" -> "100001",
-          "mainPurchaserId" -> "1",
-          "mainVendorId" -> "1",
-          "irmarkGenerated" -> "IRMark123456",
+          "mainPurchaserID" -> "1",
+          "mainVendorID" -> "1",
+          "IRMarkGenerated" -> "IRMark123456",
           "landCertForEachProp" -> "Y",
           "declaration" -> "Y"
         )
@@ -304,13 +304,13 @@ class FilingReturnsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
-      "return BAD_REQUEST when irmarkGenerated is missing" in new BaseSetup {
+      "return BAD_REQUEST when IRMarkGenerated is missing" in new BaseSetup {
         val invalidRequest: JsObject = Json.obj(
           "storn" -> "STORN123456",
           "returnResourceRef" -> "100001",
-          "mainPurchaserId" -> "1",
-          "mainVendorId" -> "1",
-          "mainLandId" -> "1",
+          "mainPurchaserID" -> "1",
+          "mainVendorID" -> "1",
+          "mainLandID" -> "1",
           "landCertForEachProp" -> "Y",
           "declaration" -> "Y"
         )
@@ -324,10 +324,10 @@ class FilingReturnsControllerSpec extends SpecBase {
         val invalidRequest: JsObject = Json.obj(
           "storn" -> "STORN123456",
           "returnResourceRef" -> "100001",
-          "mainPurchaserId" -> "1",
-          "mainVendorId" -> "1",
-          "mainLandId" -> "1",
-          "irmarkGenerated" -> "IRMark123456",
+          "mainPurchaserID" -> "1",
+          "mainVendorID" -> "1",
+          "mainLandID" -> "1",
+          "IRMarkGenerated" -> "IRMark123456",
           "declaration" -> "Y"
         )
         val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
@@ -340,10 +340,10 @@ class FilingReturnsControllerSpec extends SpecBase {
         val invalidRequest: JsObject = Json.obj(
           "storn" -> "STORN123456",
           "returnResourceRef" -> "100001",
-          "mainPurchaserId" -> "1",
-          "mainVendorId" -> "1",
-          "mainLandId" -> "1",
-          "irmarkGenerated" -> "IRMark123456",
+          "mainPurchaserID" -> "1",
+          "mainVendorID" -> "1",
+          "mainLandID" -> "1",
+          "IRMarkGenerated" -> "IRMark123456",
           "landCertForEachProp" -> "Y"
         )
         val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
@@ -409,14 +409,14 @@ class FilingReturnsControllerSpec extends SpecBase {
 
       "handle different entity IDs" in new BaseSetup {
         val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(
-          mainPurchaserId = "1",
-          mainVendorId = "1",
-          mainLandId = "1"
+          mainPurchaserID = "1",
+          mainVendorID = "1",
+          mainLandID = "1"
         )
         val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(
-          mainPurchaserId = "100",
-          mainVendorId = "200",
-          mainLandId = "300"
+          mainPurchaserID = "100",
+          mainVendorID = "200",
+          mainLandID = "300"
         )
 
         when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
@@ -430,9 +430,9 @@ class FilingReturnsControllerSpec extends SpecBase {
       }
 
       "handle different IRMark formats" in new BaseSetup {
-        val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(irmarkGenerated = "IRMark123456")
-        val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(irmarkGenerated = "IRMark-ABC-123")
-        val request3: UpdateReturnRequest = testUpdateReturnRequest.copy(irmarkGenerated = "12345678")
+        val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = "IRMark123456")
+        val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = "IRMark-ABC-123")
+        val request3: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = "12345678")
 
         when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testUpdateReturnResponse))
@@ -475,10 +475,10 @@ class FilingReturnsControllerSpec extends SpecBase {
     val testUpdateReturnRequest: UpdateReturnRequest = UpdateReturnRequest(
       storn = "STORN123456",
       returnResourceRef = "100001",
-      mainPurchaserId = "1",
-      mainVendorId = "1",
-      mainLandId = "1",
-      irmarkGenerated = "IRMark123456",
+      mainPurchaserID = "1",
+      mainVendorID = "1",
+      mainLandID = "1",
+      IRMarkGenerated = "IRMark123456",
       landCertForEachProp = "Y",
       declaration = "Y"
     )

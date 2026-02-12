@@ -21,10 +21,10 @@ import play.api.libs.json.{Json, OFormat}
 case class UpdateReturnRequest(
   storn: String,
   returnResourceRef: String,
-  mainPurchaserId: String,
-  mainVendorId: String,
-  mainLandId: String,
-  irmarkGenerated: String,
+  mainPurchaserID: String,
+  mainVendorID: String,
+  mainLandID: String,
+  IRMarkGenerated: String,
   landCertForEachProp: String,
   declaration: String
 )

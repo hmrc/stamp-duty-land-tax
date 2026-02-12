@@ -85,20 +85,20 @@ final class FilingReturnsServiceSpec extends SpecBase {
   private def mkUpdateReturnRequest(
                                        storn: String = "STORN12345",
                                        returnResourceRef: String = "100001",
-                                       mainPurchaserId: String = "1",
-                                       mainVendorId: String = "1",
-                                       mainLandId: String = "1",
-                                       irmarkGenerated: String = "IRMark123456",
+                                       mainPurchaserID: String = "1",
+                                       mainVendorID: String = "1",
+                                       mainLandID: String = "1",
+                                       IRMarkGenerated: String = "IRMark123456",
                                        landCertForEachProp: String = "Y",
                                        declaration: String = "Y"
                                      ): UpdateReturnRequest =
       UpdateReturnRequest(
         storn = storn,
         returnResourceRef = returnResourceRef,
-        mainPurchaserId = mainPurchaserId,
-        mainVendorId = mainVendorId,
-        mainLandId = mainLandId,
-        irmarkGenerated = irmarkGenerated,
+        mainPurchaserID = mainPurchaserID,
+        mainVendorID = mainVendorID,
+        mainLandID = mainLandID,
+        IRMarkGenerated = IRMarkGenerated,
         landCertForEachProp = landCertForEachProp,
         declaration = declaration
       )
@@ -589,9 +589,9 @@ final class FilingReturnsServiceSpec extends SpecBase {
     "must handle different IRMark formats" in {
       val connector = mock[FilingFormpProxyConnector]
       val service = new FilingReturnsService(connector)
-      val request1: UpdateReturnRequest = mkUpdateReturnRequest(irmarkGenerated = "IRMark123456")
-      val request2: UpdateReturnRequest = mkUpdateReturnRequest(irmarkGenerated = "IRMark-ABC-123")
-      val request3: UpdateReturnRequest = mkUpdateReturnRequest(irmarkGenerated = "12345678")
+      val request1: UpdateReturnRequest = mkUpdateReturnRequest(IRMarkGenerated = "IRMark123456")
+      val request2: UpdateReturnRequest = mkUpdateReturnRequest(IRMarkGenerated = "IRMark-ABC-123")
+      val request3: UpdateReturnRequest = mkUpdateReturnRequest(IRMarkGenerated = "12345678")
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
@@ -611,14 +611,14 @@ final class FilingReturnsServiceSpec extends SpecBase {
       val connector = mock[FilingFormpProxyConnector]
       val service = new FilingReturnsService(connector)
       val request1: UpdateReturnRequest = mkUpdateReturnRequest(
-        mainPurchaserId = "1",
-        mainVendorId = "1",
-        mainLandId = "1"
+        mainPurchaserID = "1",
+        mainVendorID = "1",
+        mainLandID = "1"
       )
       val request2: UpdateReturnRequest = mkUpdateReturnRequest(
-        mainPurchaserId = "100",
-        mainVendorId = "200",
-        mainLandId = "300"
+        mainPurchaserID = "100",
+        mainVendorID = "200",
+        mainLandID = "300"
       )
       implicit val hc: HeaderCarrier = HeaderCarrier()
 

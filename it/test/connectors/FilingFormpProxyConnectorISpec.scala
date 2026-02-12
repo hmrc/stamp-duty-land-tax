@@ -1713,10 +1713,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     val payload = UpdateReturnRequest(
       storn = stornId,
       returnResourceRef = "100001",
-      mainPurchaserId = "1",
-      mainVendorId = "1",
-      mainLandId = "1",
-      irmarkGenerated = "IRMark123456",
+      mainPurchaserID = "1",
+      mainVendorID = "1",
+      mainLandID = "1",
+      IRMarkGenerated = "IRMark123456",
       landCertForEachProp = "YES",
       declaration = "YES"
     )
@@ -1803,9 +1803,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val payload1 = payload.copy(irmarkGenerated = "IRMark123456")
-      val payload2 = payload.copy(irmarkGenerated = "IRMark-ABC-123")
-      val payload3 = payload.copy(irmarkGenerated = "12345678")
+      val payload1 = payload.copy(IRMarkGenerated = "IRMark123456")
+      val payload2 = payload.copy(IRMarkGenerated = "IRMark-ABC-123")
+      val payload3 = payload.copy(IRMarkGenerated = "12345678")
 
       connector.updateReturnInfo(payload1).futureValue.updated mustBe true
       connector.updateReturnInfo(payload2).futureValue.updated mustBe true
@@ -1822,8 +1822,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val payload1 = payload.copy(mainPurchaserId = "1", mainVendorId = "1", mainLandId = "1")
-      val payload2 = payload.copy(mainPurchaserId = "100", mainVendorId = "200", mainLandId = "300")
+      val payload1 = payload.copy(mainPurchaserID = "1", mainVendorID = "1", mainLandID = "1")
+      val payload2 = payload.copy(mainPurchaserID = "100", mainVendorID = "200", mainLandID = "300")
 
       connector.updateReturnInfo(payload1).futureValue.updated mustBe true
       connector.updateReturnInfo(payload2).futureValue.updated mustBe true
