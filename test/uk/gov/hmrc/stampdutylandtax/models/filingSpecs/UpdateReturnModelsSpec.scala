@@ -29,12 +29,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request = UpdateReturnRequest(
         storn = "STORN12345",
         returnResourceRef = "100001",
-        mainPurchaserID = "1",
-        mainVendorID = "1",
-        mainLandID = "1",
-        IRMarkGenerated = "IRMark123456",
-        landCertForEachProp = "YES",
-        declaration = "YES"
+        mainPurchaserID = Some("1"),
+        mainVendorID = Some("1"),
+        mainLandID = Some("1"),
+        IRMarkGenerated = Some("IRMark123456"),
+        landCertForEachProp = Some("YES"),
+        declaration = Some("YES")
       )
 
       val json = Json.toJson(request)
@@ -53,12 +53,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request = UpdateReturnRequest(
         storn = "STORN99999",
         returnResourceRef = "100002",
-        mainPurchaserID = "5",
-        mainVendorID = "3",
-        mainLandID = "7",
-        IRMarkGenerated = "IRMark999999",
-        landCertForEachProp = "NO",
-        declaration = "NO"
+        mainPurchaserID = Some("5"),
+        mainVendorID = Some("3"),
+        mainLandID = Some("7"),
+        IRMarkGenerated = Some("IRMark999999"),
+        landCertForEachProp = Some("NO"),
+        declaration = Some("NO")
       )
 
       val json = Json.toJson(request)
@@ -77,12 +77,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request = UpdateReturnRequest(
         storn = "STORN88888",
         returnResourceRef = "100003",
-        mainPurchaserID = "10",
-        mainVendorID = "20",
-        mainLandID = "30",
-        IRMarkGenerated = "IRMark888888",
-        landCertForEachProp = "YES",
-        declaration = "NO"
+        mainPurchaserID = Some("10"),
+        mainVendorID = Some("20"),
+        mainLandID = Some("30"),
+        IRMarkGenerated = Some("IRMark888888"),
+        landCertForEachProp = Some("YES"),
+        declaration = Some("NO")
       )
 
       val json = Json.toJson(request)
@@ -116,12 +116,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       request.storn mustBe "STORN12345"
       request.returnResourceRef mustBe "100001"
-      request.mainPurchaserID mustBe "1"
-      request.mainVendorID mustBe "1"
-      request.mainLandID mustBe "1"
-      request.IRMarkGenerated mustBe "IRMark123456"
-      request.landCertForEachProp mustBe "YES"
-      request.declaration mustBe "YES"
+      request.mainPurchaserID mustBe Some("1")
+      request.mainVendorID mustBe Some("1")
+      request.mainLandID mustBe Some("1")
+      request.IRMarkGenerated mustBe Some("IRMark123456")
+      request.landCertForEachProp mustBe Some("YES")
+      request.declaration mustBe Some("YES")
     }
 
     "must deserialize from JSON correctly with N values" in {
@@ -143,12 +143,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       request.storn mustBe "STORN99999"
       request.returnResourceRef mustBe "100002"
-      request.mainPurchaserID mustBe "5"
-      request.mainVendorID mustBe "3"
-      request.mainLandID mustBe "7"
-      request.IRMarkGenerated mustBe "IRMark999999"
-      request.landCertForEachProp mustBe "NO"
-      request.declaration mustBe "NO"
+      request.mainPurchaserID mustBe Some("5")
+      request.mainVendorID mustBe Some("3")
+      request.mainLandID mustBe Some("7")
+      request.IRMarkGenerated mustBe Some("IRMark999999")
+      request.landCertForEachProp mustBe Some("NO")
+      request.declaration mustBe Some("NO")
     }
 
     "must fail to deserialize when storn is missing" in {
@@ -183,7 +183,7 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       result.isError mustBe true
     }
 
-    "must fail to deserialize when mainPurchaserID is missing" in {
+    "must pass to deserialize when mainPurchaserID is missing" in {
       val json = Json.obj(
         "storn"               -> "STORN12345",
         "returnResourceRef"   -> "100001",
@@ -196,10 +196,10 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       val result = json.validate[UpdateReturnRequest]
 
-      result.isError mustBe true
+      result.isError mustBe false
     }
 
-    "must fail to deserialize when mainVendorID is missing" in {
+    "must pass to deserialize when mainVendorID is missing" in {
       val json = Json.obj(
         "storn"               -> "STORN12345",
         "returnResourceRef"   -> "100001",
@@ -212,10 +212,10 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       val result = json.validate[UpdateReturnRequest]
 
-      result.isError mustBe true
+      result.isError mustBe false
     }
 
-    "must fail to deserialize when mainLandID is missing" in {
+    "must pass to deserialize when mainLandID is missing" in {
       val json = Json.obj(
         "storn"               -> "STORN12345",
         "returnResourceRef"   -> "100001",
@@ -228,10 +228,10 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       val result = json.validate[UpdateReturnRequest]
 
-      result.isError mustBe true
+      result.isError mustBe false
     }
 
-    "must fail to deserialize when IRMarkGenerated is missing" in {
+    "must pass to deserialize when IRMarkGenerated is missing" in {
       val json = Json.obj(
         "storn"               -> "STORN12345",
         "returnResourceRef"   -> "100001",
@@ -244,10 +244,10 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       val result = json.validate[UpdateReturnRequest]
 
-      result.isError mustBe true
+      result.isError mustBe false
     }
 
-    "must fail to deserialize when landCertForEachProp is missing" in {
+    "must pass to deserialize when landCertForEachProp is missing" in {
       val json = Json.obj(
         "storn"             -> "STORN12345",
         "returnResourceRef" -> "100001",
@@ -260,10 +260,10 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       val result = json.validate[UpdateReturnRequest]
 
-      result.isError mustBe true
+      result.isError mustBe false
     }
 
-    "must fail to deserialize when declaration is missing" in {
+    "must pass to deserialize when declaration is missing" in {
       val json = Json.obj(
         "storn"               -> "STORN12345",
         "returnResourceRef"   -> "100001",
@@ -276,7 +276,7 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
 
       val result = json.validate[UpdateReturnRequest]
 
-      result.isError mustBe true
+      result.isError mustBe false
     }
 
     "must fail to deserialize when all fields are missing" in {
@@ -291,12 +291,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request1 = UpdateReturnRequest(
         storn = "STORN12345",
         returnResourceRef = "100001",
-        mainPurchaserID = "1",
-        mainVendorID = "1",
-        mainLandID = "1",
-        IRMarkGenerated = "123456789012",
-        landCertForEachProp = "YES",
-        declaration = "YES"
+        mainPurchaserID = Some("1"),
+        mainVendorID = Some("1"),
+        mainLandID = Some("1"),
+        IRMarkGenerated = Some("123456789012"),
+        landCertForEachProp = Some("YES"),
+        declaration = Some("YES")
       )
 
       val json1 = Json.toJson(request1)
@@ -305,12 +305,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request2 = UpdateReturnRequest(
         storn = "STORN12345",
         returnResourceRef = "100001",
-        mainPurchaserID = "1",
-        mainVendorID = "1",
-        mainLandID = "1",
-        IRMarkGenerated = "IRMark-ABC-123",
-        landCertForEachProp = "YES",
-        declaration = "YES"
+        mainPurchaserID = Some("1"),
+        mainVendorID = Some("1"),
+        mainLandID = Some("1"),
+        IRMarkGenerated = Some("IRMark-ABC-123"),
+        landCertForEachProp = Some("YES"),
+        declaration = Some("YES")
       )
 
       val json2 = Json.toJson(request2)
@@ -385,12 +385,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request = UpdateReturnRequest(
         storn = "STORN12345",
         returnResourceRef = "100001",
-        mainPurchaserID = "1",
-        mainVendorID = "1",
-        mainLandID = "1",
-        IRMarkGenerated = "IRMark123456",
-        landCertForEachProp = "YES",
-        declaration = "YES"
+        mainPurchaserID = Some("1"),
+        mainVendorID = Some("1"),
+        mainLandID = Some("1"),
+        IRMarkGenerated = Some("IRMark123456"),
+        landCertForEachProp = Some("YES"),
+        declaration = Some("YES")
       )
 
       val requestJson   = Json.toJson(request)
@@ -412,12 +412,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request = UpdateReturnRequest(
         storn = "STORN12345",
         returnResourceRef = "100001",
-        mainPurchaserID = "1",
-        mainVendorID = "1",
-        mainLandID = "1",
-        IRMarkGenerated = "IRMark123456",
-        landCertForEachProp = "YES",
-        declaration = "YES"
+        mainPurchaserID = Some("1"),
+        mainVendorID = Some("1"),
+        mainLandID = Some("1"),
+        IRMarkGenerated = Some("IRMark123456"),
+        landCertForEachProp = Some("YES"),
+        declaration = Some("YES")
       )
 
       val requestJson = Json.toJson(request)
@@ -434,12 +434,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request = UpdateReturnRequest(
         storn = "STORN99999",
         returnResourceRef = "100002",
-        mainPurchaserID = "5",
-        mainVendorID = "3",
-        mainLandID = "7",
-        IRMarkGenerated = "IRMark999999",
-        landCertForEachProp = "NO",
-        declaration = "NO"
+        mainPurchaserID = Some("5"),
+        mainVendorID = Some("3"),
+        mainLandID = Some("7"),
+        IRMarkGenerated = Some("IRMark999999"),
+        landCertForEachProp = Some("NO"),
+        declaration = Some("NO")
       )
 
       val requestJson = Json.toJson(request)
@@ -456,12 +456,12 @@ class UpdateReturnModelsSpec extends AnyFreeSpec with Matchers {
       val request = UpdateReturnRequest(
         storn = "STORN88888",
         returnResourceRef = "100003",
-        mainPurchaserID = "10",
-        mainVendorID = "20",
-        mainLandID = "30",
-        IRMarkGenerated = "IRMark888888",
-        landCertForEachProp = "YES",
-        declaration = "YES"
+        mainPurchaserID = Some("10"),
+        mainVendorID = Some("20"),
+        mainLandID = Some("30"),
+        IRMarkGenerated = Some("IRMark888888"),
+        landCertForEachProp = Some("YES"),
+        declaration = Some("YES")
       )
 
       val requestJson = Json.toJson(request)

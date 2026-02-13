@@ -1713,12 +1713,12 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     val payload = UpdateReturnRequest(
       storn = stornId,
       returnResourceRef = "100001",
-      mainPurchaserID = "1",
-      mainVendorID = "1",
-      mainLandID = "1",
-      IRMarkGenerated = "IRMark123456",
-      landCertForEachProp = "YES",
-      declaration = "YES"
+      mainPurchaserID = Some("1"),
+      mainVendorID = Some("1"),
+      mainLandID = Some("1"),
+      IRMarkGenerated = Some("IRMark123456"),
+      landCertForEachProp = Some("YES"),
+      declaration = Some("YES")
     )
 
     "return UpdateReturnReturn with updated=true when BE returns OK" in {
@@ -1758,7 +1758,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     }
 
     "handle update with Y values for boolean fields" in {
-      val yPayload = payload.copy(landCertForEachProp = "Y", declaration = "Y")
+      val yPayload = payload.copy(landCertForEachProp = Some("Y"), declaration = Some("Y"))
       val payloadJson = Json.toJson(yPayload)
 
       stubFor(
@@ -1776,7 +1776,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     }
 
     "handle update with N values for boolean fields" in {
-      val nPayload = payload.copy(landCertForEachProp = "N", declaration = "N")
+      val nPayload = payload.copy(landCertForEachProp = Some("N"), declaration = Some("N"))
       val payloadJson = Json.toJson(nPayload)
 
       stubFor(
@@ -1803,9 +1803,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val payload1 = payload.copy(IRMarkGenerated = "IRMark123456")
-      val payload2 = payload.copy(IRMarkGenerated = "IRMark-ABC-123")
-      val payload3 = payload.copy(IRMarkGenerated = "12345678")
+      val payload1 = payload.copy(IRMarkGenerated = Some("IRMark123456"))
+      val payload2 = payload.copy(IRMarkGenerated = Some("IRMark-ABC-123"))
+      val payload3 = payload.copy(IRMarkGenerated = Some("12345678"))
 
       connector.updateReturnInfo(payload1).futureValue.updated mustBe true
       connector.updateReturnInfo(payload2).futureValue.updated mustBe true
@@ -1822,8 +1822,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val payload1 = payload.copy(mainPurchaserID = "1", mainVendorID = "1", mainLandID = "1")
-      val payload2 = payload.copy(mainPurchaserID = "100", mainVendorID = "200", mainLandID = "300")
+      val payload1 = payload.copy(mainPurchaserID = Some("1"), mainVendorID = Some("1"), mainLandID = Some("1"))
+      val payload2 = payload.copy(mainPurchaserID = Some("100"), mainVendorID = Some("200"), mainLandID = Some("300"))
 
       connector.updateReturnInfo(payload1).futureValue.updated mustBe true
       connector.updateReturnInfo(payload2).futureValue.updated mustBe true
