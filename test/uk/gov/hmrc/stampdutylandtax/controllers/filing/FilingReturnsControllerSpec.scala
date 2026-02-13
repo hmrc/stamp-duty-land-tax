@@ -256,102 +256,6 @@ class FilingReturnsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
-      "return BAD_REQUEST when mainPurchaserID is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "storn" -> "STORN123456",
-          "returnResourceRef" -> "100001",
-          "mainVendorID" -> "1",
-          "mainLandID" -> "1",
-          "IRMarkGenerated" -> "IRMark123456",
-          "landCertForEachProp" -> "Y",
-          "declaration" -> "Y"
-        )
-        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when mainVendorID is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "storn" -> "STORN123456",
-          "returnResourceRef" -> "100001",
-          "mainPurchaserID" -> "1",
-          "mainLandID" -> "1",
-          "IRMarkGenerated" -> "IRMark123456",
-          "landCertForEachProp" -> "Y",
-          "declaration" -> "Y"
-        )
-        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when mainLandID is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "storn" -> "STORN123456",
-          "returnResourceRef" -> "100001",
-          "mainPurchaserID" -> "1",
-          "mainVendorID" -> "1",
-          "IRMarkGenerated" -> "IRMark123456",
-          "landCertForEachProp" -> "Y",
-          "declaration" -> "Y"
-        )
-        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when IRMarkGenerated is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "storn" -> "STORN123456",
-          "returnResourceRef" -> "100001",
-          "mainPurchaserID" -> "1",
-          "mainVendorID" -> "1",
-          "mainLandID" -> "1",
-          "landCertForEachProp" -> "Y",
-          "declaration" -> "Y"
-        )
-        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when landCertForEachProp is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "storn" -> "STORN123456",
-          "returnResourceRef" -> "100001",
-          "mainPurchaserID" -> "1",
-          "mainVendorID" -> "1",
-          "mainLandID" -> "1",
-          "IRMarkGenerated" -> "IRMark123456",
-          "declaration" -> "Y"
-        )
-        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
-      "return BAD_REQUEST when declaration is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "storn" -> "STORN123456",
-          "returnResourceRef" -> "100001",
-          "mainPurchaserID" -> "1",
-          "mainVendorID" -> "1",
-          "mainLandID" -> "1",
-          "IRMarkGenerated" -> "IRMark123456",
-          "landCertForEachProp" -> "Y"
-        )
-        val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
       "return BAD_REQUEST when all fields are missing" in new BaseSetup {
         val result: Future[Result] = controller.updateReturnInfo()(fakeRequest.withBody(Json.obj()))
 
@@ -381,8 +285,8 @@ class FilingReturnsControllerSpec extends SpecBase {
 
       "handle valid payload with Y values for boolean fields" in new BaseSetup {
         val request: UpdateReturnRequest = testUpdateReturnRequest.copy(
-          landCertForEachProp = "Y",
-          declaration = "Y"
+          landCertForEachProp = Some("Y"),
+          declaration = Some("Y")
         )
         when(mockFilingReturnsService.updateReturnInfo(eqTo(request))(any[HeaderCarrier]))
           .thenReturn(Future.successful(testUpdateReturnResponse))
@@ -395,8 +299,8 @@ class FilingReturnsControllerSpec extends SpecBase {
 
       "handle valid payload with N values for boolean fields" in new BaseSetup {
         val request: UpdateReturnRequest = testUpdateReturnRequest.copy(
-          landCertForEachProp = "N",
-          declaration = "N"
+          landCertForEachProp = Some("N"),
+          declaration = Some("N")
         )
         when(mockFilingReturnsService.updateReturnInfo(eqTo(request))(any[HeaderCarrier]))
           .thenReturn(Future.successful(testUpdateReturnResponse))
@@ -409,14 +313,14 @@ class FilingReturnsControllerSpec extends SpecBase {
 
       "handle different entity IDs" in new BaseSetup {
         val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(
-          mainPurchaserID = "1",
-          mainVendorID = "1",
-          mainLandID = "1"
+          mainPurchaserID = Some("1"),
+          mainVendorID = Some("1"),
+          mainLandID = Some("1")
         )
         val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(
-          mainPurchaserID = "100",
-          mainVendorID = "200",
-          mainLandID = "300"
+          mainPurchaserID = Some("100"),
+          mainVendorID = Some("200"),
+          mainLandID = Some("300")
         )
 
         when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
@@ -430,9 +334,9 @@ class FilingReturnsControllerSpec extends SpecBase {
       }
 
       "handle different IRMark formats" in new BaseSetup {
-        val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = "IRMark123456")
-        val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = "IRMark-ABC-123")
-        val request3: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = "12345678")
+        val request1: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = Some("IRMark123456"))
+        val request2: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = Some("IRMark-ABC-123"))
+        val request3: UpdateReturnRequest = testUpdateReturnRequest.copy(IRMarkGenerated = Some("12345678"))
 
         when(mockFilingReturnsService.updateReturnInfo(any[UpdateReturnRequest])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testUpdateReturnResponse))
@@ -475,12 +379,12 @@ class FilingReturnsControllerSpec extends SpecBase {
     val testUpdateReturnRequest: UpdateReturnRequest = UpdateReturnRequest(
       storn = "STORN123456",
       returnResourceRef = "100001",
-      mainPurchaserID = "1",
-      mainVendorID = "1",
-      mainLandID = "1",
-      IRMarkGenerated = "IRMark123456",
-      landCertForEachProp = "Y",
-      declaration = "Y"
+      mainPurchaserID = Some("1"),
+      mainVendorID = Some("1"),
+      mainLandID = Some("1"),
+      IRMarkGenerated = Some("IRMark123456"),
+      landCertForEachProp = Some("Y"),
+      declaration = Some("Y")
     )
 
     val testUpdateReturnResponse: UpdateReturnReturn = UpdateReturnReturn(
