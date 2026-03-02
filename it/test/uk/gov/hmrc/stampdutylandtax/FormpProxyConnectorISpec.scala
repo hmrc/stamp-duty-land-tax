@@ -16,15 +16,15 @@
 
 package connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalToJson, post, stubFor, urlPathEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import itutil.ApplicationWithWiremock
-import models.agent.{CreatePredefinedAgentRequest, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, CreatePredefinedAgentResponse}
+import models.agent.*
 import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.http.Status.*
-import play.api.libs.json.{JsBoolean, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.LocalDate
@@ -37,14 +37,16 @@ class FormpProxyConnectorISpec extends AnyWordSpec
   
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  private val connector: FormpProxyConnector = app.injector.instanceOf[FormpProxyConnector]
+  private val connectorWithStub: FormpProxyConnector = appWithSubOn.injector.instanceOf[FormpProxyConnector]
+  private val connectorWithFormP: FormpProxyConnector = appWithSubOff.injector.instanceOf[FormpProxyConnector]
 
   private val storn = "STN001"
   private val arn   = "ARN001"
 
   "submitAgentDetails" should {
 
-    val url = "/stamp-duty-land-tax-stub/create/predefined-agent"
+    val stubUrl = "/stamp-duty-land-tax-stub/create/predefined-agent"
+    val formpUrl = "/formp-proxy/create/predefined-agent"
 
     val payload = CreatePredefinedAgentRequest(
       storn       = "STN001",
@@ -58,39 +60,49 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       email        = Some("info@acmeagents.co.uk")
     )
 
-    "return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
+    "select stubUrl when stubFormPBool = true and return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""))
       )
 
-      val result = connector.submitAgentDetails(payload).futureValue
+      val result = connectorWithStub.submitAgentDetails(payload).futureValue
+      result mustBe CreatePredefinedAgentResponse(agentResourceRef = "ARN4324234", agentId = "1234")
+    }
+    "select formpUrl when stubFormPBool = false and return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
+      stubFor(
+        post(urlPathEqualTo(formpUrl))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""))
+      )
+
+      val result = connectorWithFormP.submitAgentDetails(payload).futureValue
       result mustBe CreatePredefinedAgentResponse(agentResourceRef = "ARN4324234", agentId = "1234")
     }
 
     "fail when BE returns OK with invalid JSON" in {
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
       )
 
       val ex = intercept[Exception] {
-        connector.submitAgentDetails(payload).futureValue
+        connectorWithStub.submitAgentDetails(payload).futureValue
       }
       ex.getMessage.toLowerCase must include ("agentresourceref")
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
 
       val ex = intercept[Exception] {
-        connector.submitAgentDetails(payload).futureValue
+        connectorWithStub.submitAgentDetails(payload).futureValue
       }
       ex.getMessage must include ("returned 500")
     }
@@ -98,40 +110,152 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "deletePredefinedAgent" should {
 
-    val url = "/stamp-duty-land-tax-stub/delete/predefined-agent"
+    val stubUrl = "/stamp-duty-land-tax-stub/delete/predefined-agent"
+    val formpUrl = "/formp-proxy/delete/predefined-agent"
+
     val req = DeletePredefinedAgentRequest(storn, arn)
 
-    "return Unit when BE returns OK with valid JSON object" in {
+    "select formPUrl when stubFormPBool = true and return OK with valid JSON object" in {
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(formpUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
       )
 
-      val result = connector.deletePredefinedAgent(req).futureValue
+      val result = connectorWithFormP.deletePredefinedAgent(req).futureValue
+      result mustBe DeletePredefinedAgentResponse(true)
+    }
+
+    "select stubURL when stubFormPBool = false and return OK with valid JSON object" in {
+      stubFor(
+        post(urlPathEqualTo(stubUrl))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
+      )
+
+      val result = connectorWithStub.deletePredefinedAgent(req).futureValue
       result mustBe DeletePredefinedAgentResponse(true)
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
 
       val ex = intercept[Exception] {
-        connector.deletePredefinedAgent(req).futureValue
+        connectorWithStub.deletePredefinedAgent(req).futureValue
       }
       ex.getMessage must include ("boom")
+    }
+    "propagate Exception  when BE throws unexpected JSResult " in {
+      stubFor(
+        post(urlPathEqualTo(stubUrl))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}"""))
+      )
+
+      val ex = intercept[Exception] {
+        connectorWithStub.deletePredefinedAgent(req).futureValue
+      }
+      ex mustBe a[RuntimeException]
     }
   }
 
   "getReturns" should {
 
-    val url = "/stamp-duty-land-tax-stub/returns"
+    val stubUrl = "/stamp-duty-land-tax-stub/returns"
+    val formpUrl = "/formp-proxy/returns"
 
     val request = SdltReturnRecordRequest(storn = storn, None, false, None)
 
+    "select formPUrl when stubFormPBool = false, return SdltReturnRecordResponse when BE returns OK with valid JSON" in {
+
+      val responseBody =
+        s"""
+           |{
+           |  "storn": "$storn",
+           |  "returnSummaryCount": 1,
+           |  "returnSummaryList": [
+           |    {
+           |      "returnReference": "RET123",
+           |      "utrn": "UTRN001",
+           |      "status": "SUBMITTED",
+           |      "dateSubmitted": "2025-11-10",
+           |      "purchaserName": "John Smith",
+           |      "address": "10 Downing Street, London",
+           |      "agentReference": "Smith & Co"
+           |    }
+           |  ]
+           |}
+         """.stripMargin
+
+      stubFor(
+        post(urlPathEqualTo(formpUrl))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(responseBody))
+      )
+
+      val result = connectorWithFormP.getReturns(request).futureValue
+      result mustBe SdltReturnRecordResponse(
+        returnSummaryCount = Some(1),
+        returnSummaryList = List(
+          ReturnSummary(
+            returnReference = "RET123",
+            utrn = Some("UTRN001"),
+            status = "SUBMITTED",
+            dateSubmitted = Some(LocalDate.parse("2025-11-10")),
+            purchaserName = "John Smith",
+            address = "10 Downing Street, London",
+            agentReference = Some("Smith & Co")
+          )
+        )
+      )
+    }
+    "select stubUrl when stubFormPBool = true, return SdltReturnRecordResponse when BE returns OK with valid JSON" in {
+
+      val responseBody =
+        s"""
+           |{
+           |  "storn": "$storn",
+           |  "returnSummaryCount": 1,
+           |  "returnSummaryList": [
+           |    {
+           |      "returnReference": "RET123",
+           |      "utrn": "UTRN001",
+           |      "status": "SUBMITTED",
+           |      "dateSubmitted": "2025-11-10",
+           |      "purchaserName": "John Smith",
+           |      "address": "10 Downing Street, London",
+           |      "agentReference": "Smith & Co"
+           |    }
+           |  ]
+           |}
+         """.stripMargin
+
+      stubFor(
+        post(urlPathEqualTo(stubUrl))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(responseBody))
+      )
+
+      val result = connectorWithStub.getReturns(request).futureValue
+      result mustBe SdltReturnRecordResponse(
+        returnSummaryCount = Some(1),
+        returnSummaryList = List(
+          ReturnSummary(
+            returnReference = "RET123",
+            utrn = Some("UTRN001"),
+            status = "SUBMITTED",
+            dateSubmitted = Some(LocalDate.parse("2025-11-10")),
+            purchaserName = "John Smith",
+            address = "10 Downing Street, London",
+            agentReference = Some("Smith & Co")
+          )
+        )
+      )
+    }
     "return SdltReturnRecordResponse when BE returns OK with valid JSON" in {
 
       val responseBody =
@@ -154,12 +278,12 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          """.stripMargin
 
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody(responseBody))
       )
 
-      val result = connector.getReturns(request).futureValue
+      val result = connectorWithStub.getReturns(request).futureValue
       result mustBe SdltReturnRecordResponse(
         returnSummaryCount = Some(1),
         returnSummaryList = List(
@@ -179,13 +303,13 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     "fail when BE returns OK with invalid JSON" in {
 
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
       )
 
       val ex = intercept[Exception] {
-        connector.getReturns(request).futureValue
+        connectorWithStub.getReturns(request).futureValue
       }
       ex.getMessage.toLowerCase must include("error")
     }
@@ -193,13 +317,13 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
 
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
 
       val ex = intercept[Exception] {
-        connector.getReturns(request).futureValue
+        connectorWithStub.getReturns(request).futureValue
       }
       ex.getMessage must include("returned 500")
     }
@@ -207,9 +331,10 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "getSdltOrganisation" should {
 
-    val url = "/stamp-duty-land-tax-stub/organisation"
+    val stubUrl = "/stamp-duty-land-tax-stub/organisation"
+    val formpUrl = "/formp-proxy/organisation"
 
-    "return SdltOrganisation when BE returns OK with valid JSON" in {
+    "select formUrl when stubFormPBool = false and return SdltOrganisation when BE returns OK with valid JSON" in {
       val responseJson =
         s"""
            |{
@@ -237,12 +362,82 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          """.stripMargin
 
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(formpUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody(responseJson))
       )
 
-      val result = connector.getSdltOrganisation(storn).futureValue
+      val result = connectorWithFormP.getSdltOrganisation(storn).futureValue
+
+      result mustBe SdltOrganisationResponse(
+        storn = storn,
+        version = Some("1"),
+        isReturnUser = Some("true"),
+        doNotDisplayWelcomePage = Some("Yes"),
+        agents = Seq(
+          CreatedAgent(
+            storn                  = Some(storn),
+            agentId                = Some("AGT001"),
+            name                   = Some("John"),
+            houseNumber            = None,
+            address1               = Some("1 High Street"),
+            address2               = Some("Westminster"),
+            address3               = Some("London"),
+            address4               = Some("Greater London"),
+            postcode               = Some("SW72AZ"),
+            phone                  = Some("02079460000"),
+            email                  = Some("info@acme.co.uk"),
+            dxAddress              = None,
+            agentResourceReference = Some("ARN001")
+          )
+        )
+      )
+
+      result.toString must include("SW72AZ")
+      result.toString must include("AGT001")
+      result.toString must include("John")
+      result.toString must include("ARN001")
+      result.toString must include("02079460000")
+      result.toString must include("1 High Street")
+      result.toString must include("Westminster")
+      result.toString must include("London")
+      result.toString must include("Greater London")
+      result.toString must include("info@acme.co.uk")
+    }
+    "select stubUrl when stubFormPBool = true and return SdltOrganisation when BE returns OK with valid JSON" in {
+      val responseJson =
+        s"""
+           |{
+           |  "storn": "STN001",
+           |  "version": "1",
+           |  "isReturnUser": "true",
+           |  "doNotDisplayWelcomePage": "Yes",
+           |  "agents": [
+           |    {
+           |      "agentResourceReference": "ARN001",
+           |      "name": "John",
+           |      "storn": "STN001",
+           |      "agentId": "AGT001",
+           |      "address1": "1 High Street",
+           |      "address2": "Westminster",
+           |      "address3": "London",
+           |      "address4": "Greater London",
+           |      "postcode": "SW72AZ",
+           |      "phone": "02079460000",
+           |      "email": "info@acme.co.uk"
+           |    }
+           |  ]
+           |}
+           |
+         """.stripMargin
+
+      stubFor(
+        post(urlPathEqualTo(stubUrl))
+          .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(responseJson))
+      )
+
+      val result = connectorWithStub.getSdltOrganisation(storn).futureValue
 
       result mustBe SdltOrganisationResponse(
         storn = storn,
@@ -282,28 +477,98 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "fail when BE returns OK with invalid JSON" in {
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
       )
 
       val ex = intercept[Exception] {
-        connector.getSdltOrganisation(storn).futureValue
+        connectorWithStub.getSdltOrganisation(storn).futureValue
       }
       ex.getMessage.toLowerCase must include("error")
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
-        post(urlPathEqualTo(url))
+        post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
 
       val ex = intercept[Exception] {
-        connector.getSdltOrganisation(storn).futureValue
+        connectorWithStub.getSdltOrganisation(storn).futureValue
       }
       ex.getMessage must include("returned 500")
+    }
+  }
+
+  "updateAgentDetails" should {
+    val stubUrl = "/stamp-duty-land-tax-stub/update/predefined-agent"
+    val formpUrl = "/formp-proxy/update/predefined-agent"
+
+    val agentName = "John Snow"
+    val req = UpdatePredefinedAgentRequest(
+      arn,
+      storn,
+      agentName,
+      Some("value"),
+      None,
+      None,
+      Some("value"),
+      None,
+      Some("value"),
+      Some("value"),
+      Some("value"),
+      None
+    )
+
+    val payLoad = Json.toJson(req)
+
+    "select formPUrl when stubFormPBool = true and return CREATED with valid JSON object" in {
+      stubFor(
+        post(urlPathEqualTo(formpUrl))
+          .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "updated": true }"""))
+      )
+
+      val result = connectorWithFormP.updateAgentDetails(req).futureValue
+      result mustBe UpdatePredefinedAgentResponse(true)
+    }
+
+    "select stubURL when stubFormPBool = false and return OK with valid JSON object" in {
+      stubFor(
+        post(urlPathEqualTo(stubUrl))
+          .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "updated": true }"""))
+      )
+
+      val result = connectorWithStub.updateAgentDetails(req).futureValue
+      result mustBe UpdatePredefinedAgentResponse(true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(stubUrl))
+          .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connectorWithStub.updateAgentDetails(req).futureValue
+      }
+      ex.getMessage must include("boom")
+    }
+    "propagate Exception  when BE throws unexpected JSResult " in {
+      stubFor(
+        post(urlPathEqualTo(stubUrl))
+          .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}"""))
+      )
+
+      val ex = intercept[Exception] {
+        connectorWithStub.updateAgentDetails(req).futureValue
+      }
+      ex mustBe a[RuntimeException]
     }
   }
 }

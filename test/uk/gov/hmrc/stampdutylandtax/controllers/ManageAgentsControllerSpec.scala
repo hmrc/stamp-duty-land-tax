@@ -134,6 +134,15 @@ class ManageAgentsControllerSpec extends SpecBase {
         contentAsJson(result) mustBe Json.obj("deleted" -> true)
         verify(mockManageAgentsService).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
       }
+      "returns BAD_REQUEST(400) with message when given an invalid json body" in new BaseSetup {
+        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testDeletePredefinedAgentDetailsFailedResponse))
+
+        val result: Future[Result] = controller.deletePredefinedAgent(fakeRequest.withBody(Json.toJson(Json.obj())))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] must include("Invalid payload")
+      }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
         when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))

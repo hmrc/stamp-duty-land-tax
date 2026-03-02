@@ -20,7 +20,7 @@ import models.filing.{CreateLandRequest, DeleteLandRequest, UpdateLandRequest}
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
-import service.filing.{FilingLandService, FilingReturnsService}
+import service.filing.FilingLandService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 

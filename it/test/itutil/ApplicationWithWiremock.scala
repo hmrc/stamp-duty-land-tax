@@ -35,17 +35,34 @@ trait ApplicationWithWiremock
 
   lazy val wireMock = new WireMock
 
+
   val extraConfig: Map[String, Any] = {
     Map[String, Any](
-      "microservice.services.auth.host"                -> WireMockConstants.stubHost,
-      "microservice.services.auth.port"                -> WireMockConstants.stubPort,
-      "microservice.services.chris.host"               -> WireMockConstants.stubHost,
-      "microservice.services.chris.port"               -> WireMockConstants.stubPort,
+      "microservice.services.auth.host" -> WireMockConstants.stubHost,
+      "microservice.services.auth.port" -> WireMockConstants.stubPort,
+      "microservice.services.chris.host" -> WireMockConstants.stubHost,
+      "microservice.services.chris.port" -> WireMockConstants.stubPort,
       "microservice.services.rds-datacache-proxy.host" -> WireMockConstants.stubHost,
       "microservice.services.rds-datacache-proxy.port" -> WireMockConstants.stubPort,
-      "microservice.services.formp-proxy.host"         -> WireMockConstants.stubHost,
-      "microservice.services.formp-proxy.port"         -> WireMockConstants.stubPort,
+      "microservice.services.formp-proxy.host" -> WireMockConstants.stubHost,
+      "microservice.services.formp-proxy.port" -> WireMockConstants.stubPort,
       "microservice.services.stamp-duty-land-tax-stub.port" -> WireMockConstants.stubPort,
+      "microservice.services.stamp-duty-land-tax-stub.host" -> WireMockConstants.stubHost
+    )
+  }
+
+  def extraConfigWithStubOnOrOff(stubFormPBool: Boolean): Map[String, Any] = {
+    Map[String, Any](
+      "microservice.services.auth.host" -> WireMockConstants.stubHost,
+      "microservice.services.auth.port" -> WireMockConstants.stubPort,
+      "microservice.services.chris.host" -> WireMockConstants.stubHost,
+      "microservice.services.chris.port" -> WireMockConstants.stubPort,
+      "microservice.services.rds-datacache-proxy.host" -> WireMockConstants.stubHost,
+      "microservice.services.rds-datacache-proxy.port" -> WireMockConstants.stubPort,
+      "microservice.services.formp-proxy.host" -> WireMockConstants.stubHost,
+      "microservice.services.formp-proxy.port" -> WireMockConstants.stubPort,
+      "microservice.services.stamp-duty-land-tax-stub.port" -> WireMockConstants.stubPort,
+      "features.stub-formp-enabled" -> stubFormPBool,
       "microservice.services.stamp-duty-land-tax-stub.host" -> WireMockConstants.stubHost
     )
   }
@@ -54,7 +71,18 @@ trait ApplicationWithWiremock
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfig)
     .build()
-
+  
+  lazy val appWithSubOn: Application = new GuiceApplicationBuilder()
+    .in(Environment.simple(mode = Mode.Dev))
+    .configure(extraConfigWithStubOnOrOff(true))
+    .build()
+  
+  lazy val appWithSubOff: Application = new GuiceApplicationBuilder()
+    .in(Environment.simple(mode = Mode.Dev))
+    .configure(extraConfigWithStubOnOrOff(false))
+    .build()
+  
+  
   lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   override protected def beforeAll(): Unit =
