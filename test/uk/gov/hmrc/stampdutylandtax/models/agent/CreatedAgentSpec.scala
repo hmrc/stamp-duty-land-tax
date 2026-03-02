@@ -24,7 +24,7 @@ import play.api.libs.json.Json
 class CreatedAgentSpec extends AnyWordSpec with Matchers {
 
   "CreatedAgent (JSON)" should {
-    "must deserialize when all fields are present " in {
+    "read and write a fully-populated when all fields are present " in {
     val json = Json.parse (
         """
           |{

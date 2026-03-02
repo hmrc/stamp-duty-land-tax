@@ -36,8 +36,6 @@ class ManageAgentsController @Inject()(
 )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async { implicit request =>
-    
-
     service.getSdltOrganisation(storn) map { sdltOrganisation =>
       Ok(Json.toJson(
         sdltOrganisation
