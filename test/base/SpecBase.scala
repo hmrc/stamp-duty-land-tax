@@ -141,6 +141,9 @@ trait   SpecBase
     agentId = "4567"
   )
 
+  val testDeletePredefinedAgentDetailsFailedResponse: DeletePredefinedAgentResponse = DeletePredefinedAgentResponse(
+    false
+  )
 
   val testDeletePredefinedAgentRequest: DeletePredefinedAgentRequest = DeletePredefinedAgentRequest(
     storn = "STN001",
