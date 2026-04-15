@@ -2525,4 +2525,120 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     }
   }
 
+  "updateTransaction" should {
+
+    val url = "/formp-proxy/filing/update/transaction"
+
+    val payload = UpdateTransactionRequest(
+      storn = stornId,
+      returnResourceRef = returnResourceRef,
+      transaction = TransactionPayload()
+    )
+
+    "return UpdateTransactionReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTransaction(payload).futureValue
+
+      result mustBe UpdateTransactionReturn(updated = true)
+    }
+
+    "return UpdateTransactionReturn with updated=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTransaction(payload).futureValue
+
+      result mustBe UpdateTransactionReturn(updated = true)
+    }
+
+    "handle request with complete transaction payload" in {
+      val completePayload = payload.copy(
+        transaction = TransactionPayload(
+          claimingRelief = Some("YES"),
+          totalConsider = Some("200000"),
+          effectiveDate = Some("2024-02-01"),
+          contractDate = Some("2024-01-15"),
+          isLandExchanged = Some("NO")
+        )
+      )
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTransaction(completePayload).futureValue
+      result mustBe UpdateTransactionReturn(updated = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTransaction(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTransaction(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTransaction(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
 }

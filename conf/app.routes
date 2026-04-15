@@ -39,3 +39,6 @@ POST       /filing/delete/land                              uk.gov.hmrc.stampdut
 POST        /filing/create/residency                        uk.gov.hmrc.stampdutylandtax.controllers.filing.ResidencyReturnsController.createResidency()
 POST        /filing/update/residency                        uk.gov.hmrc.stampdutylandtax.controllers.filing.ResidencyReturnsController.updateResidency()
 POST        /filing/delete/residency                        uk.gov.hmrc.stampdutylandtax.controllers.filing.ResidencyReturnsController.deleteResidency()
+
+
+POST        /filing/update/transaction                      uk.gov.hmrc.stampdutylandtax.controllers.filing.TransactionReturnsController.updateTransaction()

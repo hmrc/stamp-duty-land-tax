@@ -324,4 +324,17 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][deleteResidency]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
+
+  def updateTransaction(updateTransactionRequest: UpdateTransactionRequest)(implicit hc: HeaderCarrier): Future[UpdateTransactionReturn] =
+    http.post(url"$formpPath/filing/update/transaction")
+      .withBody(Json.toJson(updateTransactionRequest))
+      .execute[UpdateTransactionReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateTransaction]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateTransaction]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
 }
