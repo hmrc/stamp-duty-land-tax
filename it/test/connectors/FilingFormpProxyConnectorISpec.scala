@@ -2280,4 +2280,365 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     }
   }
 
+  "createResidency" should {
+
+    val url = "/formp-proxy/filing/create/residency"
+
+    val payload = CreateResidencyRequest(
+      stornId = stornId,
+      returnResourceRef = returnResourceRef,
+      residency = ResidencyPayload(
+        isNonUkResidents = "NO",
+        isCompany = "NO",
+        isCrownRelief = "NO"
+      )
+    )
+
+    "return CreateResidencyReturn when BE returns OK with valid JSON" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                s"""{
+                   |  "residencyResourceRef": "RRF-001",
+                   |  "residencyId": "RID-001"
+                   |}""".stripMargin
+              )
+          )
+      )
+
+      val result = connector.createResidency(payload).futureValue
+
+      result mustBe CreateResidencyReturn(residencyResourceRef = "RRF-001", residencyId = "RID-001")
+    }
+
+    "handle different residency flag combinations" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(s"""{ "residencyResourceRef": "RRF-001", "residencyId": "RID-001" }""")
+          )
+      )
+
+      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "YES"))
+      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = "YES"))
+      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
+
+      connector.createResidency(nonUkPayload).futureValue.residencyId mustBe "RID-001"
+      connector.createResidency(companyPayload).futureValue.residencyId mustBe "RID-001"
+      connector.createResidency(crownPayload).futureValue.residencyId mustBe "RID-001"
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createResidency(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createResidency(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "updateResidency" should {
+
+    val url = "/formp-proxy/filing/update/residency"
+
+    val payload = UpdateResidencyRequest(
+      stornId = stornId,
+      returnResourceRef = returnResourceRef,
+      residency = ResidencyPayload(
+        isNonUkResidents = "NO",
+        isCompany = "NO",
+        isCrownRelief = "NO"
+      )
+    )
+
+    "return UpdateResidencyReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateResidencyReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateResidency(payload).futureValue
+
+      result mustBe UpdateResidencyReturn(updated = true)
+    }
+
+    "handle different residency flag combinations" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateResidencyReturn(updated = true))))
+          )
+      )
+
+      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "YES"))
+      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = "YES"))
+      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
+
+      connector.updateResidency(nonUkPayload).futureValue.updated mustBe true
+      connector.updateResidency(companyPayload).futureValue.updated mustBe true
+      connector.updateResidency(crownPayload).futureValue.updated mustBe true
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateResidency(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateResidency(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "deleteResidency" should {
+
+    val url = "/formp-proxy/filing/delete/residency"
+
+    val payload = DeleteResidencyRequest(
+      storn = stornId,
+      returnResourceRef = returnResourceRef
+    )
+
+    "return DeleteResidencyReturn with deleted=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(DeleteResidencyReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deleteResidency(payload).futureValue
+
+      result mustBe DeleteResidencyReturn(deleted = true)
+    }
+
+    "return DeleteResidencyReturn with deleted=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(DeleteResidencyReturn(deleted = true))))
+          )
+      )
+
+      val result = connector.deleteResidency(payload).futureValue
+
+      result mustBe DeleteResidencyReturn(deleted = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteResidency(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteResidency(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "updateTransaction" should {
+
+    val url = "/formp-proxy/filing/update/transaction"
+
+    val payload = UpdateTransactionRequest(
+      storn = stornId,
+      returnResourceRef = returnResourceRef,
+      transaction = TransactionPayload()
+    )
+
+    "return UpdateTransactionReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTransaction(payload).futureValue
+
+      result mustBe UpdateTransactionReturn(updated = true)
+    }
+
+    "return UpdateTransactionReturn with updated=true when BE returns CREATED" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTransaction(payload).futureValue
+
+      result mustBe UpdateTransactionReturn(updated = true)
+    }
+
+    "handle request with complete transaction payload" in {
+      val completePayload = payload.copy(
+        transaction = TransactionPayload(
+          claimingRelief = Some("YES"),
+          totalConsider = Some("200000"),
+          effectiveDate = Some("2024-02-01"),
+          contractDate = Some("2024-01-15"),
+          isLandExchanged = Some("NO")
+        )
+      )
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTransaction(completePayload).futureValue
+      result mustBe UpdateTransactionReturn(updated = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTransaction(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTransaction(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTransaction(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
 }

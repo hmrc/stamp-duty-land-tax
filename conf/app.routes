@@ -35,3 +35,10 @@ POST        /filing/delete/company-details                  uk.gov.hmrc.stampdut
 POST       /filing/create/land                              uk.gov.hmrc.stampdutylandtax.controllers.filing.LandReturnsController.createLand()
 POST       /filing/update/land                              uk.gov.hmrc.stampdutylandtax.controllers.filing.LandReturnsController.updateLand()
 POST       /filing/delete/land                              uk.gov.hmrc.stampdutylandtax.controllers.filing.LandReturnsController.deleteLand()
+
+POST        /filing/create/residency                        uk.gov.hmrc.stampdutylandtax.controllers.filing.ResidencyReturnsController.createResidency()
+POST        /filing/update/residency                        uk.gov.hmrc.stampdutylandtax.controllers.filing.ResidencyReturnsController.updateResidency()
+POST        /filing/delete/residency                        uk.gov.hmrc.stampdutylandtax.controllers.filing.ResidencyReturnsController.deleteResidency()
+
+
+POST        /filing/update/transaction                      uk.gov.hmrc.stampdutylandtax.controllers.filing.TransactionReturnsController.updateTransaction()
