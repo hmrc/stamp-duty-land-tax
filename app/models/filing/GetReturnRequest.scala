@@ -151,8 +151,9 @@ case class Vendor(
                    postcode: Option[String] = None,
                    isRepresentedByAgent: Option[String] = None,
                    vendorResourceRef: Option[String] = None,
-                   nextVendorID: Option[String] = None
-                 )
+                   nextVendorID: Option[String] = None,
+                   lastUpdateDate: Option[String] = None
+)
 
 object Vendor {
   private val baseFormat: OFormat[Vendor] = Json.format[Vendor]
@@ -195,7 +196,8 @@ case class Land(
                  titleNumber: Option[String] = None,
                  landResourceRef: Option[String] = None,
                  nextLandID: Option[String] = None,
-                 DARPostcode: Option[String] = None
+                 DARPostcode: Option[String] = None,
+                 lastUpdateDate: Option[String] = None
                )
 
 object Land {
