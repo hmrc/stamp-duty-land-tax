@@ -50,13 +50,9 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     )
 
   private def mkCreateResidencyReturn(
-                                       residencyResourceRef: String = "RRF-001",
-                                       residencyId: String          = "RID-001"
+                                       created: Boolean = true
                                      ): CreateResidencyReturn =
-    CreateResidencyReturn(
-      residencyResourceRef = residencyResourceRef,
-      residencyId          = residencyId
-    )
+    CreateResidencyReturn(created = created)
 
   private def mkUpdateResidencyRequest(
                                         stornId: String           = "STORN12345",
@@ -82,14 +78,14 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
 
   private def mkDeleteResidencyReturn(deleted: Boolean = true): DeleteResidencyReturn =
     DeleteResidencyReturn(deleted = deleted)
-  
+
   "ResidencyReturnsService createResidency" - {
 
     "must delegate to connector (happy path)" in {
-      val connector                             = mock[FilingFormpProxyConnector]
-      val service                               = new ResidencyReturnsService(connector)
-      val request: CreateResidencyRequest       = mkCreateResidencyRequest()
-      implicit val hc: HeaderCarrier            = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: CreateResidencyRequest = mkCreateResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.createResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkCreateResidencyReturn()))
@@ -102,19 +98,19 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must return different results for different requests" in {
-      val connector                              = mock[FilingFormpProxyConnector]
-      val service                                = new ResidencyReturnsService(connector)
-      val request1: CreateResidencyRequest       = mkCreateResidencyRequest("STORN11111", "RRF-001")
-      val request2: CreateResidencyRequest       = mkCreateResidencyRequest("STORN22222", "RRF-002")
-      implicit val hc: HeaderCarrier             = HeaderCarrier()
+      val connector                        = mock[FilingFormpProxyConnector]
+      val service                          = new ResidencyReturnsService(connector)
+      val request1: CreateResidencyRequest = mkCreateResidencyRequest("STORN11111", "RRF-001")
+      val request2: CreateResidencyRequest = mkCreateResidencyRequest("STORN22222", "RRF-002")
+      implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.createResidency(eqTo(request1))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResidencyReturn("RRF-001", "RID-001")))
+        .thenReturn(Future.successful(mkCreateResidencyReturn(true)))
       when(connector.createResidency(eqTo(request2))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResidencyReturn("RRF-002", "RID-002")))
+        .thenReturn(Future.successful(mkCreateResidencyReturn(true)))
 
-      service.createResidency(request1).futureValue mustBe mkCreateResidencyReturn("RRF-001", "RID-001")
-      service.createResidency(request2).futureValue mustBe mkCreateResidencyReturn("RRF-002", "RID-002")
+      service.createResidency(request1).futureValue mustBe mkCreateResidencyReturn(true)
+      service.createResidency(request2).futureValue mustBe mkCreateResidencyReturn(true)
 
       verify(connector).createResidency(eqTo(request1))(any[HeaderCarrier])
       verify(connector).createResidency(eqTo(request2))(any[HeaderCarrier])
@@ -122,11 +118,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate failures from connector" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: CreateResidencyRequest  = mkCreateResidencyRequest()
-      val boom                             = UpstreamErrorResponse("Service unavailable", 503)
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: CreateResidencyRequest = mkCreateResidencyRequest()
+      val boom                            = UpstreamErrorResponse("Service unavailable", 503)
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.createResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -139,11 +135,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate RuntimeException from connector" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: CreateResidencyRequest  = mkCreateResidencyRequest()
-      val boom                             = new RuntimeException("Connection failed")
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: CreateResidencyRequest = mkCreateResidencyRequest()
+      val boom                            = new RuntimeException("Connection failed")
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.createResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -156,10 +152,10 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must call connector exactly once per request" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: CreateResidencyRequest  = mkCreateResidencyRequest()
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: CreateResidencyRequest = mkCreateResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.createResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkCreateResidencyReturn()))
@@ -171,12 +167,12 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle different residency flag combinations" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new ResidencyReturnsService(connector)
-      val nonUkRequest: CreateResidencyRequest  = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "YES"))
+      val connector                              = mock[FilingFormpProxyConnector]
+      val service                                = new ResidencyReturnsService(connector)
+      val nonUkRequest: CreateResidencyRequest   = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "YES"))
       val companyRequest: CreateResidencyRequest = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isCompany = "YES"))
       val crownRequest: CreateResidencyRequest   = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isCrownRelief = "YES"))
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      implicit val hc: HeaderCarrier             = HeaderCarrier()
 
       when(connector.createResidency(any[CreateResidencyRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkCreateResidencyReturn()))
@@ -190,37 +186,36 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle consecutive requests independently" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new ResidencyReturnsService(connector)
-      val request1: CreateResidencyRequest   = mkCreateResidencyRequest("STORN11111", "RRF-001")
-      val request2: CreateResidencyRequest   = mkCreateResidencyRequest("STORN22222", "RRF-002")
-      val request3: CreateResidencyRequest   = mkCreateResidencyRequest("STORN33333", "RRF-003")
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector                        = mock[FilingFormpProxyConnector]
+      val service                          = new ResidencyReturnsService(connector)
+      val request1: CreateResidencyRequest = mkCreateResidencyRequest("STORN11111", "RRF-001")
+      val request2: CreateResidencyRequest = mkCreateResidencyRequest("STORN22222", "RRF-002")
+      val request3: CreateResidencyRequest = mkCreateResidencyRequest("STORN33333", "RRF-003")
+      implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.createResidency(eqTo(request1))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResidencyReturn("RRF-001", "RID-001")))
+        .thenReturn(Future.successful(mkCreateResidencyReturn(true)))
       when(connector.createResidency(eqTo(request2))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResidencyReturn("RRF-002", "RID-002")))
+        .thenReturn(Future.successful(mkCreateResidencyReturn(true)))
       when(connector.createResidency(eqTo(request3))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResidencyReturn("RRF-003", "RID-003")))
+        .thenReturn(Future.successful(mkCreateResidencyReturn(true)))
 
-      service.createResidency(request1).futureValue mustBe mkCreateResidencyReturn("RRF-001", "RID-001")
-      service.createResidency(request2).futureValue mustBe mkCreateResidencyReturn("RRF-002", "RID-002")
-      service.createResidency(request3).futureValue mustBe mkCreateResidencyReturn("RRF-003", "RID-003")
+      service.createResidency(request1).futureValue mustBe mkCreateResidencyReturn(true)
+      service.createResidency(request2).futureValue mustBe mkCreateResidencyReturn(true)
+      service.createResidency(request3).futureValue mustBe mkCreateResidencyReturn(true)
 
       verify(connector, times(3)).createResidency(any[CreateResidencyRequest])(any[HeaderCarrier])
       verifyNoMoreInteractions(connector)
     }
   }
-  
 
   "ResidencyReturnsService updateResidency" - {
 
     "must delegate to connector (happy path)" in {
-      val connector                             = mock[FilingFormpProxyConnector]
-      val service                               = new ResidencyReturnsService(connector)
-      val request: UpdateResidencyRequest       = mkUpdateResidencyRequest()
-      implicit val hc: HeaderCarrier            = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: UpdateResidencyRequest = mkUpdateResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.updateResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateResidencyReturn()))
@@ -233,11 +228,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must return different results for different requests" in {
-      val connector                              = mock[FilingFormpProxyConnector]
-      val service                                = new ResidencyReturnsService(connector)
-      val request1: UpdateResidencyRequest       = mkUpdateResidencyRequest("STORN11111", "RRF-001")
-      val request2: UpdateResidencyRequest       = mkUpdateResidencyRequest("STORN22222", "RRF-002")
-      implicit val hc: HeaderCarrier             = HeaderCarrier()
+      val connector                        = mock[FilingFormpProxyConnector]
+      val service                          = new ResidencyReturnsService(connector)
+      val request1: UpdateResidencyRequest = mkUpdateResidencyRequest("STORN11111", "RRF-001")
+      val request2: UpdateResidencyRequest = mkUpdateResidencyRequest("STORN22222", "RRF-002")
+      implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.updateResidency(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateResidencyReturn(true)))
@@ -253,11 +248,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate failures from connector" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: UpdateResidencyRequest  = mkUpdateResidencyRequest()
-      val boom                             = UpstreamErrorResponse("Not found", 404)
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: UpdateResidencyRequest = mkUpdateResidencyRequest()
+      val boom                            = UpstreamErrorResponse("Not found", 404)
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.updateResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -270,11 +265,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate RuntimeException from connector" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: UpdateResidencyRequest  = mkUpdateResidencyRequest()
-      val boom                             = new RuntimeException("Connection timeout")
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: UpdateResidencyRequest = mkUpdateResidencyRequest()
+      val boom                            = new RuntimeException("Connection timeout")
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.updateResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -287,10 +282,10 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must call connector exactly once per request" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: UpdateResidencyRequest  = mkUpdateResidencyRequest()
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: UpdateResidencyRequest = mkUpdateResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.updateResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateResidencyReturn()))
@@ -302,10 +297,10 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle update result with false status" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: UpdateResidencyRequest  = mkUpdateResidencyRequest()
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: UpdateResidencyRequest = mkUpdateResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.updateResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateResidencyReturn(false)))
@@ -319,12 +314,12 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle different residency flag combinations" in {
-      val connector                            = mock[FilingFormpProxyConnector]
-      val service                              = new ResidencyReturnsService(connector)
-      val nonUkRequest: UpdateResidencyRequest  = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "YES"))
+      val connector                              = mock[FilingFormpProxyConnector]
+      val service                                = new ResidencyReturnsService(connector)
+      val nonUkRequest: UpdateResidencyRequest   = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "YES"))
       val companyRequest: UpdateResidencyRequest = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isCompany = "YES"))
       val crownRequest: UpdateResidencyRequest   = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isCrownRelief = "YES"))
-      implicit val hc: HeaderCarrier           = HeaderCarrier()
+      implicit val hc: HeaderCarrier             = HeaderCarrier()
 
       when(connector.updateResidency(any[UpdateResidencyRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateResidencyReturn()))
@@ -338,12 +333,12 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle consecutive requests independently" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new ResidencyReturnsService(connector)
-      val request1: UpdateResidencyRequest   = mkUpdateResidencyRequest("STORN11111", "RRF-001")
-      val request2: UpdateResidencyRequest   = mkUpdateResidencyRequest("STORN22222", "RRF-002")
-      val request3: UpdateResidencyRequest   = mkUpdateResidencyRequest("STORN33333", "RRF-003")
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector                        = mock[FilingFormpProxyConnector]
+      val service                          = new ResidencyReturnsService(connector)
+      val request1: UpdateResidencyRequest = mkUpdateResidencyRequest("STORN11111", "RRF-001")
+      val request2: UpdateResidencyRequest = mkUpdateResidencyRequest("STORN22222", "RRF-002")
+      val request3: UpdateResidencyRequest = mkUpdateResidencyRequest("STORN33333", "RRF-003")
+      implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.updateResidency(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateResidencyReturn(true)))
@@ -360,14 +355,14 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
       verifyNoMoreInteractions(connector)
     }
   }
-  
+
   "ResidencyReturnsService deleteResidency" - {
 
     "must delegate to connector (happy path)" in {
-      val connector                             = mock[FilingFormpProxyConnector]
-      val service                               = new ResidencyReturnsService(connector)
-      val request: DeleteResidencyRequest       = mkDeleteResidencyRequest()
-      implicit val hc: HeaderCarrier            = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: DeleteResidencyRequest = mkDeleteResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkDeleteResidencyReturn()))
@@ -380,11 +375,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must return different results for different requests" in {
-      val connector                              = mock[FilingFormpProxyConnector]
-      val service                                = new ResidencyReturnsService(connector)
-      val request1: DeleteResidencyRequest       = mkDeleteResidencyRequest("STORN11111", "RRF-001")
-      val request2: DeleteResidencyRequest       = mkDeleteResidencyRequest("STORN22222", "RRF-002")
-      implicit val hc: HeaderCarrier             = HeaderCarrier()
+      val connector                        = mock[FilingFormpProxyConnector]
+      val service                          = new ResidencyReturnsService(connector)
+      val request1: DeleteResidencyRequest = mkDeleteResidencyRequest("STORN11111", "RRF-001")
+      val request2: DeleteResidencyRequest = mkDeleteResidencyRequest("STORN22222", "RRF-002")
+      implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkDeleteResidencyReturn(true)))
@@ -400,11 +395,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate failures from connector" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: DeleteResidencyRequest  = mkDeleteResidencyRequest()
-      val boom                             = UpstreamErrorResponse("Internal Server Error", 500)
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: DeleteResidencyRequest = mkDeleteResidencyRequest()
+      val boom                            = UpstreamErrorResponse("Internal Server Error", 500)
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -417,11 +412,11 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate RuntimeException from connector" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: DeleteResidencyRequest  = mkDeleteResidencyRequest()
-      val boom                             = new RuntimeException("Network error")
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: DeleteResidencyRequest = mkDeleteResidencyRequest()
+      val boom                            = new RuntimeException("Network error")
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -434,10 +429,10 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must call connector exactly once per request" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: DeleteResidencyRequest  = mkDeleteResidencyRequest()
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: DeleteResidencyRequest = mkDeleteResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkDeleteResidencyReturn()))
@@ -449,10 +444,10 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle delete result with false status" in {
-      val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new ResidencyReturnsService(connector)
-      val request: DeleteResidencyRequest  = mkDeleteResidencyRequest()
-      implicit val hc: HeaderCarrier       = HeaderCarrier()
+      val connector                       = mock[FilingFormpProxyConnector]
+      val service                         = new ResidencyReturnsService(connector)
+      val request: DeleteResidencyRequest = mkDeleteResidencyRequest()
+      implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkDeleteResidencyReturn(false)))
@@ -466,12 +461,12 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle different storn formats" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new ResidencyReturnsService(connector)
-      val request1: DeleteResidencyRequest   = mkDeleteResidencyRequest("STORN12345",   "RRF-001")
-      val request2: DeleteResidencyRequest   = mkDeleteResidencyRequest("STORN-ABC-123", "RRF-001")
-      val request3: DeleteResidencyRequest   = mkDeleteResidencyRequest("12345678",     "RRF-001")
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector                        = mock[FilingFormpProxyConnector]
+      val service                          = new ResidencyReturnsService(connector)
+      val request1: DeleteResidencyRequest = mkDeleteResidencyRequest("STORN12345",    "RRF-001")
+      val request2: DeleteResidencyRequest = mkDeleteResidencyRequest("STORN-ABC-123", "RRF-001")
+      val request3: DeleteResidencyRequest = mkDeleteResidencyRequest("12345678",      "RRF-001")
+      implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkDeleteResidencyReturn(true)))
@@ -491,12 +486,12 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     }
 
     "must handle consecutive requests independently" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new ResidencyReturnsService(connector)
-      val request1: DeleteResidencyRequest   = mkDeleteResidencyRequest("STORN11111", "RRF-001")
-      val request2: DeleteResidencyRequest   = mkDeleteResidencyRequest("STORN22222", "RRF-002")
-      val request3: DeleteResidencyRequest   = mkDeleteResidencyRequest("STORN33333", "RRF-003")
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector                        = mock[FilingFormpProxyConnector]
+      val service                          = new ResidencyReturnsService(connector)
+      val request1: DeleteResidencyRequest = mkDeleteResidencyRequest("STORN11111", "RRF-001")
+      val request2: DeleteResidencyRequest = mkDeleteResidencyRequest("STORN22222", "RRF-002")
+      val request3: DeleteResidencyRequest = mkDeleteResidencyRequest("STORN33333", "RRF-003")
+      implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.deleteResidency(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkDeleteResidencyReturn(true)))
