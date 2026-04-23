@@ -11,6 +11,13 @@ To run all tests and coverage: `sbt clean compile coverage test it/test coverage
 
 To start the server locally on `port 10913`: `sbt 'run 10913'`
 
+How to switch service to use formP:
+
+Execute next set of commands or run switchToFormP.sh
+
+sm -stop STAMP-DUTY-LAND-TAX
+sm --start STAMP-DUTY-LAND-TAX --appendArgs '{"STAMP-DUTY-LAND-TAX":["-Dfeatures.stub-formp-enabled=false"]}'
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
