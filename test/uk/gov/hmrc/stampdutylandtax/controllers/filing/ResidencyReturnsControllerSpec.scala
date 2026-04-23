@@ -20,7 +20,7 @@ import base.SpecBase
 import models.filing.*
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
-import play.api.http.Status.{BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR}
+import play.api.http.Status.{BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, OK}
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Result
 import play.api.test.Helpers.{contentAsJson, status}
@@ -123,9 +123,9 @@ class ResidencyReturnsControllerSpec extends SpecBase {
       }
 
       "handle different residency flag combinations" in new BaseSetup {
-        val nonUkRequest    = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isNonUkResidents = "YES"))
-        val companyRequest  = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCompany = "YES"))
-        val crownRequest    = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCrownRelief = "YES"))
+        val nonUkRequest   = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isNonUkResidents = "YES"))
+        val companyRequest = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCompany = "YES"))
+        val crownRequest   = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCrownRelief = "YES"))
 
         when(mockResidencyReturnsService.createResidency(any[CreateResidencyRequest])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testCreateResidencyReturn))
@@ -142,13 +142,13 @@ class ResidencyReturnsControllerSpec extends SpecBase {
 
     "POST /update-residency (updateResidency)" - {
 
-      "return CREATED with update response when service returns successfully" in new BaseSetup {
+      "return OK with update response when service returns successfully" in new BaseSetup {
         when(mockResidencyReturnsService.updateResidency(eqTo(testUpdateResidencyRequest))(any[HeaderCarrier]))
           .thenReturn(Future.successful(testUpdateResidencyReturn))
 
         val result: Future[Result] = controller.updateResidency()(fakeRequest.withBody(Json.toJson(testUpdateResidencyRequest)))
 
-        status(result) mustBe CREATED
+        status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(testUpdateResidencyReturn)
         verify(mockResidencyReturnsService).updateResidency(eqTo(testUpdateResidencyRequest))(any[HeaderCarrier])
       }
@@ -220,7 +220,7 @@ class ResidencyReturnsControllerSpec extends SpecBase {
 
         val result: Future[Result] = controller.updateResidency()(fakeRequest.withBody(Json.toJson(testUpdateResidencyRequest)))
 
-        status(result) mustBe CREATED
+        status(result) mustBe OK
         (contentAsJson(result) \ "updated").as[Boolean] mustBe false
       }
 
@@ -236,21 +236,21 @@ class ResidencyReturnsControllerSpec extends SpecBase {
         val result2: Future[Result] = controller.updateResidency()(fakeRequest.withBody(Json.toJson(companyRequest)))
         val result3: Future[Result] = controller.updateResidency()(fakeRequest.withBody(Json.toJson(crownRequest)))
 
-        status(result1) mustBe CREATED
-        status(result2) mustBe CREATED
-        status(result3) mustBe CREATED
+        status(result1) mustBe OK
+        status(result2) mustBe OK
+        status(result3) mustBe OK
       }
     }
 
     "POST /delete-residency (deleteResidency)" - {
 
-      "return CREATED with delete response when service returns successfully" in new BaseSetup {
+      "return OK with delete response when service returns successfully" in new BaseSetup {
         when(mockResidencyReturnsService.deleteResidency(eqTo(testDeleteResidencyRequest))(any[HeaderCarrier]))
           .thenReturn(Future.successful(testDeleteResidencyReturn))
 
         val result: Future[Result] = controller.deleteResidency()(fakeRequest.withBody(Json.toJson(testDeleteResidencyRequest)))
 
-        status(result) mustBe CREATED
+        status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(testDeleteResidencyReturn)
         verify(mockResidencyReturnsService).deleteResidency(eqTo(testDeleteResidencyRequest))(any[HeaderCarrier])
       }
@@ -316,7 +316,7 @@ class ResidencyReturnsControllerSpec extends SpecBase {
 
         val result: Future[Result] = controller.deleteResidency()(fakeRequest.withBody(Json.toJson(testDeleteResidencyRequest)))
 
-        status(result) mustBe CREATED
+        status(result) mustBe OK
         (contentAsJson(result) \ "deleted").as[Boolean] mustBe false
       }
 
@@ -332,17 +332,17 @@ class ResidencyReturnsControllerSpec extends SpecBase {
         val result2: Future[Result] = controller.deleteResidency()(fakeRequest.withBody(Json.toJson(request2)))
         val result3: Future[Result] = controller.deleteResidency()(fakeRequest.withBody(Json.toJson(request3)))
 
-        status(result1) mustBe CREATED
-        status(result2) mustBe CREATED
-        status(result3) mustBe CREATED
+        status(result1) mustBe OK
+        status(result2) mustBe OK
+        status(result3) mustBe OK
       }
     }
   }
 
   private trait BaseSetup {
     val mockResidencyReturnsService: ResidencyReturnsService = mock[ResidencyReturnsService]
-    implicit val ec: ExecutionContext = cc.executionContext
-    implicit val hc: HeaderCarrier = HeaderCarrier()
+    implicit val ec: ExecutionContext                        = cc.executionContext
+    implicit val hc: HeaderCarrier                          = HeaderCarrier()
     val controller = new ResidencyReturnsController(cc, mockResidencyReturnsService, fakeIdentifierAction)
 
     val testResidencyPayload: ResidencyPayload = ResidencyPayload(
@@ -358,8 +358,7 @@ class ResidencyReturnsControllerSpec extends SpecBase {
     )
 
     val testCreateResidencyReturn: CreateResidencyReturn = CreateResidencyReturn(
-      residencyResourceRef = "RRF-001",
-      residencyId          = "RID-001"
+      created = true
     )
 
     val testUpdateResidencyRequest: UpdateResidencyRequest = UpdateResidencyRequest(

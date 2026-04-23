@@ -48,15 +48,10 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
     residency         = residencyPayload
   )
 
-  private val validCreateResidencyReturnJson = Json.obj(
-    "residencyResourceRef" -> "RRF-001",
-    "residencyId"          -> "RID-001"
-  )
-
-  private val createResidencyReturn = CreateResidencyReturn(
-    residencyResourceRef = "RRF-001",
-    residencyId          = "RID-001"
-  )
+  private val validCreateResidencyReturnJsonTrue  = Json.obj("created" -> true)
+  private val validCreateResidencyReturnJsonFalse = Json.obj("created" -> false)
+  private val createResidencyReturnTrue           = CreateResidencyReturn(created = true)
+  private val createResidencyReturnFalse          = CreateResidencyReturn(created = false)
 
   private val validUpdateResidencyRequestJson = Json.obj(
     "stornId"           -> "12345",
@@ -120,18 +115,15 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must fail to deserialize when isNonUkResidents is missing" in {
-        val result = Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isNonUkResidents").asEither
-        result.isLeft mustBe true
+        Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isNonUkResidents").asEither.isLeft mustBe true
       }
 
       "must fail to deserialize when isCompany is missing" in {
-        val result = Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCompany").asEither
-        result.isLeft mustBe true
+        Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCompany").asEither.isLeft mustBe true
       }
 
       "must fail to deserialize when isCrownRelief is missing" in {
-        val result = Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCrownRelief").asEither
-        result.isLeft mustBe true
+        Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCrownRelief").asEither.isLeft mustBe true
       }
 
       "must fail to deserialize when field has invalid type" in {
@@ -244,8 +236,8 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       "must serialize all fields" in {
         val json = Json.toJson(createResidencyRequest)
 
-        (json \ "stornId").as[String]           mustBe "12345"
-        (json \ "returnResourceRef").as[String] mustBe "45678"
+        (json \ "stornId").as[String]                        mustBe "12345"
+        (json \ "returnResourceRef").as[String]              mustBe "45678"
         (json \ "residency" \ "isNonUkResidents").as[String] mustBe "NO"
         (json \ "residency" \ "isCompany").as[String]        mustBe "NO"
         (json \ "residency" \ "isCrownRelief").as[String]    mustBe "NO"
@@ -298,24 +290,20 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
         implicitly[Reads[CreateResidencyReturn]]
       }
 
-      "must deserialize valid JSON" in {
-        val result = Json.fromJson[CreateResidencyReturn](validCreateResidencyReturnJson).asEither.value
-
-        result.residencyResourceRef mustBe "RRF-001"
-        result.residencyId          mustBe "RID-001"
+      "must deserialize valid JSON with created true" in {
+        Json.fromJson[CreateResidencyReturn](validCreateResidencyReturnJsonTrue).asEither.value.created mustBe true
       }
 
-      "must fail to deserialize when residencyResourceRef is missing" in {
-        Json.fromJson[CreateResidencyReturn](validCreateResidencyReturnJson - "residencyResourceRef").asEither.isLeft mustBe true
+      "must deserialize valid JSON with created false" in {
+        Json.fromJson[CreateResidencyReturn](validCreateResidencyReturnJsonFalse).asEither.value.created mustBe false
       }
 
-      "must fail to deserialize when residencyId is missing" in {
-        Json.fromJson[CreateResidencyReturn](validCreateResidencyReturnJson - "residencyId").asEither.isLeft mustBe true
+      "must fail to deserialize when created is missing" in {
+        Json.fromJson[CreateResidencyReturn](Json.obj()).asEither.isLeft mustBe true
       }
 
-      "must fail to deserialize when field has invalid type" in {
-        val json = validCreateResidencyReturnJson ++ Json.obj("residencyId" -> 123)
-        Json.fromJson[CreateResidencyReturn](json).asEither.isLeft mustBe true
+      "must fail to deserialize when created has invalid type" in {
+        Json.fromJson[CreateResidencyReturn](Json.obj("created" -> "invalid")).asEither.isLeft mustBe true
       }
 
       "must fail to deserialize completely invalid JSON structure" in {
@@ -329,18 +317,18 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
         implicitly[Writes[CreateResidencyReturn]]
       }
 
-      "must serialize all fields" in {
-        val json = Json.toJson(createResidencyReturn)
+      "must serialize with created true" in {
+        (Json.toJson(createResidencyReturnTrue) \ "created").as[Boolean] mustBe true
+      }
 
-        (json \ "residencyResourceRef").as[String] mustBe "RRF-001"
-        (json \ "residencyId").as[String]          mustBe "RID-001"
+      "must serialize with created false" in {
+        (Json.toJson(createResidencyReturnFalse) \ "created").as[Boolean] mustBe false
       }
 
       "must produce valid JSON structure" in {
-        val json = Json.toJson(createResidencyReturn)
-
+        val json = Json.toJson(createResidencyReturnTrue)
         json mustBe a[JsObject]
-        json.as[JsObject].keys must contain allOf("residencyResourceRef", "residencyId")
+        json.as[JsObject].keys must contain("created")
       }
     }
 
@@ -350,27 +338,35 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
         implicitly[Format[CreateResidencyReturn]]
       }
 
-      "must round-trip serialize and deserialize" in {
-        val json   = Json.toJson(createResidencyReturn)
-        val result = Json.fromJson[CreateResidencyReturn](json).asEither.value
-        result mustEqual createResidencyReturn
+      "must round-trip with created true" in {
+        Json.fromJson[CreateResidencyReturn](Json.toJson(createResidencyReturnTrue)).asEither.value mustEqual createResidencyReturnTrue
+      }
+
+      "must round-trip with created false" in {
+        Json.fromJson[CreateResidencyReturn](Json.toJson(createResidencyReturnFalse)).asEither.value mustEqual createResidencyReturnFalse
       }
     }
 
     "case class" - {
 
+      "must create instance with created true" in {
+        createResidencyReturnTrue.created mustBe true
+      }
+
+      "must create instance with created false" in {
+        createResidencyReturnFalse.created mustBe false
+      }
+
       "must support equality" in {
-        createResidencyReturn mustEqual createResidencyReturn.copy()
+        createResidencyReturnTrue mustEqual createResidencyReturnTrue.copy()
       }
 
       "must support copy with modifications" in {
-        val modified = createResidencyReturn.copy(residencyId = "RID-999")
-        modified.residencyId          mustBe "RID-999"
-        modified.residencyResourceRef mustBe createResidencyReturn.residencyResourceRef
+        createResidencyReturnTrue.copy(created = false).created mustBe false
       }
 
       "must not be equal when fields differ" in {
-        createResidencyReturn must not equal createResidencyReturn.copy(residencyId = "DIFFERENT")
+        createResidencyReturnTrue must not equal createResidencyReturnFalse
       }
     }
   }
@@ -417,8 +413,8 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       "must serialize all fields" in {
         val json = Json.toJson(updateResidencyRequest)
 
-        (json \ "stornId").as[String]           mustBe "12345"
-        (json \ "returnResourceRef").as[String] mustBe "45678"
+        (json \ "stornId").as[String]                        mustBe "12345"
+        (json \ "returnResourceRef").as[String]              mustBe "45678"
         (json \ "residency" \ "isNonUkResidents").as[String] mustBe "NO"
       }
 
@@ -451,7 +447,7 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
       "must support copy with modifications" in {
         val modified = updateResidencyRequest.copy(stornId = "99999")
-        modified.stornId mustBe "99999"
+        modified.stornId           mustBe "99999"
         modified.returnResourceRef mustBe updateResidencyRequest.returnResourceRef
       }
 

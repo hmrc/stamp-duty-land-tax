@@ -2294,6 +2294,24 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       )
     )
 
+    "return CreateResidencyReturn when BE returns CREATED with valid JSON" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(CreateResidencyReturn(created = true))))
+          )
+      )
+
+      val result = connector.createResidency(payload).futureValue
+
+      result mustBe CreateResidencyReturn(created = true)
+    }
+
     "return CreateResidencyReturn when BE returns OK with valid JSON" in {
       val payloadJson = Json.toJson(payload)
 
@@ -2303,18 +2321,13 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(
-                s"""{
-                   |  "residencyResourceRef": "RRF-001",
-                   |  "residencyId": "RID-001"
-                   |}""".stripMargin
-              )
+              .withBody(Json.stringify(Json.toJson(CreateResidencyReturn(created = true))))
           )
       )
 
       val result = connector.createResidency(payload).futureValue
 
-      result mustBe CreateResidencyReturn(residencyResourceRef = "RRF-001", residencyId = "RID-001")
+      result mustBe CreateResidencyReturn(created = true)
     }
 
     "handle different residency flag combinations" in {
@@ -2322,8 +2335,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
         post(urlPathEqualTo(url))
           .willReturn(
             aResponse()
-              .withStatus(OK)
-              .withBody(s"""{ "residencyResourceRef": "RRF-001", "residencyId": "RID-001" }""")
+              .withStatus(CREATED)
+              .withBody(Json.stringify(Json.toJson(CreateResidencyReturn(created = true))))
           )
       )
 
@@ -2331,9 +2344,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = "YES"))
       val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
 
-      connector.createResidency(nonUkPayload).futureValue.residencyId mustBe "RID-001"
-      connector.createResidency(companyPayload).futureValue.residencyId mustBe "RID-001"
-      connector.createResidency(crownPayload).futureValue.residencyId mustBe "RID-001"
+      connector.createResidency(nonUkPayload).futureValue.created mustBe true
+      connector.createResidency(companyPayload).futureValue.created mustBe true
+      connector.createResidency(crownPayload).futureValue.created mustBe true
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {

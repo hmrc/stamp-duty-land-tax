@@ -21,7 +21,7 @@ import itutil.ApplicationWithWiremock
 import models.filing.*
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status
-import play.api.http.Status.{CREATED, FORBIDDEN}
+import play.api.http.Status.{CREATED, FORBIDDEN, OK}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
@@ -35,16 +35,16 @@ class ResidencyReturnsControllerISpec extends BaseSpec
 
   def stubCreateResidencyResponse(): Unit = {
     stubPost("/formp-proxy/filing/create/residency", Status.CREATED,
-      Json.toJson(CreateResidencyReturn(residencyResourceRef = "ref", residencyId = "residencyId")).toString)
+      Json.toJson(CreateResidencyReturn(created = true)).toString)
   }
 
   def stubUpdateResidencyResponse(): Unit = {
-    stubPost("/formp-proxy/filing/update/residency", Status.CREATED,
+    stubPost("/formp-proxy/filing/update/residency", Status.OK,
       Json.toJson(UpdateResidencyReturn(updated = true)).toString)
   }
 
   def stubDeleteResidencyResponse(): Unit = {
-    stubPost("/formp-proxy/filing/delete/residency", Status.CREATED,
+    stubPost("/formp-proxy/filing/delete/residency", Status.OK,
       Json.toJson(DeleteResidencyReturn(deleted = true)).toString)
   }
 
@@ -95,7 +95,6 @@ class ResidencyReturnsControllerISpec extends BaseSpec
 
         result.status shouldBe CREATED
       }
-
     }
 
     "call updateResidency" when {
@@ -122,7 +121,7 @@ class ResidencyReturnsControllerISpec extends BaseSpec
         result.status shouldBe FORBIDDEN
       }
 
-      "return a 201:Created:: authorised request" in {
+      "return a 200:OK:: authorised request" in {
         stubAuthorisedAsActivated()
         stubUpdateResidencyResponse()
         val jsonBody = Json.toJson(
@@ -141,9 +140,8 @@ class ResidencyReturnsControllerISpec extends BaseSpec
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
-        result.status shouldBe CREATED
+        result.status shouldBe OK
       }
-
     }
 
     "call deleteResidency" when {
@@ -161,7 +159,7 @@ class ResidencyReturnsControllerISpec extends BaseSpec
         result.status shouldBe FORBIDDEN
       }
 
-      "return a 201:Created:: authorised request" in {
+      "return a 200:OK:: authorised request" in {
         stubAuthorisedAsActivated()
         stubDeleteResidencyResponse()
         val jsonBody = Json.toJson(
@@ -171,11 +169,8 @@ class ResidencyReturnsControllerISpec extends BaseSpec
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
-        result.status shouldBe CREATED
+        result.status shouldBe OK
       }
-
     }
-
   }
-
 }

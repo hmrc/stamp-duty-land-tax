@@ -63,7 +63,7 @@ class ResidencyReturnsController @Inject()(
           service
             .updateResidency(body)
             .map { result =>
-              Created(Json.toJson(result))
+              Ok(Json.toJson(result))
             }
             .recover { case t =>
               logger.error("[updateResidency] failed", t)
@@ -82,7 +82,7 @@ class ResidencyReturnsController @Inject()(
           service
             .deleteResidency(body)
             .map { result =>
-              Created(Json.toJson(result))
+              Ok(Json.toJson(result))
             }
             .recover { case t =>
               logger.error("[deleteResidency] failed", t)
