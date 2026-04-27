@@ -27,16 +27,18 @@ import play.api.http.Status.*
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HeaderCarrier
 
-class FilingFormpProxyConnectorISpec extends AnyWordSpec
-  with Matchers
-  with ScalaFutures
-  with IntegrationPatience
-  with ApplicationWithWiremock
-  with BeforeAndAfterEach {
+class FilingFormpProxyConnectorISpec
+    extends AnyWordSpec
+    with Matchers
+    with ScalaFutures
+    with IntegrationPatience
+    with ApplicationWithWiremock
+    with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  private val connector: FilingFormpProxyConnector = app.injector.instanceOf[FilingFormpProxyConnector]
+  private val connector: FilingFormpProxyConnector =
+    app.injector.instanceOf[FilingFormpProxyConnector]
 
   private val stornId = "STORN123456"
   private val returnResourceRef = "RRF-2024-001"
@@ -137,12 +139,25 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       )
 
       val residentialPayload = payload.copy(transactionType = "RESIDENTIAL")
-      val nonResidentialPayload = payload.copy(transactionType = "NON_RESIDENTIAL")
+      val nonResidentialPayload =
+        payload.copy(transactionType = "NON_RESIDENTIAL")
       val mixedPayload = payload.copy(transactionType = "MIXED")
 
-      connector.createReturn(residentialPayload).futureValue mustBe CreateReturnResult(returnResourceRef = returnResourceRef)
-      connector.createReturn(nonResidentialPayload).futureValue mustBe CreateReturnResult(returnResourceRef = returnResourceRef)
-      connector.createReturn(mixedPayload).futureValue mustBe CreateReturnResult(returnResourceRef = returnResourceRef)
+      connector
+        .createReturn(residentialPayload)
+        .futureValue mustBe CreateReturnResult(returnResourceRef =
+        returnResourceRef
+      )
+      connector
+        .createReturn(nonResidentialPayload)
+        .futureValue mustBe CreateReturnResult(returnResourceRef =
+        returnResourceRef
+      )
+      connector
+        .createReturn(mixedPayload)
+        .futureValue mustBe CreateReturnResult(returnResourceRef =
+        returnResourceRef
+      )
     }
 
     "fail when BE returns OK with invalid JSON" in {
@@ -151,7 +166,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody("""{ "unexpectedField": true }""")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -166,7 +185,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -181,7 +202,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -204,9 +227,21 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val payload2 = payload.copy(stornId = "STORN-ABC-123")
       val payload3 = payload.copy(stornId = "12345678")
 
-      connector.createReturn(payload1).futureValue mustBe CreateReturnResult(returnResourceRef = returnResourceRef)
-      connector.createReturn(payload2).futureValue mustBe CreateReturnResult(returnResourceRef = returnResourceRef)
-      connector.createReturn(payload3).futureValue mustBe CreateReturnResult(returnResourceRef = returnResourceRef)
+      connector
+        .createReturn(payload1)
+        .futureValue mustBe CreateReturnResult(returnResourceRef =
+        returnResourceRef
+      )
+      connector
+        .createReturn(payload2)
+        .futureValue mustBe CreateReturnResult(returnResourceRef =
+        returnResourceRef
+      )
+      connector
+        .createReturn(payload3)
+        .futureValue mustBe CreateReturnResult(returnResourceRef =
+        returnResourceRef
+      )
     }
   }
 
@@ -321,9 +356,18 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val payload2 = GetReturnByRefRequest(returnResourceRef, "STORN-ABC-123")
       val payload3 = GetReturnByRefRequest(returnResourceRef, "12345678")
 
-      connector.getFullReturn(payload1).futureValue.returnResourceRef mustBe Some(returnResourceRef)
-      connector.getFullReturn(payload2).futureValue.returnResourceRef mustBe Some(returnResourceRef)
-      connector.getFullReturn(payload3).futureValue.returnResourceRef mustBe Some(returnResourceRef)
+      connector
+        .getFullReturn(payload1)
+        .futureValue
+        .returnResourceRef mustBe Some(returnResourceRef)
+      connector
+        .getFullReturn(payload2)
+        .futureValue
+        .returnResourceRef mustBe Some(returnResourceRef)
+      connector
+        .getFullReturn(payload3)
+        .futureValue
+        .returnResourceRef mustBe Some(returnResourceRef)
     }
 
     "fail when BE returns OK with invalid JSON" in {
@@ -338,7 +382,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val ex = intercept[Exception] {
         connector.getFullReturn(payload).futureValue
       }
-      ex.getMessage.toLowerCase must (include("json") or include("error") or include("parse"))
+      ex.getMessage.toLowerCase must (include("json") or include(
+        "error"
+      ) or include("parse"))
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -347,7 +393,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -377,7 +425,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -427,7 +477,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
 
       val result = connector.createVendor(payload).futureValue
 
-      result mustBe CreateVendorReturn(vendorResourceRef = "VRF-001", vendorId = "VID-001")
+      result mustBe CreateVendorReturn(
+        vendorResourceRef = "VRF-001",
+        vendorId = "VID-001"
+      )
     }
 
     "return CreateVendorReturn for minimal request" in {
@@ -449,7 +502,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(s"""{ "vendorResourceRef": "VRF-001", "vendorId": "VID-001" }""")
+              .withBody(
+                s"""{ "vendorResourceRef": "VRF-001", "vendorId": "VID-001" }"""
+              )
           )
       )
 
@@ -464,7 +519,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(s"""{ "vendorResourceRef": "VRF-001", "vendorId": "VID-001" }""")
+              .withBody(
+                s"""{ "vendorResourceRef": "VRF-001", "vendorId": "VID-001" }"""
+              )
           )
       )
 
@@ -481,7 +538,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -496,7 +555,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -537,7 +598,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateVendorReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateVendorReturn(updated = true)))
+              )
           )
       )
 
@@ -555,7 +618,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateVendorReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateVendorReturn(updated = true)))
+              )
           )
       )
 
@@ -570,7 +635,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -614,7 +681,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(DeleteVendorReturn(deleted = true))))
+              .withBody(
+                Json.stringify(Json.toJson(DeleteVendorReturn(deleted = true)))
+              )
           )
       )
 
@@ -632,7 +701,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(DeleteVendorReturn(deleted = true))))
+              .withBody(
+                Json.stringify(Json.toJson(DeleteVendorReturn(deleted = true)))
+              )
           )
       )
 
@@ -647,7 +718,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -752,9 +825,18 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val conveyancerPayload = payload.copy(agentType = "CONVEYANCER")
       val otherPayload = payload.copy(agentType = "OTHER")
 
-      connector.createReturnAgent(solicitorPayload).futureValue.returnAgentID mustBe "AGID-001"
-      connector.createReturnAgent(conveyancerPayload).futureValue.returnAgentID mustBe "AGID-001"
-      connector.createReturnAgent(otherPayload).futureValue.returnAgentID mustBe "AGID-001"
+      connector
+        .createReturnAgent(solicitorPayload)
+        .futureValue
+        .returnAgentID mustBe "AGID-001"
+      connector
+        .createReturnAgent(conveyancerPayload)
+        .futureValue
+        .returnAgentID mustBe "AGID-001"
+      connector
+        .createReturnAgent(otherPayload)
+        .futureValue
+        .returnAgentID mustBe "AGID-001"
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -763,7 +845,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -778,7 +862,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -818,7 +904,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnAgentReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateReturnAgentReturn(updated = true))
+                )
+              )
           )
       )
 
@@ -836,7 +926,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnAgentReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateReturnAgentReturn(updated = true))
+                )
+              )
           )
       )
 
@@ -851,7 +945,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -895,7 +991,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(DeleteReturnAgentReturn(deleted = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(DeleteReturnAgentReturn(deleted = true))
+                )
+              )
           )
       )
 
@@ -913,7 +1013,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(DeleteReturnAgentReturn(deleted = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(DeleteReturnAgentReturn(deleted = true))
+                )
+              )
           )
       )
 
@@ -925,8 +1029,14 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     "handle different agent types" in {
       stubFor(
         post(urlPathEqualTo(url))
-          .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.stringify(Json.toJson(DeleteReturnAgentReturn(deleted = true))))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                Json.stringify(
+                  Json.toJson(DeleteReturnAgentReturn(deleted = true))
+                )
+              )
           )
       )
 
@@ -934,7 +1044,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val purchaserPayload = payload.copy(agentType = "PURCHASER")
 
       connector.deleteReturnAgent(vendorPayload).futureValue.deleted mustBe true
-      connector.deleteReturnAgent(purchaserPayload).futureValue.deleted mustBe true
+      connector
+        .deleteReturnAgent(purchaserPayload)
+        .futureValue
+        .deleted mustBe true
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -943,7 +1056,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -987,7 +1102,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(ReturnVersionUpdateReturn(newVersion = 1))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(ReturnVersionUpdateReturn(newVersion = 1))
+                )
+              )
           )
       )
 
@@ -1005,7 +1124,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(ReturnVersionUpdateReturn(newVersion = 1))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(ReturnVersionUpdateReturn(newVersion = 1))
+                )
+              )
           )
       )
 
@@ -1020,7 +1143,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1050,7 +1175,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(CONFLICT).withBody("Version conflict"))
+          .willReturn(
+            aResponse().withStatus(CONFLICT).withBody("Version conflict")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1069,8 +1196,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       returnResourceRef = returnResourceRef,
       isCompany = Some("NO"),
       isTrustee = Some("NO"),
-      isConnectedToVendor =  Some("NO"),
-      isRepresentedByAgent =  Some("YES"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones"),
       forename1 = Some("David"),
@@ -1111,7 +1238,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
 
       val result = connector.createPurchaser(payload).futureValue
 
-      result mustBe CreatePurchaserReturn(purchaserResourceRef = "PRF-001", purchaserId = "PID-001")
+      result mustBe CreatePurchaserReturn(
+        purchaserResourceRef = "PRF-001",
+        purchaserId = "PID-001"
+      )
     }
 
     "return CreatePurchaserReturn for company purchaser" in {
@@ -1137,12 +1267,17 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(s"""{ "purchaserResourceRef": "PRF-002", "purchaserId": "PID-002" }""")
+              .withBody(
+                s"""{ "purchaserResourceRef": "PRF-002", "purchaserId": "PID-002" }"""
+              )
           )
       )
 
       val result = connector.createPurchaser(companyPayload).futureValue
-      result mustBe CreatePurchaserReturn(purchaserResourceRef = "PRF-002", purchaserId = "PID-002")
+      result mustBe CreatePurchaserReturn(
+        purchaserResourceRef = "PRF-002",
+        purchaserId = "PID-002"
+      )
     }
 
     "return CreatePurchaserReturn for minimal request" in {
@@ -1169,7 +1304,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(s"""{ "purchaserResourceRef": "PRF-003", "purchaserId": "PID-003" }""")
+              .withBody(
+                s"""{ "purchaserResourceRef": "PRF-003", "purchaserId": "PID-003" }"""
+              )
           )
       )
 
@@ -1184,7 +1321,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(s"""{ "purchaserResourceRef": "PRF-001", "purchaserId": "PID-001" }""")
+              .withBody(
+                s"""{ "purchaserResourceRef": "PRF-001", "purchaserId": "PID-001" }"""
+              )
           )
       )
 
@@ -1192,9 +1331,18 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val connectedPayload = payload.copy(isConnectedToVendor = Some("YES"))
       val noAgentPayload = payload.copy(isRepresentedByAgent = Some("NO"))
 
-      connector.createPurchaser(trusteePayload).futureValue.purchaserId mustBe "PID-001"
-      connector.createPurchaser(connectedPayload).futureValue.purchaserId mustBe "PID-001"
-      connector.createPurchaser(noAgentPayload).futureValue.purchaserId mustBe "PID-001"
+      connector
+        .createPurchaser(trusteePayload)
+        .futureValue
+        .purchaserId mustBe "PID-001"
+      connector
+        .createPurchaser(connectedPayload)
+        .futureValue
+        .purchaserId mustBe "PID-001"
+      connector
+        .createPurchaser(noAgentPayload)
+        .futureValue
+        .purchaserId mustBe "PID-001"
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -1203,7 +1351,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1218,7 +1368,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1237,9 +1389,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       returnResourceRef = returnResourceRef,
       purchaserResourceRef = "PRF-001",
       isCompany = Some("NO"),
-      isTrustee =  Some("NO"),
-      isConnectedToVendor =  Some("NO"),
-      isRepresentedByAgent =  Some("YES"),
+      isTrustee = Some("NO"),
+      isConnectedToVendor = Some("NO"),
+      isRepresentedByAgent = Some("YES"),
       title = Some("Mr"),
       surname = Some("Jones Updated"),
       forename1 = Some("David"),
@@ -1270,7 +1422,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdatePurchaserReturn(updated = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(UpdatePurchaserReturn(updated = true)))
+              )
           )
       )
 
@@ -1288,7 +1443,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdatePurchaserReturn(updated = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(UpdatePurchaserReturn(updated = true)))
+              )
           )
       )
 
@@ -1303,7 +1461,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1347,7 +1507,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(DeletePurchaserReturn(deleted = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(DeletePurchaserReturn(deleted = true)))
+              )
           )
       )
 
@@ -1365,7 +1528,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(DeletePurchaserReturn(deleted = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(DeletePurchaserReturn(deleted = true)))
+              )
           )
       )
 
@@ -1380,7 +1546,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1496,13 +1664,25 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val propertyPayload = payload.copy(compTypeBank = Some("NO"), compTypeProperty = Some("YES"))
-      val charityPayload = payload.copy(compTypeBank = Some("NO"), compTypeOcharity = Some("YES"))
-      val partnershipPayload = payload.copy(compTypeBank = Some("NO"), compTypePartship = Some("YES"))
+      val propertyPayload =
+        payload.copy(compTypeBank = Some("NO"), compTypeProperty = Some("YES"))
+      val charityPayload =
+        payload.copy(compTypeBank = Some("NO"), compTypeOcharity = Some("YES"))
+      val partnershipPayload =
+        payload.copy(compTypeBank = Some("NO"), compTypePartship = Some("YES"))
 
-      connector.createCompanyDetails(propertyPayload).futureValue.companyDetailsId mustBe "CID-001"
-      connector.createCompanyDetails(charityPayload).futureValue.companyDetailsId mustBe "CID-001"
-      connector.createCompanyDetails(partnershipPayload).futureValue.companyDetailsId mustBe "CID-001"
+      connector
+        .createCompanyDetails(propertyPayload)
+        .futureValue
+        .companyDetailsId mustBe "CID-001"
+      connector
+        .createCompanyDetails(charityPayload)
+        .futureValue
+        .companyDetailsId mustBe "CID-001"
+      connector
+        .createCompanyDetails(partnershipPayload)
+        .futureValue
+        .companyDetailsId mustBe "CID-001"
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -1511,7 +1691,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1526,7 +1708,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1572,7 +1756,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateCompanyDetailsReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateCompanyDetailsReturn(updated = true))
+                )
+              )
           )
       )
 
@@ -1590,7 +1778,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateCompanyDetailsReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateCompanyDetailsReturn(updated = true))
+                )
+              )
           )
       )
 
@@ -1605,7 +1797,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1648,7 +1842,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(DeleteCompanyDetailsReturn(deleted = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(DeleteCompanyDetailsReturn(deleted = true))
+                )
+              )
           )
       )
 
@@ -1666,7 +1864,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(DeleteCompanyDetailsReturn(deleted = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(DeleteCompanyDetailsReturn(deleted = true))
+                )
+              )
           )
       )
 
@@ -1681,7 +1883,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1730,7 +1934,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateReturnReturn(updated = true)))
+              )
           )
       )
 
@@ -1748,7 +1954,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateReturnReturn(updated = true)))
+              )
           )
       )
 
@@ -1758,7 +1966,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     }
 
     "handle update with Y values for boolean fields" in {
-      val yPayload = payload.copy(landCertForEachProp = Some("Y"), declaration = Some("Y"))
+      val yPayload =
+        payload.copy(landCertForEachProp = Some("Y"), declaration = Some("Y"))
       val payloadJson = Json.toJson(yPayload)
 
       stubFor(
@@ -1767,7 +1976,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateReturnReturn(updated = true)))
+              )
           )
       )
 
@@ -1776,7 +1987,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     }
 
     "handle update with N values for boolean fields" in {
-      val nPayload = payload.copy(landCertForEachProp = Some("N"), declaration = Some("N"))
+      val nPayload =
+        payload.copy(landCertForEachProp = Some("N"), declaration = Some("N"))
       val payloadJson = Json.toJson(nPayload)
 
       stubFor(
@@ -1785,7 +1997,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateReturnReturn(updated = true)))
+              )
           )
       )
 
@@ -1799,7 +2013,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateReturnReturn(updated = true)))
+              )
           )
       )
 
@@ -1818,12 +2034,22 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateReturnReturn(updated = true)))
+              )
           )
       )
 
-      val payload1 = payload.copy(mainPurchaserID = Some("1"), mainVendorID = Some("1"), mainLandID = Some("1"))
-      val payload2 = payload.copy(mainPurchaserID = Some("100"), mainVendorID = Some("200"), mainLandID = Some("300"))
+      val payload1 = payload.copy(
+        mainPurchaserID = Some("1"),
+        mainVendorID = Some("1"),
+        mainLandID = Some("1")
+      )
+      val payload2 = payload.copy(
+        mainPurchaserID = Some("100"),
+        mainVendorID = Some("200"),
+        mainLandID = Some("300")
+      )
 
       connector.updateReturnInfo(payload1).futureValue.updated mustBe true
       connector.updateReturnInfo(payload2).futureValue.updated mustBe true
@@ -1835,7 +2061,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateReturnReturn(updated = true)))
+              )
           )
       )
 
@@ -1854,7 +2082,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -1884,7 +2114,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2002,8 +2234,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val freeholdPayload = payload.copy(interestTransferredCreated = "FREEHOLD")
-      val leaseholdPayload = payload.copy(interestTransferredCreated = "LEASEHOLD")
+      val freeholdPayload =
+        payload.copy(interestTransferredCreated = "FREEHOLD")
+      val leaseholdPayload =
+        payload.copy(interestTransferredCreated = "LEASEHOLD")
 
       connector.createLand(freeholdPayload).futureValue.landId mustBe "1"
       connector.createLand(leaseholdPayload).futureValue.landId mustBe "1"
@@ -2015,7 +2249,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2030,7 +2266,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2075,7 +2313,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateLandReturn(updated = true)))
+              )
           )
       )
 
@@ -2093,7 +2333,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateLandReturn(updated = true)))
+              )
           )
       )
 
@@ -2126,7 +2368,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateLandReturn(updated = true)))
+              )
           )
       )
 
@@ -2140,7 +2384,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
+              .withBody(
+                Json.stringify(Json.toJson(UpdateLandReturn(updated = true)))
+              )
           )
       )
 
@@ -2149,7 +2395,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       val mixedPayload = payload.copy(propertyType = "MIXED")
 
       connector.updateLand(residentialPayload).futureValue.updated mustBe true
-      connector.updateLand(nonResidentialPayload).futureValue.updated mustBe true
+      connector
+        .updateLand(nonResidentialPayload)
+        .futureValue
+        .updated mustBe true
       connector.updateLand(mixedPayload).futureValue.updated mustBe true
     }
 
@@ -2159,7 +2408,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2203,7 +2454,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(DeleteLandReturn(deleted = true))))
+              .withBody(
+                Json.stringify(Json.toJson(DeleteLandReturn(deleted = true)))
+              )
           )
       )
 
@@ -2221,7 +2474,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(DeleteLandReturn(deleted = true))))
+              .withBody(
+                Json.stringify(Json.toJson(DeleteLandReturn(deleted = true)))
+              )
           )
       )
 
@@ -2236,7 +2491,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(DeleteLandReturn(deleted = true))))
+              .withBody(
+                Json.stringify(Json.toJson(DeleteLandReturn(deleted = true)))
+              )
           )
       )
 
@@ -2255,7 +2512,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2303,7 +2562,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(CreateResidencyReturn(created = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(CreateResidencyReturn(created = true)))
+              )
           )
       )
 
@@ -2321,7 +2583,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(CreateResidencyReturn(created = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(CreateResidencyReturn(created = true)))
+              )
           )
       )
 
@@ -2336,13 +2601,21 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(CreateResidencyReturn(created = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(CreateResidencyReturn(created = true))
+                )
+              )
           )
       )
 
-      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "YES"))
-      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = "YES"))
-      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
+      val nonUkPayload = payload.copy(residency =
+        payload.residency.copy(isNonUkResidents = "YES")
+      )
+      val companyPayload =
+        payload.copy(residency = payload.residency.copy(isCompany = "YES"))
+      val crownPayload =
+        payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
 
       connector.createResidency(nonUkPayload).futureValue.created mustBe true
       connector.createResidency(companyPayload).futureValue.created mustBe true
@@ -2355,7 +2628,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2370,7 +2645,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2403,7 +2680,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateResidencyReturn(updated = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(UpdateResidencyReturn(updated = true)))
+              )
           )
       )
 
@@ -2418,13 +2698,21 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateResidencyReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateResidencyReturn(updated = true))
+                )
+              )
           )
       )
 
-      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "YES"))
-      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = "YES"))
-      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
+      val nonUkPayload = payload.copy(residency =
+        payload.residency.copy(isNonUkResidents = "YES")
+      )
+      val companyPayload =
+        payload.copy(residency = payload.residency.copy(isCompany = "YES"))
+      val crownPayload =
+        payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
 
       connector.updateResidency(nonUkPayload).futureValue.updated mustBe true
       connector.updateResidency(companyPayload).futureValue.updated mustBe true
@@ -2437,7 +2725,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2480,7 +2770,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(DeleteResidencyReturn(deleted = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(DeleteResidencyReturn(deleted = true)))
+              )
           )
       )
 
@@ -2498,7 +2791,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(DeleteResidencyReturn(deleted = true))))
+              .withBody(
+                Json
+                  .stringify(Json.toJson(DeleteResidencyReturn(deleted = true)))
+              )
           )
       )
 
@@ -2513,7 +2809,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2557,7 +2855,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateTransactionReturn(updated = true))
+                )
+              )
           )
       )
 
@@ -2575,7 +2877,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(CREATED)
-              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateTransactionReturn(updated = true))
+                )
+              )
           )
       )
 
@@ -2600,7 +2906,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-              .withBody(Json.stringify(Json.toJson(UpdateTransactionReturn(updated = true))))
+              .withBody(
+                Json.stringify(
+                  Json.toJson(UpdateTransactionReturn(updated = true))
+                )
+              )
           )
       )
 
@@ -2614,7 +2924,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -2644,7 +2956,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
-          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+          .willReturn(
+            aResponse().withStatus(BAD_REQUEST).withBody("Invalid request")
+          )
       )
 
       val ex = intercept[Exception] {

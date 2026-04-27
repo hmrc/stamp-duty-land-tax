@@ -19,9 +19,10 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class CreateReturnResult(
-                               returnResourceRef: String
-                              )
+    returnResourceRef: String
+)
 
 object CreateReturnResult {
-  implicit val format: OFormat[CreateReturnResult] = Json.format[CreateReturnResult]
+  implicit val format: OFormat[CreateReturnResult] =
+    Json.format[CreateReturnResult]
 }

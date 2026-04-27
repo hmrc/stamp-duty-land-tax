@@ -18,28 +18,30 @@ package models.agent
 
 import play.api.libs.json.{Json, OFormat}
 
-case class UpdatePredefinedAgentRequest (
-                                   agentResourceReference      : String,
-                                   storn                       : String,
-                                   agentName                   : String,
-                                   houseNumber                 : Option[String],
-                                   addressLine1                : Option[String],
-                                   addressLine2                : Option[String],
-                                   addressLine3                : Option[String],
-                                   addressLine4                : Option[String],
-                                   postcode                    : Option[String],
-                                   phone                       : Option[String],
-                                   email                       : Option[String],
-                                   dxAddress                   : Option[String]
-                                     )
+case class UpdatePredefinedAgentRequest(
+    agentResourceReference: String,
+    storn: String,
+    agentName: String,
+    houseNumber: Option[String],
+    addressLine1: Option[String],
+    addressLine2: Option[String],
+    addressLine3: Option[String],
+    addressLine4: Option[String],
+    postcode: Option[String],
+    phone: Option[String],
+    email: Option[String],
+    dxAddress: Option[String]
+)
 object UpdatePredefinedAgentRequest {
-  implicit val format: OFormat[UpdatePredefinedAgentRequest] = Json.format[UpdatePredefinedAgentRequest]
+  implicit val format: OFormat[UpdatePredefinedAgentRequest] =
+    Json.format[UpdatePredefinedAgentRequest]
 }
 
 case class UpdatePredefinedAgentResponse(
-                                          updated: Boolean
-                                        )
+    updated: Boolean
+)
 
 object UpdatePredefinedAgentResponse {
-  implicit val format: OFormat[UpdatePredefinedAgentResponse] = Json.format[UpdatePredefinedAgentResponse]
+  implicit val format: OFormat[UpdatePredefinedAgentResponse] =
+    Json.format[UpdatePredefinedAgentResponse]
 }

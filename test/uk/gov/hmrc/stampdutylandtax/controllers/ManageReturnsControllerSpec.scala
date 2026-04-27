@@ -21,7 +21,12 @@ import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.eq as eqTo
 import org.mockito.Mockito.{verify, when}
-import play.api.http.Status.{BAD_GATEWAY, BAD_REQUEST, INTERNAL_SERVER_ERROR, OK}
+import play.api.http.Status.{
+  BAD_GATEWAY,
+  BAD_REQUEST,
+  INTERNAL_SERVER_ERROR,
+  OK
+}
 import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.test.Helpers.{CONTENT_TYPE, contentAsJson, status}
 import play.api.mvc.Result
@@ -35,20 +40,25 @@ import scala.concurrent.{ExecutionContext, Future}
 class ManageReturnsControllerSpec extends SpecBase {
 
   "ManageReturnsController" - {
-    
+
     ".getReturns" - {
 
       val storn = "STN-123"
 
-      val requestBody = SdltReturnRecordRequest(storn = storn, None, false, None)
+      val requestBody =
+        SdltReturnRecordRequest(storn = storn, None, false, None)
 
       "return OK with returns when service successfully returns a ReturnsResponse payload" in new BaseSetup {
         private val payload = SdltReturnRecordResponse(
           returnSummaryCount = Some(3),
-          returnSummaryList  = Nil
+          returnSummaryList = Nil
         )
 
-        when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
+        when(
+          mockManageReturnsService.getReturns(eqTo(requestBody))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(payload))
 
         val fakePostRequest: FakeRequest[JsValue] =
@@ -60,7 +70,9 @@ class ManageReturnsControllerSpec extends SpecBase {
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(payload)
-        verify(mockManageReturnsService).getReturns(eqTo(requestBody))(any[HeaderCarrier])
+        verify(mockManageReturnsService).getReturns(eqTo(requestBody))(
+          any[HeaderCarrier]
+        )
       }
 
       "return BAD_REQUEST when payload is invalid" in new BaseSetup {
@@ -80,8 +92,16 @@ class ManageReturnsControllerSpec extends SpecBase {
 
       "return INTERNAL_SERVER_ERROR with Unexpected error on upstream failure" in new BaseSetup {
 
-        when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+        when(
+          mockManageReturnsService.getReturns(eqTo(requestBody))(
+            any[HeaderCarrier]
+          )
+        )
+          .thenReturn(
+            Future.failed(
+              UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)
+            )
+          )
 
         val fakePostRequest: FakeRequest[JsValue] =
           FakeRequest("POST", "/manage-returns/get-returns")
@@ -91,12 +111,18 @@ class ManageReturnsControllerSpec extends SpecBase {
         val result: Future[Result] = controller.getReturns(fakePostRequest)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+        (contentAsJson(result) \ "message").as[String] must equal(
+          "Unexpected error"
+        )
       }
 
       "return INTERNAL_SERVER_ERROR with Unexpected error on unknown exception" in new BaseSetup {
 
-        when(mockManageReturnsService.getReturns(eqTo(requestBody))(any[HeaderCarrier]))
+        when(
+          mockManageReturnsService.getReturns(eqTo(requestBody))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
         val fakePostRequest: FakeRequest[JsValue] =
@@ -107,16 +133,23 @@ class ManageReturnsControllerSpec extends SpecBase {
         val result: Future[Result] = controller.getReturns(fakePostRequest)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+        (contentAsJson(result) \ "message").as[String] must equal(
+          "Unexpected error"
+        )
       }
     }
   }
 
   private trait BaseSetup {
-    val mockManageReturnsService: ManageReturnsService = mock[ManageReturnsService]
-    
+    val mockManageReturnsService: ManageReturnsService =
+      mock[ManageReturnsService]
+
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ManageReturnsController(cc, mockManageReturnsService, fakeIdentifierAction)
+    val controller = new ManageReturnsController(
+      cc,
+      mockManageReturnsService,
+      fakeIdentifierAction
+    )
   }
 }

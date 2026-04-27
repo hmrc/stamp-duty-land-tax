@@ -19,10 +19,11 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class GetReturnByRefRequest(
-                                  returnResourceRef: String,
-                                  storn: String
-                                )
+    returnResourceRef: String,
+    storn: String
+)
 
 object GetReturnByRefRequest {
-  implicit val format: OFormat[GetReturnByRefRequest] = Json.format[GetReturnByRefRequest]
+  implicit val format: OFormat[GetReturnByRefRequest] =
+    Json.format[GetReturnByRefRequest]
 }

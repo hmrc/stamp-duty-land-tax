@@ -33,90 +33,160 @@ import scala.concurrent.{ExecutionContext, Future}
 class ManageAgentsControllerSpec extends SpecBase {
 
   "ManageAgentsController" - {
-    
+
     "POST /agent-details/submit (submitAgentDetails)" - {
 
       "return OK with agent details when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[CreatePredefinedAgentRequest])(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.submitAgentDetails(
+            any[CreatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testAgentDetailsSuccessResponse))
 
-        val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
+        val result: Future[Result] = controller.submitAgentDetails(
+          fakeRequest.withBody(Json.toJson(testAgentDetailsRequest))
+        )
 
         status(result) mustBe OK
-        contentAsJson(result) mustBe Json.toJson(testAgentDetailsSuccessResponse)
-        verify(mockManageAgentsService).submitAgentDetails(eqTo(testAgentDetailsRequest))(any[HeaderCarrier])
+        contentAsJson(result) mustBe Json.toJson(
+          testAgentDetailsSuccessResponse
+        )
+        verify(mockManageAgentsService).submitAgentDetails(
+          eqTo(testAgentDetailsRequest)
+        )(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[CreatePredefinedAgentRequest])(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.submitAgentDetails(
+            any[CreatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testAgentDetailsSuccessResponse))
 
-        val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(Json.obj())))
+        val result: Future[Result] = controller.submitAgentDetails(
+          fakeRequest.withBody(Json.toJson(Json.obj()))
+        )
 
         status(result) mustBe BAD_REQUEST
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[CreatePredefinedAgentRequest])(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+        when(
+          mockManageAgentsService.submitAgentDetails(
+            any[CreatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
+          .thenReturn(
+            Future.failed(
+              UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)
+            )
+          )
 
-        val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
+        val result: Future[Result] = controller.submitAgentDetails(
+          fakeRequest.withBody(Json.toJson(testAgentDetailsRequest))
+        )
 
         status(result) mustBe BAD_GATEWAY
-        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+        (contentAsJson(result) \ "message").as[String] must include(
+          "boom from upstream"
+        )
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.submitAgentDetails(any[CreatePredefinedAgentRequest])(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.submitAgentDetails(
+            any[CreatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.submitAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsRequest)))
+        val result: Future[Result] = controller.submitAgentDetails(
+          fakeRequest.withBody(Json.toJson(testAgentDetailsRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+        (contentAsJson(result) \ "message").as[String] must equal(
+          "Unexpected error"
+        )
       }
     }
 
     "POST /agent-details/update (updateAgentDetails)" - {
 
       "return 200 OK when service returns agent details" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.updateAgentDetails(
+            any[UpdatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(UpdatePredefinedAgentResponse(true)))
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
+        val result: Future[Result] = controller.updateAgentDetails(
+          fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent))
+        )
 
         status(result) mustBe OK
-        verify(mockManageAgentsService).updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier])
+        verify(mockManageAgentsService).updateAgentDetails(
+          eqTo(testUpdatePredefinedAgent)
+        )(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.updateAgentDetails(
+            any[UpdatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.unit)
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testAgentDetailsList)))
+        val result: Future[Result] = controller.updateAgentDetails(
+          fakeRequest.withBody(Json.toJson(testAgentDetailsList))
+        )
 
         status(result) mustBe BAD_REQUEST
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+        when(
+          mockManageAgentsService.updateAgentDetails(
+            any[UpdatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
+          .thenReturn(
+            Future.failed(
+              UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)
+            )
+          )
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
+        val result: Future[Result] = controller.updateAgentDetails(
+          fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent))
+        )
 
         status(result) mustBe BAD_GATEWAY
-        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+        (contentAsJson(result) \ "message").as[String] must include(
+          "boom from upstream"
+        )
 
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.updateAgentDetails(any[UpdatePredefinedAgentRequest])(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.updateAgentDetails(
+            any[UpdatePredefinedAgentRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.updateAgentDetails(fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent)))
+        val result: Future[Result] = controller.updateAgentDetails(
+          fakeRequest.withBody(Json.toJson(testUpdatePredefinedAgent))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+        (contentAsJson(result) \ "message").as[String] must equal(
+          "Unexpected error"
+        )
       }
     }
 
@@ -125,43 +195,81 @@ class ManageAgentsControllerSpec extends SpecBase {
       val req = DeletePredefinedAgentRequest("STN001", "100001")
 
       "returns 200 Ok when service runs successfully" in new BaseSetup {
-        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.deletePredefinedAgent(eqTo(req))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(DeletePredefinedAgentResponse(true)))
 
-        val result: Future[Result] = controller.deletePredefinedAgent(fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest)))
+        val result: Future[Result] = controller.deletePredefinedAgent(
+          fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest))
+        )
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.obj("deleted" -> true)
-        verify(mockManageAgentsService).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
+        verify(mockManageAgentsService).deletePredefinedAgent(eqTo(req))(
+          any[HeaderCarrier]
+        )
       }
       "returns BAD_REQUEST(400) with message when given an invalid json body" in new BaseSetup {
-        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(testDeletePredefinedAgentDetailsFailedResponse))
+        when(
+          mockManageAgentsService.deletePredefinedAgent(eqTo(req))(
+            any[HeaderCarrier]
+          )
+        )
+          .thenReturn(
+            Future.successful(testDeletePredefinedAgentDetailsFailedResponse)
+          )
 
-        val result: Future[Result] = controller.deletePredefinedAgent(fakeRequest.withBody(Json.toJson(Json.obj())))
+        val result: Future[Result] = controller.deletePredefinedAgent(
+          fakeRequest.withBody(Json.toJson(Json.obj()))
+        )
 
         status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] must include("Invalid payload")
+        (contentAsJson(result) \ "message").as[String] must include(
+          "Invalid payload"
+        )
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+        when(
+          mockManageAgentsService.deletePredefinedAgent(eqTo(req))(
+            any[HeaderCarrier]
+          )
+        )
+          .thenReturn(
+            Future.failed(
+              UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)
+            )
+          )
 
-        val result: Future[Result] = controller.deletePredefinedAgent(fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest)))
+        val result: Future[Result] = controller.deletePredefinedAgent(
+          fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest))
+        )
 
         status(result) mustBe BAD_GATEWAY
-        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+        (contentAsJson(result) \ "message").as[String] must include(
+          "boom from upstream"
+        )
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.deletePredefinedAgent(eqTo(req))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.deletePredefinedAgent()(fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest)))
+        val result: Future[Result] = controller.deletePredefinedAgent()(
+          fakeRequest.withBody(Json.toJson(testDeletePredefinedAgentRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+        (contentAsJson(result) \ "message").as[String] must equal(
+          "Unexpected error"
+        )
       }
     }
 
@@ -192,14 +300,21 @@ class ManageAgentsControllerSpec extends SpecBase {
           )
         )
 
-        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testOrg))
 
-        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
+        val result: Future[Result] =
+          controller.getSdltOrganisation("A-123")(fakeRequest)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(testOrg)
-        verify(mockManageAgentsService).getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier])
+        verify(mockManageAgentsService).getSdltOrganisation(eqTo("A-123"))(
+          any[HeaderCarrier]
+        )
       }
 
       "return OK with empty agents when service returns an organisation with no agents" in new BaseSetup {
@@ -211,34 +326,59 @@ class ManageAgentsControllerSpec extends SpecBase {
           agents = Nil
         )
 
-        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(emptyOrg))
 
-        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
+        val result: Future[Result] =
+          controller.getSdltOrganisation("A-123")(fakeRequest)
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(emptyOrg)
-        verify(mockManageAgentsService).getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier])
+        verify(mockManageAgentsService).getSdltOrganisation(eqTo("A-123"))(
+          any[HeaderCarrier]
+        )
       }
 
       "propagate UpstreamErrorResponse status & message" in new BaseSetup {
-        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
-          .thenReturn(Future.failed(UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)))
+        when(
+          mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(
+            any[HeaderCarrier]
+          )
+        )
+          .thenReturn(
+            Future.failed(
+              UpstreamErrorResponse("boom from upstream", BAD_GATEWAY)
+            )
+          )
 
-        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
+        val result: Future[Result] =
+          controller.getSdltOrganisation("A-123")(fakeRequest)
 
         status(result) mustBe BAD_GATEWAY
-        (contentAsJson(result) \ "message").as[String] must include("boom from upstream")
+        (contentAsJson(result) \ "message").as[String] must include(
+          "boom from upstream"
+        )
       }
 
       "return INTERNAL_SERVER_ERROR Unexpected error on unknown exception" in new BaseSetup {
-        when(mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(any[HeaderCarrier]))
+        when(
+          mockManageAgentsService.getSdltOrganisation(eqTo("A-123"))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.getSdltOrganisation("A-123")(fakeRequest)
+        val result: Future[Result] =
+          controller.getSdltOrganisation("A-123")(fakeRequest)
 
         status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "message").as[String] must equal("Unexpected error")
+        (contentAsJson(result) \ "message").as[String] must equal(
+          "Unexpected error"
+        )
       }
     }
   }
@@ -247,6 +387,10 @@ class ManageAgentsControllerSpec extends SpecBase {
     val mockManageAgentsService: ManageAgentsService = mock[ManageAgentsService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ManageAgentsController(cc, mockManageAgentsService, fakeIdentifierAction)
+    val controller = new ManageAgentsController(
+      cc,
+      mockManageAgentsService,
+      fakeIdentifierAction
+    )
   }
 }

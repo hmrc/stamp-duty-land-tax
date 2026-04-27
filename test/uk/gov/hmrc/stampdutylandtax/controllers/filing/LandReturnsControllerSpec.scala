@@ -36,18 +36,28 @@ class LandReturnsControllerSpec extends SpecBase {
     "POST /create-land (createLand)" - {
 
       "return CREATED with land response when service returns successfully" in new BaseSetup {
-        when(mockFilingLandService.createLand(eqTo(testCreateLandRequest))(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.createLand(eqTo(testCreateLandRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateLandResponse))
 
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(testCreateLandRequest)))
+        val result: Future[Result] = controller.createLand()(
+          fakeRequest.withBody(Json.toJson(testCreateLandRequest))
+        )
 
         status(result) mustBe CREATED
         contentAsJson(result) mustBe Json.toJson(testCreateLandResponse)
-        verify(mockFilingLandService).createLand(eqTo(testCreateLandRequest))(any[HeaderCarrier])
+        verify(mockFilingLandService).createLand(eqTo(testCreateLandRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+        val result: Future[Result] = controller.createLand()(
+          fakeRequest.withBody(Json.obj("invalid" -> "data"))
+        )
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -61,7 +71,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "interestTransferredCreated" -> "FREEHOLD",
           "addressLine1" -> "High Street"
         )
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -74,7 +85,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "interestTransferredCreated" -> "FREEHOLD",
           "addressLine1" -> "High Street"
         )
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -87,7 +99,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "interestTransferredCreated" -> "FREEHOLD",
           "addressLine1" -> "High Street"
         )
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -100,7 +113,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "propertyType" -> "RESIDENTIAL",
           "addressLine1" -> "High Street"
         )
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -113,34 +127,48 @@ class LandReturnsControllerSpec extends SpecBase {
           "propertyType" -> "RESIDENTIAL",
           "interestTransferredCreated" -> "FREEHOLD"
         )
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return BAD_REQUEST when all fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockFilingLandService.createLand(any[CreateLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.createLand(any[CreateLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(testCreateLandRequest)))
+        val result: Future[Result] = controller.createLand()(
+          fakeRequest.withBody(Json.toJson(testCreateLandRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "return 500 when service fails with exception" in new BaseSetup {
-        when(mockFilingLandService.createLand(any[CreateLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.createLand(any[CreateLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new Exception("Service failure")))
 
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(testCreateLandRequest)))
+        val result: Future[Result] = controller.createLand()(
+          fakeRequest.withBody(Json.toJson(testCreateLandRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
@@ -148,37 +176,63 @@ class LandReturnsControllerSpec extends SpecBase {
 
       "handle valid payload with all optional fields" in new BaseSetup {
         val completeRequest: CreateLandRequest = testCreateLandRequestComplete
-        when(mockFilingLandService.createLand(eqTo(completeRequest))(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.createLand(eqTo(completeRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateLandResponse))
 
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(completeRequest)))
+        val result: Future[Result] = controller.createLand()(
+          fakeRequest.withBody(Json.toJson(completeRequest))
+        )
 
         status(result) mustBe CREATED
-        verify(mockFilingLandService).createLand(eqTo(completeRequest))(any[HeaderCarrier])
+        verify(mockFilingLandService).createLand(eqTo(completeRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle valid payload with minimal required fields" in new BaseSetup {
         val minimalRequest: CreateLandRequest = testCreateLandRequestMinimal
-        when(mockFilingLandService.createLand(eqTo(minimalRequest))(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.createLand(eqTo(minimalRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateLandResponse))
 
-        val result: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(minimalRequest)))
+        val result: Future[Result] = controller.createLand()(
+          fakeRequest.withBody(Json.toJson(minimalRequest))
+        )
 
         status(result) mustBe CREATED
-        verify(mockFilingLandService).createLand(eqTo(minimalRequest))(any[HeaderCarrier])
+        verify(mockFilingLandService).createLand(eqTo(minimalRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle different property types" in new BaseSetup {
-        val request1: CreateLandRequest = testCreateLandRequest.copy(propertyType = "RESIDENTIAL")
-        val request2: CreateLandRequest = testCreateLandRequest.copy(propertyType = "NON_RESIDENTIAL")
-        val request3: CreateLandRequest = testCreateLandRequest.copy(propertyType = "MIXED")
+        val request1: CreateLandRequest =
+          testCreateLandRequest.copy(propertyType = "RESIDENTIAL")
+        val request2: CreateLandRequest =
+          testCreateLandRequest.copy(propertyType = "NON_RESIDENTIAL")
+        val request3: CreateLandRequest =
+          testCreateLandRequest.copy(propertyType = "MIXED")
 
-        when(mockFilingLandService.createLand(any[CreateLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.createLand(any[CreateLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateLandResponse))
 
-        val result1: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(Json.toJson(request3)))
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -186,14 +240,22 @@ class LandReturnsControllerSpec extends SpecBase {
       }
 
       "handle different interest types" in new BaseSetup {
-        val request1: CreateLandRequest = testCreateLandRequest.copy(interestTransferredCreated = "FREEHOLD")
-        val request2: CreateLandRequest = testCreateLandRequest.copy(interestTransferredCreated = "LEASEHOLD")
+        val request1: CreateLandRequest =
+          testCreateLandRequest.copy(interestTransferredCreated = "FREEHOLD")
+        val request2: CreateLandRequest =
+          testCreateLandRequest.copy(interestTransferredCreated = "LEASEHOLD")
 
-        when(mockFilingLandService.createLand(any[CreateLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.createLand(any[CreateLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateLandResponse))
 
-        val result1: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.createLand()(fakeRequest.withBody(Json.toJson(request2)))
+        val result1: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.createLand()(fakeRequest.withBody(Json.toJson(request2)))
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -203,18 +265,28 @@ class LandReturnsControllerSpec extends SpecBase {
     "POST /update-land (updateLand)" - {
 
       "return OK with update response when service returns successfully" in new BaseSetup {
-        when(mockFilingLandService.updateLand(eqTo(testUpdateLandRequest))(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.updateLand(eqTo(testUpdateLandRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateLandResponse))
 
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(testUpdateLandRequest)))
+        val result: Future[Result] = controller.updateLand()(
+          fakeRequest.withBody(Json.toJson(testUpdateLandRequest))
+        )
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(testUpdateLandResponse)
-        verify(mockFilingLandService).updateLand(eqTo(testUpdateLandRequest))(any[HeaderCarrier])
+        verify(mockFilingLandService).updateLand(eqTo(testUpdateLandRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+        val result: Future[Result] = controller.updateLand()(
+          fakeRequest.withBody(Json.obj("invalid" -> "data"))
+        )
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -229,7 +301,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "interestTransferredCreated" -> "FREEHOLD",
           "addressLine1" -> "High Street"
         )
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -243,7 +316,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "interestTransferredCreated" -> "FREEHOLD",
           "addressLine1" -> "High Street"
         )
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -257,34 +331,48 @@ class LandReturnsControllerSpec extends SpecBase {
           "interestTransferredCreated" -> "FREEHOLD",
           "addressLine1" -> "High Street"
         )
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return BAD_REQUEST when all fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.updateLand()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockFilingLandService.updateLand(any[UpdateLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.updateLand(any[UpdateLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(testUpdateLandRequest)))
+        val result: Future[Result] = controller.updateLand()(
+          fakeRequest.withBody(Json.toJson(testUpdateLandRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "return 500 when service fails with exception" in new BaseSetup {
-        when(mockFilingLandService.updateLand(any[UpdateLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.updateLand(any[UpdateLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new Exception("Service failure")))
 
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(testUpdateLandRequest)))
+        val result: Future[Result] = controller.updateLand()(
+          fakeRequest.withBody(Json.toJson(testUpdateLandRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
@@ -292,37 +380,63 @@ class LandReturnsControllerSpec extends SpecBase {
 
       "handle valid payload with all optional fields" in new BaseSetup {
         val completeRequest: UpdateLandRequest = testUpdateLandRequestComplete
-        when(mockFilingLandService.updateLand(eqTo(completeRequest))(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.updateLand(eqTo(completeRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateLandResponse))
 
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(completeRequest)))
+        val result: Future[Result] = controller.updateLand()(
+          fakeRequest.withBody(Json.toJson(completeRequest))
+        )
 
         status(result) mustBe OK
-        verify(mockFilingLandService).updateLand(eqTo(completeRequest))(any[HeaderCarrier])
+        verify(mockFilingLandService).updateLand(eqTo(completeRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle valid payload with minimal required fields" in new BaseSetup {
         val minimalRequest: UpdateLandRequest = testUpdateLandRequestMinimal
-        when(mockFilingLandService.updateLand(eqTo(minimalRequest))(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.updateLand(eqTo(minimalRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateLandResponse))
 
-        val result: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(minimalRequest)))
+        val result: Future[Result] = controller.updateLand()(
+          fakeRequest.withBody(Json.toJson(minimalRequest))
+        )
 
         status(result) mustBe OK
-        verify(mockFilingLandService).updateLand(eqTo(minimalRequest))(any[HeaderCarrier])
+        verify(mockFilingLandService).updateLand(eqTo(minimalRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle different property types" in new BaseSetup {
-        val request1: UpdateLandRequest = testUpdateLandRequest.copy(propertyType = "RESIDENTIAL")
-        val request2: UpdateLandRequest = testUpdateLandRequest.copy(propertyType = "NON_RESIDENTIAL")
-        val request3: UpdateLandRequest = testUpdateLandRequest.copy(propertyType = "MIXED")
+        val request1: UpdateLandRequest =
+          testUpdateLandRequest.copy(propertyType = "RESIDENTIAL")
+        val request2: UpdateLandRequest =
+          testUpdateLandRequest.copy(propertyType = "NON_RESIDENTIAL")
+        val request3: UpdateLandRequest =
+          testUpdateLandRequest.copy(propertyType = "MIXED")
 
-        when(mockFilingLandService.updateLand(any[UpdateLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.updateLand(any[UpdateLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateLandResponse))
 
-        val result1: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.updateLand()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] =
+          controller.updateLand()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.updateLand()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] =
+          controller.updateLand()(fakeRequest.withBody(Json.toJson(request3)))
 
         status(result1) mustBe OK
         status(result2) mustBe OK
@@ -333,18 +447,28 @@ class LandReturnsControllerSpec extends SpecBase {
     "POST /delete-land (deleteLand)" - {
 
       "return OK with delete response when service returns successfully" in new BaseSetup {
-        when(mockFilingLandService.deleteLand(eqTo(testDeleteLandRequest))(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.deleteLand(eqTo(testDeleteLandRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testDeleteLandResponse))
 
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.toJson(testDeleteLandRequest)))
+        val result: Future[Result] = controller.deleteLand()(
+          fakeRequest.withBody(Json.toJson(testDeleteLandRequest))
+        )
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(testDeleteLandResponse)
-        verify(mockFilingLandService).deleteLand(eqTo(testDeleteLandRequest))(any[HeaderCarrier])
+        verify(mockFilingLandService).deleteLand(eqTo(testDeleteLandRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+        val result: Future[Result] = controller.deleteLand()(
+          fakeRequest.withBody(Json.obj("invalid" -> "data"))
+        )
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -356,7 +480,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "returnResourceRef" -> "100001",
           "landResourceRef" -> "100001"
         )
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.deleteLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -367,7 +492,8 @@ class LandReturnsControllerSpec extends SpecBase {
           "storn" -> "STORN123456",
           "landResourceRef" -> "100001"
         )
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.deleteLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -378,50 +504,74 @@ class LandReturnsControllerSpec extends SpecBase {
           "storn" -> "STORN123456",
           "returnResourceRef" -> "100001"
         )
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.deleteLand()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return BAD_REQUEST when all fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.deleteLand()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockFilingLandService.deleteLand(any[DeleteLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.deleteLand(any[DeleteLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.toJson(testDeleteLandRequest)))
+        val result: Future[Result] = controller.deleteLand()(
+          fakeRequest.withBody(Json.toJson(testDeleteLandRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "return 500 when service fails with exception" in new BaseSetup {
-        when(mockFilingLandService.deleteLand(any[DeleteLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.deleteLand(any[DeleteLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new Exception("Service failure")))
 
-        val result: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.toJson(testDeleteLandRequest)))
+        val result: Future[Result] = controller.deleteLand()(
+          fakeRequest.withBody(Json.toJson(testDeleteLandRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "handle different resource reference formats" in new BaseSetup {
-        val request1: DeleteLandRequest = testDeleteLandRequest.copy(landResourceRef = "100001")
-        val request2: DeleteLandRequest = testDeleteLandRequest.copy(landResourceRef = "999999")
-        val request3: DeleteLandRequest = testDeleteLandRequest.copy(landResourceRef = "LRF-2024-001")
+        val request1: DeleteLandRequest =
+          testDeleteLandRequest.copy(landResourceRef = "100001")
+        val request2: DeleteLandRequest =
+          testDeleteLandRequest.copy(landResourceRef = "999999")
+        val request3: DeleteLandRequest =
+          testDeleteLandRequest.copy(landResourceRef = "LRF-2024-001")
 
-        when(mockFilingLandService.deleteLand(any[DeleteLandRequest])(any[HeaderCarrier]))
+        when(
+          mockFilingLandService.deleteLand(any[DeleteLandRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testDeleteLandResponse))
 
-        val result1: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.deleteLand()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] =
+          controller.deleteLand()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.deleteLand()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] =
+          controller.deleteLand()(fakeRequest.withBody(Json.toJson(request3)))
 
         status(result1) mustBe OK
         status(result2) mustBe OK
@@ -434,7 +584,8 @@ class LandReturnsControllerSpec extends SpecBase {
     val mockFilingLandService: FilingLandService = mock[FilingLandService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new LandReturnsController(cc, mockFilingLandService, fakeIdentifierAction)
+    val controller =
+      new LandReturnsController(cc, mockFilingLandService, fakeIdentifierAction)
 
     val testCreateLandRequest: CreateLandRequest = CreateLandRequest(
       stornId = "STORN123456",

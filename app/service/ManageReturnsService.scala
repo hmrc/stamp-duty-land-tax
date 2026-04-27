@@ -24,10 +24,11 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class ManageReturnsService @Inject()(formp: FormpProxyConnector) {
+class ManageReturnsService @Inject() (formp: FormpProxyConnector) {
 
-  def getReturns(request: SdltReturnRecordRequest)
-                (implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] =
+  def getReturns(
+      request: SdltReturnRecordRequest
+  )(implicit hc: HeaderCarrier): Future[SdltReturnRecordResponse] =
     formp
       .getReturns(request)
 }

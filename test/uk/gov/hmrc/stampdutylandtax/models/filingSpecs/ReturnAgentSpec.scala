@@ -38,7 +38,11 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.{EitherValues, OptionValues}
 import play.api.libs.json.*
 
-class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with OptionValues {
+class ReturnAgentSpec
+    extends AnyFreeSpec
+    with Matchers
+    with EitherValues
+    with OptionValues {
 
   private val validDeleteReturnAgentReturnJsonTrue = Json.obj(
     "deleted" -> true
@@ -48,8 +52,10 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
     "deleted" -> false
   )
 
-  private val deleteReturnAgentReturnTrue = DeleteReturnAgentReturn(deleted = true)
-  private val deleteReturnAgentReturnFalse = DeleteReturnAgentReturn(deleted = false)
+  private val deleteReturnAgentReturnTrue =
+    DeleteReturnAgentReturn(deleted = true)
+  private val deleteReturnAgentReturnFalse =
+    DeleteReturnAgentReturn(deleted = false)
 
   private val validDeleteReturnAgentRequestJson = Json.obj(
     "storn" -> "12345",
@@ -71,9 +77,10 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
     "updated" -> false
   )
 
-  private val updateReturnAgentReturnTrue = UpdateReturnAgentReturn(updated = true)
-  private val updateReturnAgentReturnFalse = UpdateReturnAgentReturn(updated = false)
-
+  private val updateReturnAgentReturnTrue =
+    UpdateReturnAgentReturn(updated = true)
+  private val updateReturnAgentReturnFalse =
+    UpdateReturnAgentReturn(updated = false)
 
   private val validUpdateReturnAgentRequestJsonComplete = Json.obj(
     "stornId" -> "12345",
@@ -126,7 +133,6 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
     addressLine1 = "Main Street",
     postcode = "TE23 5TT"
   )
-
 
   private val validCreateReturnAgentRequestJsonComplete = Json.obj(
     "stornId" -> "12345",
@@ -197,7 +203,12 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[CreateReturnAgentRequest](validCreateReturnAgentRequestJsonComplete).asEither.value
+        val result = Json
+          .fromJson[CreateReturnAgentRequest](
+            validCreateReturnAgentRequestJsonComplete
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -216,7 +227,12 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with only required fields" in {
-        val result = Json.fromJson[CreateReturnAgentRequest](validCreateReturnAgentRequestJsonMinimal).asEither.value
+        val result = Json
+          .fromJson[CreateReturnAgentRequest](
+            validCreateReturnAgentRequestJsonMinimal
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -252,7 +268,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
           "isAuthorised" -> JsNull
         )
 
-        val result = Json.fromJson[CreateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[CreateReturnAgentRequest](json).asEither.value
 
         result.houseNumber must not be defined
         result.addressLine2 must not be defined
@@ -269,7 +286,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when returnResourceRef is missing" in {
-        val json = validCreateReturnAgentRequestJsonComplete - "returnResourceRef"
+        val json =
+          validCreateReturnAgentRequestJsonComplete - "returnResourceRef"
 
         val result = Json.fromJson[CreateReturnAgentRequest](json).asEither
 
@@ -309,7 +327,9 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when houseNumber has invalid type" in {
-        val json = validCreateReturnAgentRequestJsonComplete ++ Json.obj("houseNumber" -> 123)
+        val json = validCreateReturnAgentRequestJsonComplete ++ Json.obj(
+          "houseNumber" -> 123
+        )
 
         val result = Json.fromJson[CreateReturnAgentRequest](json).asEither
 
@@ -317,7 +337,9 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when required field has invalid type" in {
-        val json = validCreateReturnAgentRequestJsonComplete ++ Json.obj("stornId" -> 123)
+        val json = validCreateReturnAgentRequestJsonComplete ++ Json.obj(
+          "stornId" -> 123
+        )
 
         val result = Json.fromJson[CreateReturnAgentRequest](json).asEither
 
@@ -372,7 +394,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       "must serialize None optional fields correctly" in {
         val json = Json.toJson(minimalCreateReturnAgentRequest)
 
-        val deserialized = Json.fromJson[CreateReturnAgentRequest](json).asEither.value
+        val deserialized =
+          Json.fromJson[CreateReturnAgentRequest](json).asEither.value
         deserialized.houseNumber must not be defined
         deserialized.addressLine2 must not be defined
         deserialized.phoneNumber must not be defined
@@ -383,7 +406,22 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
         val json = Json.toJson(completeCreateReturnAgentRequest)
 
         json mustBe a[JsObject]
-        json.as[JsObject].keys must contain allOf("stornId", "returnResourceRef", "agentType", "name", "houseNumber", "addressLine1", "addressLine2", "addressLine3", "addressLine4", "postcode", "phoneNumber", "email", "agentReference", "isAuthorised")
+        json.as[JsObject].keys must contain allOf (
+          "stornId",
+          "returnResourceRef",
+          "agentType",
+          "name",
+          "houseNumber",
+          "addressLine1",
+          "addressLine2",
+          "addressLine3",
+          "addressLine4",
+          "postcode",
+          "phoneNumber",
+          "email",
+          "agentReference",
+          "isAuthorised"
+        )
       }
     }
 
@@ -395,14 +433,16 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
 
       "must round-trip serialize and deserialize with all fields" in {
         val json = Json.toJson(completeCreateReturnAgentRequest)
-        val result = Json.fromJson[CreateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[CreateReturnAgentRequest](json).asEither.value
 
         result mustEqual completeCreateReturnAgentRequest
       }
 
       "must round-trip serialize and deserialize with only required fields" in {
         val json = Json.toJson(minimalCreateReturnAgentRequest)
-        val result = Json.fromJson[CreateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[CreateReturnAgentRequest](json).asEither.value
 
         result mustEqual minimalCreateReturnAgentRequest
       }
@@ -426,7 +466,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
         )
 
         val json = Json.toJson(mixedCreateReturnAgentRequest)
-        val result = Json.fromJson[CreateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[CreateReturnAgentRequest](json).asEither.value
 
         result mustEqual mixedCreateReturnAgentRequest
       }
@@ -478,14 +519,16 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
 
       "must not be equal when required fields differ" in {
         val agentRequest1 = minimalCreateReturnAgentRequest
-        val agentRequest2 = minimalCreateReturnAgentRequest.copy(stornId = "DIFFERENT")
+        val agentRequest2 =
+          minimalCreateReturnAgentRequest.copy(stornId = "DIFFERENT")
 
         agentRequest1 must not equal agentRequest2
       }
 
       "must not be equal when optional fields differ" in {
         val agentRequest1 = minimalCreateReturnAgentRequest
-        val agentRequest2 = minimalCreateReturnAgentRequest.copy(houseNumber = Some("100"))
+        val agentRequest2 =
+          minimalCreateReturnAgentRequest.copy(houseNumber = Some("100"))
 
         agentRequest1 must not equal agentRequest2
       }
@@ -501,7 +544,10 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[CreateReturnAgentReturn](validCreateReturnAgentReturnJson).asEither.value
+        val result = Json
+          .fromJson[CreateReturnAgentReturn](validCreateReturnAgentReturnJson)
+          .asEither
+          .value
 
         result.returnAgentID mustBe "AGID-001"
       }
@@ -586,7 +632,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
 
       "must not be equal when fields differ" in {
         val agentReturn1 = createReturnAgentReturn
-        val agentReturn2 = createReturnAgentReturn.copy(returnAgentID = "AGID-002")
+        val agentReturn2 =
+          createReturnAgentReturn.copy(returnAgentID = "AGID-002")
 
         agentReturn1 must not equal agentReturn2
       }
@@ -602,7 +649,12 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[UpdateReturnAgentRequest](validUpdateReturnAgentRequestJsonComplete).asEither.value
+        val result = Json
+          .fromJson[UpdateReturnAgentRequest](
+            validUpdateReturnAgentRequestJsonComplete
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -621,7 +673,12 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with only required fields" in {
-        val result = Json.fromJson[UpdateReturnAgentRequest](validUpdateReturnAgentRequestJsonMinimal).asEither.value
+        val result = Json
+          .fromJson[UpdateReturnAgentRequest](
+            validUpdateReturnAgentRequestJsonMinimal
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -657,7 +714,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
           "isAuthorised" -> JsNull
         )
 
-        val result = Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
 
         result.houseNumber must not be defined
         result.addressLine2 must not be defined
@@ -674,7 +732,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when returnResourceRef is missing" in {
-        val json = validUpdateReturnAgentRequestJsonComplete - "returnResourceRef"
+        val json =
+          validUpdateReturnAgentRequestJsonComplete - "returnResourceRef"
 
         val result = Json.fromJson[UpdateReturnAgentRequest](json).asEither
 
@@ -714,7 +773,9 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when houseNumber has invalid type" in {
-        val json = validUpdateReturnAgentRequestJsonComplete ++ Json.obj("houseNumber" -> 123)
+        val json = validUpdateReturnAgentRequestJsonComplete ++ Json.obj(
+          "houseNumber" -> 123
+        )
 
         val result = Json.fromJson[UpdateReturnAgentRequest](json).asEither
 
@@ -722,7 +783,9 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when required field has invalid type" in {
-        val json = validUpdateReturnAgentRequestJsonComplete ++ Json.obj("stornId" -> 123)
+        val json = validUpdateReturnAgentRequestJsonComplete ++ Json.obj(
+          "stornId" -> 123
+        )
 
         val result = Json.fromJson[UpdateReturnAgentRequest](json).asEither
 
@@ -777,7 +840,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       "must serialize None optional fields correctly" in {
         val json = Json.toJson(minimalUpdateReturnAgentRequest)
 
-        val deserialized = Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
+        val deserialized =
+          Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
         deserialized.houseNumber must not be defined
         deserialized.addressLine2 must not be defined
         deserialized.phoneNumber must not be defined
@@ -788,7 +852,22 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
         val json = Json.toJson(completeUpdateReturnAgentRequest)
 
         json mustBe a[JsObject]
-        json.as[JsObject].keys must contain allOf("stornId", "returnResourceRef", "agentType", "name", "houseNumber", "addressLine1", "addressLine2", "addressLine3", "addressLine4", "postcode", "phoneNumber", "email", "agentReference", "isAuthorised")
+        json.as[JsObject].keys must contain allOf (
+          "stornId",
+          "returnResourceRef",
+          "agentType",
+          "name",
+          "houseNumber",
+          "addressLine1",
+          "addressLine2",
+          "addressLine3",
+          "addressLine4",
+          "postcode",
+          "phoneNumber",
+          "email",
+          "agentReference",
+          "isAuthorised"
+        )
       }
     }
 
@@ -800,14 +879,16 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
 
       "must round-trip serialize and deserialize with all fields" in {
         val json = Json.toJson(completeUpdateReturnAgentRequest)
-        val result = Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
 
         result mustEqual completeUpdateReturnAgentRequest
       }
 
       "must round-trip serialize and deserialize with only required fields" in {
         val json = Json.toJson(minimalUpdateReturnAgentRequest)
-        val result = Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
 
         result mustEqual minimalUpdateReturnAgentRequest
       }
@@ -831,7 +912,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
         )
 
         val json = Json.toJson(mixedUpdateReturnAgentRequest)
-        val result = Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[UpdateReturnAgentRequest](json).asEither.value
 
         result mustEqual mixedUpdateReturnAgentRequest
       }
@@ -883,14 +965,16 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
 
       "must not be equal when required fields differ" in {
         val agentRequest1 = minimalUpdateReturnAgentRequest
-        val agentRequest2 = minimalUpdateReturnAgentRequest.copy(stornId = "DIFFERENT")
+        val agentRequest2 =
+          minimalUpdateReturnAgentRequest.copy(stornId = "DIFFERENT")
 
         agentRequest1 must not equal agentRequest2
       }
 
       "must not be equal when optional fields differ" in {
         val agentRequest1 = minimalUpdateReturnAgentRequest
-        val agentRequest2 = minimalUpdateReturnAgentRequest.copy(houseNumber = Some("100"))
+        val agentRequest2 =
+          minimalUpdateReturnAgentRequest.copy(houseNumber = Some("100"))
 
         agentRequest1 must not equal agentRequest2
       }
@@ -906,13 +990,23 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with updated true" in {
-        val result = Json.fromJson[UpdateReturnAgentReturn](validUpdateReturnAgentReturnJsonTrue).asEither.value
+        val result = Json
+          .fromJson[UpdateReturnAgentReturn](
+            validUpdateReturnAgentReturnJsonTrue
+          )
+          .asEither
+          .value
 
         result.updated mustBe true
       }
 
       "must deserialize valid JSON with updated false" in {
-        val result = Json.fromJson[UpdateReturnAgentReturn](validUpdateReturnAgentReturnJsonFalse).asEither.value
+        val result = Json
+          .fromJson[UpdateReturnAgentReturn](
+            validUpdateReturnAgentReturnJsonFalse
+          )
+          .asEither
+          .value
 
         result.updated mustBe false
       }
@@ -1030,7 +1124,10 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[DeleteReturnAgentRequest](validDeleteReturnAgentRequestJson).asEither.value
+        val result = Json
+          .fromJson[DeleteReturnAgentRequest](validDeleteReturnAgentRequestJson)
+          .asEither
+          .value
 
         result.storn mustBe "12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -1070,7 +1167,9 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when returnResourceRef has invalid type" in {
-        val json = validDeleteReturnAgentRequestJson ++ Json.obj("returnResourceRef" -> true)
+        val json = validDeleteReturnAgentRequestJson ++ Json.obj(
+          "returnResourceRef" -> true
+        )
 
         val result = Json.fromJson[DeleteReturnAgentRequest](json).asEither
 
@@ -1078,7 +1177,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must fail to deserialize when agentType has invalid type" in {
-        val json = validDeleteReturnAgentRequestJson ++ Json.obj("agentType" -> 456)
+        val json =
+          validDeleteReturnAgentRequestJson ++ Json.obj("agentType" -> 456)
 
         val result = Json.fromJson[DeleteReturnAgentRequest](json).asEither
 
@@ -1112,7 +1212,11 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
         val json = Json.toJson(deleteReturnAgentRequest)
 
         json mustBe a[JsObject]
-        json.as[JsObject].keys must contain allOf("storn", "returnResourceRef", "agentType")
+        json.as[JsObject].keys must contain allOf (
+          "storn",
+          "returnResourceRef",
+          "agentType"
+        )
       }
     }
 
@@ -1124,7 +1228,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
 
       "must round-trip serialize and deserialize" in {
         val json = Json.toJson(deleteReturnAgentRequest)
-        val result = Json.fromJson[DeleteReturnAgentRequest](json).asEither.value
+        val result =
+          Json.fromJson[DeleteReturnAgentRequest](json).asEither.value
 
         result mustEqual deleteReturnAgentRequest
       }
@@ -1155,7 +1260,8 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
 
       "must not be equal when fields differ" in {
         val agentRequest1 = deleteReturnAgentRequest
-        val agentRequest2 = deleteReturnAgentRequest.copy(agentType = "CONVEYANCER")
+        val agentRequest2 =
+          deleteReturnAgentRequest.copy(agentType = "CONVEYANCER")
 
         agentRequest1 must not equal agentRequest2
       }
@@ -1181,13 +1287,23 @@ class ReturnAgentSpec extends AnyFreeSpec with Matchers with EitherValues with O
       }
 
       "must deserialize valid JSON with deleted true" in {
-        val result = Json.fromJson[DeleteReturnAgentReturn](validDeleteReturnAgentReturnJsonTrue).asEither.value
+        val result = Json
+          .fromJson[DeleteReturnAgentReturn](
+            validDeleteReturnAgentReturnJsonTrue
+          )
+          .asEither
+          .value
 
         result.deleted mustBe true
       }
 
       "must deserialize valid JSON with deleted false" in {
-        val result = Json.fromJson[DeleteReturnAgentReturn](validDeleteReturnAgentReturnJsonFalse).asEither.value
+        val result = Json
+          .fromJson[DeleteReturnAgentReturn](
+            validDeleteReturnAgentReturnJsonFalse
+          )
+          .asEither
+          .value
 
         result.deleted mustBe false
       }

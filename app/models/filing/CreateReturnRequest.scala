@@ -21,17 +21,17 @@ import play.api.libs.json.{Json, OFormat}
 import play.api.libs.json.*
 
 case class CreateReturnRequest(
-                                stornId: String,
-                                purchaserIsCompany: String,
-                                surNameOrCompanyName: String,
-                                houseNumber: Option[Int],
-                                addressLine1: String,
-                                addressLine2: Option[String],
-                                addressLine3: Option[String],
-                                addressLine4: Option[String],
-                                postcode: Option[String],
-                                transactionType: String
-                              )
+    stornId: String,
+    purchaserIsCompany: String,
+    surNameOrCompanyName: String,
+    houseNumber: Option[Int],
+    addressLine1: String,
+    addressLine2: Option[String],
+    addressLine3: Option[String],
+    addressLine4: Option[String],
+    postcode: Option[String],
+    transactionType: String
+)
 
 object CreateReturnRequest {
 
@@ -39,8 +39,8 @@ object CreateReturnRequest {
     (JsPath \ "stornId").read[String] and
       (JsPath \ "purchaserIsCompany").read[String].map {
         case "Individual" => "NO"
-        case "Company" => "YES"
-        case other => other
+        case "Company"    => "YES"
+        case other        => other
       } and
       (JsPath \ "surNameOrCompanyName").read[String] and
       (JsPath \ "houseNumber").readNullable[Int] and
@@ -49,17 +49,17 @@ object CreateReturnRequest {
       (JsPath \ "addressLine3").readNullable[String] and
       (JsPath \ "addressLine4").readNullable[String] and
       (JsPath \ "postcode").readNullable[String] and
-      (JsPath \ "transactionType").read[String].map{
-        case "conveyanceTransfer" => "F"
-        case "grantOfLease" => "L"
+      (JsPath \ "transactionType").read[String].map {
+        case "conveyanceTransfer"      => "F"
+        case "grantOfLease"            => "L"
         case "conveyanceTransferLease" => "A"
-        case "otherTransaction" => "O"
-        case other => other
+        case "otherTransaction"        => "O"
+        case other                     => other
       }
-    )(CreateReturnRequest.apply _)
+  )(CreateReturnRequest.apply _)
 
-  implicit val writes: OWrites[CreateReturnRequest] = Json.writes[CreateReturnRequest]
+  implicit val writes: OWrites[CreateReturnRequest] =
+    Json.writes[CreateReturnRequest]
 
   implicit val format: OFormat[CreateReturnRequest] = OFormat(reads, writes)
 }
-

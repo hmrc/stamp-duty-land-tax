@@ -18,7 +18,11 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.manage.{
+  ReturnSummary,
+  SdltReturnRecordRequest,
+  SdltReturnRecordResponse
+}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.concurrent.ScalaFutures
@@ -29,13 +33,17 @@ import uk.gov.hmrc.http.HeaderCarrier
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
-class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase {
+class ManageReturnsServiceSpec
+    extends Matchers
+    with ScalaFutures
+    with SpecBase {
 
   "ManageReturnsService" - {
 
     "getReturns" - {
 
-      val request = SdltReturnRecordRequest(storn = "STN-123", None, false, None)
+      val request =
+        SdltReturnRecordRequest(storn = "STN-123", None, false, None)
 
       "should delegate to FormpProxyConnector and return a successful ReturnsResponse" in new Setup {
         private val response = SdltReturnRecordResponse(
@@ -53,18 +61,24 @@ class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase 
           )
         )
 
-        when(mockFormpProxyConnector.getReturns(eqTo(request))(any[HeaderCarrier]))
+        when(
+          mockFormpProxyConnector.getReturns(eqTo(request))(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(response))
 
         val result = service.getReturns(request).futureValue
 
         result mustBe response
-        verify(mockFormpProxyConnector, times(1)).getReturns(eqTo(request))(any[HeaderCarrier])
+        verify(mockFormpProxyConnector, times(1)).getReturns(eqTo(request))(
+          any[HeaderCarrier]
+        )
       }
 
       "should propagate exceptions thrown by the connector" in new Setup {
 
-        when(mockFormpProxyConnector.getReturns(eqTo(request))(any[HeaderCarrier]))
+        when(
+          mockFormpProxyConnector.getReturns(eqTo(request))(any[HeaderCarrier])
+        )
           .thenReturn(Future.failed(new RuntimeException("boom")))
 
         val ex = intercept[RuntimeException] {
@@ -72,7 +86,9 @@ class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase 
         }
 
         ex.getMessage must include("boom")
-        verify(mockFormpProxyConnector, times(1)).getReturns(eqTo(request))(any[HeaderCarrier])
+        verify(mockFormpProxyConnector, times(1)).getReturns(eqTo(request))(
+          any[HeaderCarrier]
+        )
       }
     }
   }

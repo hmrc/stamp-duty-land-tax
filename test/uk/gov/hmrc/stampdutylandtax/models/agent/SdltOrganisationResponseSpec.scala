@@ -25,7 +25,7 @@ class SdltOrganisationResponseSpec extends AnyWordSpec with Matchers {
 
   "SdltOrganisationResponse (JSON)" should {
     "read and write a fully-populated with all optional fields" in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "storn": "STORN12345",
@@ -73,7 +73,7 @@ class SdltOrganisationResponseSpec extends AnyWordSpec with Matchers {
       model.version mustBe Some("123456")
       model.isReturnUser mustBe Some("John Snow")
       model.doNotDisplayWelcomePage mustBe Some("12345")
-      model.agents.size mustBe  2
+      model.agents.size mustBe 2
     }
     "read and write a partially-populated with mandatory fields" in {
       val json = Json.parse(

@@ -176,23 +176,23 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must deserialize from JSON correctly with all fields populated" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "returnResourceRef"          -> "100001",
-        "propertyType"               -> "RESIDENTIAL",
+        "stornId" -> "STORN12345",
+        "returnResourceRef" -> "100001",
+        "propertyType" -> "RESIDENTIAL",
         "interestTransferredCreated" -> "FREEHOLD",
-        "houseNumber"                -> "123",
-        "addressLine1"               -> "Main Street",
-        "addressLine2"               -> "Apartment 4B",
-        "addressLine3"               -> "City Center",
-        "addressLine4"               -> "Greater London",
-        "postcode"                   -> "SW1A 1AA",
-        "landArea"                   -> "500",
-        "areaUnit"                   -> "SQUARE_METERS",
-        "localAuthorityNumber"       -> "LA12345",
-        "mineralRights"              -> "YES",
-        "nlpgUprn"                   -> "100012345678",
-        "willSendPlansByPost"        -> "NO",
-        "titleNumber"                -> "TN123456"
+        "houseNumber" -> "123",
+        "addressLine1" -> "Main Street",
+        "addressLine2" -> "Apartment 4B",
+        "addressLine3" -> "City Center",
+        "addressLine4" -> "Greater London",
+        "postcode" -> "SW1A 1AA",
+        "landArea" -> "500",
+        "areaUnit" -> "SQUARE_METERS",
+        "localAuthorityNumber" -> "LA12345",
+        "mineralRights" -> "YES",
+        "nlpgUprn" -> "100012345678",
+        "willSendPlansByPost" -> "NO",
+        "titleNumber" -> "TN123456"
       )
 
       val result = json.validate[CreateLandRequest]
@@ -221,11 +221,11 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must deserialize from JSON correctly with only required fields" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "returnResourceRef"          -> "100001",
-        "propertyType"               -> "RESIDENTIAL",
+        "stornId" -> "STORN12345",
+        "returnResourceRef" -> "100001",
+        "propertyType" -> "RESIDENTIAL",
         "interestTransferredCreated" -> "FREEHOLD",
-        "addressLine1"               -> "Main Street"
+        "addressLine1" -> "Main Street"
       )
 
       val result = json.validate[CreateLandRequest]
@@ -246,10 +246,10 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when required field stornId is missing" in {
       val json = Json.obj(
-        "returnResourceRef"          -> "100001",
-        "propertyType"               -> "RESIDENTIAL",
+        "returnResourceRef" -> "100001",
+        "propertyType" -> "RESIDENTIAL",
         "interestTransferredCreated" -> "FREEHOLD",
-        "addressLine1"               -> "Main Street"
+        "addressLine1" -> "Main Street"
       )
 
       val result = json.validate[CreateLandRequest]
@@ -259,10 +259,10 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when required field returnResourceRef is missing" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "propertyType"               -> "RESIDENTIAL",
+        "stornId" -> "STORN12345",
+        "propertyType" -> "RESIDENTIAL",
         "interestTransferredCreated" -> "FREEHOLD",
-        "addressLine1"               -> "Main Street"
+        "addressLine1" -> "Main Street"
       )
 
       val result = json.validate[CreateLandRequest]
@@ -272,9 +272,9 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when required field addressLine1 is missing" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "returnResourceRef"          -> "100001",
-        "propertyType"               -> "RESIDENTIAL",
+        "stornId" -> "STORN12345",
+        "returnResourceRef" -> "100001",
+        "propertyType" -> "RESIDENTIAL",
         "interestTransferredCreated" -> "FREEHOLD"
       )
 
@@ -285,10 +285,10 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when required field propertyType is missing" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "returnResourceRef"          -> "100001",
+        "stornId" -> "STORN12345",
+        "returnResourceRef" -> "100001",
         "interestTransferredCreated" -> "FREEHOLD",
-        "addressLine1"               -> "Main Street"
+        "addressLine1" -> "Main Street"
       )
 
       val result = json.validate[CreateLandRequest]
@@ -298,10 +298,10 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when required field interestTransferredCreated is missing" in {
       val json = Json.obj(
-        "stornId"           -> "STORN12345",
+        "stornId" -> "STORN12345",
         "returnResourceRef" -> "100001",
-        "propertyType"      -> "RESIDENTIAL",
-        "addressLine1"      -> "Main Street"
+        "propertyType" -> "RESIDENTIAL",
+        "addressLine1" -> "Main Street"
       )
 
       val result = json.validate[CreateLandRequest]
@@ -327,7 +327,7 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
     "must deserialize from JSON correctly" in {
       val json = Json.obj(
         "landResourceRef" -> "L100001",
-        "landId"          -> "LID123"
+        "landId" -> "LID123"
       )
 
       val result = json.validate[CreateLandReturn]
@@ -473,24 +473,24 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must deserialize from JSON correctly with all fields populated" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "returnResourceRef"          -> "100001",
-        "landResourceRef"            -> "L100001",
-        "propertyType"               -> "RESIDENTIAL",
+        "stornId" -> "STORN12345",
+        "returnResourceRef" -> "100001",
+        "landResourceRef" -> "L100001",
+        "propertyType" -> "RESIDENTIAL",
         "interestTransferredCreated" -> "FREEHOLD",
-        "houseNumber"                -> "456",
-        "addressLine1"               -> "Oak Avenue",
-        "addressLine2"               -> "Suite 10",
-        "addressLine3"               -> "Updated City",
-        "postcode"                   -> "W1A 1AA",
-        "landArea"                   -> "750",
-        "areaUnit"                   -> "SQUARE_METERS",
-        "localAuthorityNumber"       -> "LA54321",
-        "mineralRights"              -> "NO",
-        "nlpgUprn"                   -> "100087654321",
-        "willSendPlansByPost"        -> "YES",
-        "titleNumber"                -> "TN654321",
-        "nextLandId"                 -> "100002"
+        "houseNumber" -> "456",
+        "addressLine1" -> "Oak Avenue",
+        "addressLine2" -> "Suite 10",
+        "addressLine3" -> "Updated City",
+        "postcode" -> "W1A 1AA",
+        "landArea" -> "750",
+        "areaUnit" -> "SQUARE_METERS",
+        "localAuthorityNumber" -> "LA54321",
+        "mineralRights" -> "NO",
+        "nlpgUprn" -> "100087654321",
+        "willSendPlansByPost" -> "YES",
+        "titleNumber" -> "TN654321",
+        "nextLandId" -> "100002"
       )
 
       val result = json.validate[UpdateLandRequest]
@@ -511,12 +511,12 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must deserialize from JSON correctly with only required fields" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN99999",
-        "returnResourceRef"          -> "100002",
-        "landResourceRef"            -> "L100002",
-        "propertyType"               -> "NON_RESIDENTIAL",
+        "stornId" -> "STORN99999",
+        "returnResourceRef" -> "100002",
+        "landResourceRef" -> "L100002",
+        "propertyType" -> "NON_RESIDENTIAL",
         "interestTransferredCreated" -> "LEASEHOLD",
-        "addressLine1"               -> "Updated Business Park"
+        "addressLine1" -> "Updated Business Park"
       )
 
       val result = json.validate[UpdateLandRequest]
@@ -535,11 +535,11 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when required field landResourceRef is missing" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "returnResourceRef"          -> "100001",
-        "propertyType"               -> "RESIDENTIAL",
+        "stornId" -> "STORN12345",
+        "returnResourceRef" -> "100001",
+        "propertyType" -> "RESIDENTIAL",
         "interestTransferredCreated" -> "FREEHOLD",
-        "addressLine1"               -> "Oak Avenue"
+        "addressLine1" -> "Oak Avenue"
       )
 
       val result = json.validate[UpdateLandRequest]
@@ -549,11 +549,11 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when required field propertyType is missing" in {
       val json = Json.obj(
-        "stornId"                    -> "STORN12345",
-        "returnResourceRef"          -> "100001",
-        "landResourceRef"            -> "L100001",
+        "stornId" -> "STORN12345",
+        "returnResourceRef" -> "100001",
+        "landResourceRef" -> "L100001",
         "interestTransferredCreated" -> "FREEHOLD",
-        "addressLine1"               -> "Oak Avenue"
+        "addressLine1" -> "Oak Avenue"
       )
 
       val result = json.validate[UpdateLandRequest]
@@ -616,9 +616,9 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must deserialize from JSON correctly" in {
       val json = Json.obj(
-        "storn"             -> "STORN12345",
+        "storn" -> "STORN12345",
         "returnResourceRef" -> "100001",
-        "landResourceRef"   -> "L100001"
+        "landResourceRef" -> "L100001"
       )
 
       val result = json.validate[DeleteLandRequest]
@@ -634,7 +634,7 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
     "must fail to deserialize when storn is missing" in {
       val json = Json.obj(
         "returnResourceRef" -> "100001",
-        "landResourceRef"   -> "L100001"
+        "landResourceRef" -> "L100001"
       )
 
       val result = json.validate[DeleteLandRequest]
@@ -644,7 +644,7 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when returnResourceRef is missing" in {
       val json = Json.obj(
-        "storn"           -> "STORN12345",
+        "storn" -> "STORN12345",
         "landResourceRef" -> "L100001"
       )
 
@@ -655,7 +655,7 @@ class LandModelsSpec extends AnyFreeSpec with Matchers {
 
     "must fail to deserialize when landResourceRef is missing" in {
       val json = Json.obj(
-        "storn"             -> "STORN12345",
+        "storn" -> "STORN12345",
         "returnResourceRef" -> "100001"
       )
 

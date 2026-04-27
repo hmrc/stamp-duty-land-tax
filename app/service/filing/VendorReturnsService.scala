@@ -24,18 +24,21 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class VendorReturnsService @Inject()(formp: FilingFormpProxyConnector) {
+class VendorReturnsService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def createVendor(createVendorRequest: CreateVendorRequest)
-                  (implicit hc: HeaderCarrier): Future[CreateVendorReturn] =
+  def createVendor(createVendorRequest: CreateVendorRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[CreateVendorReturn] =
     formp.createVendor(createVendorRequest)
 
-  def updateVendor(updateVendorRequest: UpdateVendorRequest)
-                  (implicit hc: HeaderCarrier): Future[UpdateVendorReturn] =
+  def updateVendor(updateVendorRequest: UpdateVendorRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[UpdateVendorReturn] =
     formp.updateVendor(updateVendorRequest)
 
-  def deleteVendor(deleteVendorRequest: DeleteVendorRequest)
-                  (implicit hc: HeaderCarrier): Future[DeleteVendorReturn] =
+  def deleteVendor(deleteVendorRequest: DeleteVendorRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[DeleteVendorReturn] =
     formp.deleteVendor(deleteVendorRequest)
-    
-  }
+
+}

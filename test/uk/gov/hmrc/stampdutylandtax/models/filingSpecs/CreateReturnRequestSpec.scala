@@ -376,7 +376,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
 
     "handle very long address lines" in {
       val longAddress = "A" * 200
-      val json        = Json.parse(
+      val json = Json.parse(
         s"""
            |{
            |  "stornId": "STORN33333",
@@ -470,7 +470,7 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
 
       val result = json.validate[CreateReturnRequest]
       result mustBe a[JsSuccess[_]]
-      val model  = result.get
+      val model = result.get
       model.stornId mustBe ""
       model.purchaserIsCompany mustBe ""
       model.surNameOrCompanyName mustBe ""
@@ -479,4 +479,3 @@ class CreateReturnRequestSpec extends AnyWordSpec with Matchers {
     }
   }
 }
-

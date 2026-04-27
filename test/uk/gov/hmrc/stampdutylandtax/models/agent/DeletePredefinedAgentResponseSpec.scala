@@ -25,7 +25,7 @@ class DeletePredefinedAgentResponseSpec extends AnyWordSpec with Matchers {
 
   "DeletePredefinedAgentResponse (JSON)" should {
     "read and write a fully-populated with all optional fields" in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "deleted": false

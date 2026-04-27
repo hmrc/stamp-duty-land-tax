@@ -28,124 +28,174 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class PurchaserReturnsController @Inject()(
-                                         cc: ControllerComponents,
-                                         service: PurchaserReturnsService,
-                                         auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
-  
-  def createPurchaser(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[CreatePurchaserRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .createPurchaser(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[createPurchaser] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+class PurchaserReturnsController @Inject() (
+    cc: ControllerComponents,
+    service: PurchaserReturnsService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
+
+  def createPurchaser(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[CreatePurchaserRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .createPurchaser(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[createPurchaser] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def updatePurchaser(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdatePurchaserRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updatePurchaser(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[updatePurchaser] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def updatePurchaser(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[UpdatePurchaserRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .updatePurchaser(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[updatePurchaser] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def deletePurchaser(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[DeletePurchaserRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .deletePurchaser(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[deletePurchaser] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def deletePurchaser(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[DeletePurchaserRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .deletePurchaser(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[deletePurchaser] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def createCompanyDetails(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[CreateCompanyDetailsRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .createCompanyDetails(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[createCompanyDetails] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def createCompanyDetails(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[CreateCompanyDetailsRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .createCompanyDetails(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[createCompanyDetails] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def updateCompanyDetails(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdateCompanyDetailsRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updateCompanyDetails(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[updateCompanyDetails] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def updateCompanyDetails(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[UpdateCompanyDetailsRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .updateCompanyDetails(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[updateCompanyDetails] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def deleteCompanyDetails(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[DeleteCompanyDetailsRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .deleteCompanyDetails(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[deleteCompanyDetails] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def deleteCompanyDetails(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[DeleteCompanyDetailsRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .deleteCompanyDetails(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[deleteCompanyDetails] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
 }

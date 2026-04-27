@@ -22,7 +22,11 @@ import org.scalatest.{EitherValues, OptionValues}
 import play.api.libs.json.*
 import models.filing._
 
-class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with EitherValues with OptionValues {
+class ReturnVersionUpdateRequestSpec
+    extends AnyFreeSpec
+    with Matchers
+    with EitherValues
+    with OptionValues {
 
   private val validReturnVersionUpdateRequestJson = Json.obj(
     "storn" -> "12345",
@@ -39,8 +43,9 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
   private val validReturnVersionUpdateReturnJson = Json.obj(
     "newVersion" -> 1
   )
-  
-  private val returnVersionUpdateReturn = ReturnVersionUpdateReturn(newVersion = 1)
+
+  private val returnVersionUpdateReturn =
+    ReturnVersionUpdateReturn(newVersion = 1)
 
   "ReturnVersionUpdateRequest" - {
 
@@ -51,7 +56,12 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[ReturnVersionUpdateRequest](validReturnVersionUpdateRequestJson).asEither.value
+        val result = Json
+          .fromJson[ReturnVersionUpdateRequest](
+            validReturnVersionUpdateRequestJson
+          )
+          .asEither
+          .value
 
         result.storn mustBe "12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -65,7 +75,8 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
           "currentVersion" -> "2.5.1"
         )
 
-        val result = Json.fromJson[ReturnVersionUpdateRequest](jsonV2).asEither.value
+        val result =
+          Json.fromJson[ReturnVersionUpdateRequest](jsonV2).asEither.value
 
         result.currentVersion mustBe "2.5.1"
       }
@@ -77,7 +88,8 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
           "currentVersion" -> "3"
         )
 
-        val result = Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
+        val result =
+          Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
 
         result.currentVersion mustBe "3"
       }
@@ -107,7 +119,8 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
       }
 
       "must fail to deserialize when storn has invalid type" in {
-        val json = validReturnVersionUpdateRequestJson ++ Json.obj("storn" -> 123)
+        val json =
+          validReturnVersionUpdateRequestJson ++ Json.obj("storn" -> 123)
 
         val result = Json.fromJson[ReturnVersionUpdateRequest](json).asEither
 
@@ -115,7 +128,9 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
       }
 
       "must fail to deserialize when returnResourceRef has invalid type" in {
-        val json = validReturnVersionUpdateRequestJson ++ Json.obj("returnResourceRef" -> true)
+        val json = validReturnVersionUpdateRequestJson ++ Json.obj(
+          "returnResourceRef" -> true
+        )
 
         val result = Json.fromJson[ReturnVersionUpdateRequest](json).asEither
 
@@ -123,7 +138,9 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
       }
 
       "must fail to deserialize when currentVersion has invalid type" in {
-        val json = validReturnVersionUpdateRequestJson ++ Json.obj("currentVersion" -> 456)
+        val json = validReturnVersionUpdateRequestJson ++ Json.obj(
+          "currentVersion" -> 456
+        )
 
         val result = Json.fromJson[ReturnVersionUpdateRequest](json).asEither
 
@@ -172,7 +189,11 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
         val json = Json.toJson(returnVersionUpdateRequest)
 
         json mustBe a[JsObject]
-        json.as[JsObject].keys must contain allOf("storn", "returnResourceRef", "currentVersion")
+        json.as[JsObject].keys must contain allOf (
+          "storn",
+          "returnResourceRef",
+          "currentVersion"
+        )
       }
 
       "must produce JSON with exactly three fields" in {
@@ -190,7 +211,8 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
 
       "must round-trip serialize and deserialize" in {
         val json = Json.toJson(returnVersionUpdateRequest)
-        val result = Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
+        val result =
+          Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
 
         result mustEqual returnVersionUpdateRequest
       }
@@ -198,15 +220,18 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
       "must round-trip with version 2.0" in {
         val request = returnVersionUpdateRequest.copy(currentVersion = "2.0")
         val json = Json.toJson(request)
-        val result = Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
+        val result =
+          Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
 
         result mustEqual request
       }
 
       "must round-trip with complex version string" in {
-        val request = returnVersionUpdateRequest.copy(currentVersion = "3.14.159")
+        val request =
+          returnVersionUpdateRequest.copy(currentVersion = "3.14.159")
         val json = Json.toJson(request)
-        val result = Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
+        val result =
+          Json.fromJson[ReturnVersionUpdateRequest](json).asEither.value
 
         result mustEqual request
         result.currentVersion mustBe "3.14.159"
@@ -253,7 +278,8 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
 
       "must not be equal when returnResourceRef differs" in {
         val request1 = returnVersionUpdateRequest
-        val request2 = returnVersionUpdateRequest.copy(returnResourceRef = "RRF-2025-999")
+        val request2 =
+          returnVersionUpdateRequest.copy(returnResourceRef = "RRF-2025-999")
 
         request1 must not equal request2
       }
@@ -297,7 +323,12 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
       }
 
       "must deserialize valid JSON with newVersion true" in {
-        val result = Json.fromJson[ReturnVersionUpdateReturn](validReturnVersionUpdateReturnJson).asEither.value
+        val result = Json
+          .fromJson[ReturnVersionUpdateReturn](
+            validReturnVersionUpdateReturnJson
+          )
+          .asEither
+          .value
 
         result.newVersion mustBe 1
       }
@@ -354,7 +385,6 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
 
         (json \ "newVersion").as[Int] mustBe 1
       }
-      
 
       "must produce valid JSON structure" in {
         val json = Json.toJson(returnVersionUpdateReturn)
@@ -384,7 +414,8 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
 
       "must round-trip serialize and deserialize with newVersion 1" in {
         val json = Json.toJson(returnVersionUpdateReturn)
-        val result = Json.fromJson[ReturnVersionUpdateReturn](json).asEither.value
+        val result =
+          Json.fromJson[ReturnVersionUpdateReturn](json).asEither.value
 
         result mustEqual returnVersionUpdateReturn
       }
@@ -395,7 +426,6 @@ class ReturnVersionUpdateRequestSpec extends AnyFreeSpec with Matchers with Eith
       "must create instance with newVersion 1" in {
         returnVersionUpdateReturn.newVersion mustBe 1
       }
-      
 
       "must support equality" in {
         val versionReturn1 = returnVersionUpdateReturn

@@ -19,78 +19,84 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class CreateVendorRequest(
-                                stornId: String,
-                                returnResourceRef: String,
-                                title: Option[String] = None,
-                                forename1: Option[String] = None,
-                                forename2: Option[String] = None,
-                                name: String,
-                                houseNumber: Option[String] = None,
-                                addressLine1: String,
-                                addressLine2: Option[String] = None,
-                                addressLine3: Option[String] = None,
-                                addressLine4: Option[String] = None,
-                                postcode: Option[String] = None,
-                                isRepresentedByAgent: String
-                              )
+    stornId: String,
+    returnResourceRef: String,
+    title: Option[String] = None,
+    forename1: Option[String] = None,
+    forename2: Option[String] = None,
+    name: String,
+    houseNumber: Option[String] = None,
+    addressLine1: String,
+    addressLine2: Option[String] = None,
+    addressLine3: Option[String] = None,
+    addressLine4: Option[String] = None,
+    postcode: Option[String] = None,
+    isRepresentedByAgent: String
+)
 
 object CreateVendorRequest {
-  implicit val format: OFormat[CreateVendorRequest] = Json.format[CreateVendorRequest]
+  implicit val format: OFormat[CreateVendorRequest] =
+    Json.format[CreateVendorRequest]
 }
 
 case class CreateVendorReturn(
-                               vendorResourceRef: String,
-                               vendorId: String
-                             )
+    vendorResourceRef: String,
+    vendorId: String
+)
 
 object CreateVendorReturn {
-  implicit val format: OFormat[CreateVendorReturn] = Json.format[CreateVendorReturn]
+  implicit val format: OFormat[CreateVendorReturn] =
+    Json.format[CreateVendorReturn]
 }
 
 case class UpdateVendorRequest(
-                                stornId: String,
-                                returnResourceRef: String,
-                                title: Option[String] = None,
-                                forename1: Option[String] = None,
-                                forename2: Option[String] = None,
-                                name: String,
-                                houseNumber: Option[String] = None,
-                                addressLine1: String,
-                                addressLine2: Option[String] = None,
-                                addressLine3: Option[String] = None,
-                                addressLine4: Option[String] = None,
-                                postcode: Option[String] = None,
-                                isRepresentedByAgent: String,
-                                vendorResourceRef: String,
-                                nextVendorId: Option[String] = None
-                              )
+    stornId: String,
+    returnResourceRef: String,
+    title: Option[String] = None,
+    forename1: Option[String] = None,
+    forename2: Option[String] = None,
+    name: String,
+    houseNumber: Option[String] = None,
+    addressLine1: String,
+    addressLine2: Option[String] = None,
+    addressLine3: Option[String] = None,
+    addressLine4: Option[String] = None,
+    postcode: Option[String] = None,
+    isRepresentedByAgent: String,
+    vendorResourceRef: String,
+    nextVendorId: Option[String] = None
+)
 
 object UpdateVendorRequest {
-  implicit val format: OFormat[UpdateVendorRequest] = Json.format[UpdateVendorRequest]
+  implicit val format: OFormat[UpdateVendorRequest] =
+    Json.format[UpdateVendorRequest]
 }
 
 case class UpdateVendorReturn(
-                               updated: Boolean
-                             )
+    updated: Boolean
+)
 
 object UpdateVendorReturn {
-  implicit val format: OFormat[UpdateVendorReturn] = Json.format[UpdateVendorReturn]
+  implicit val format: OFormat[UpdateVendorReturn] =
+    Json.format[UpdateVendorReturn]
 }
 
 case class DeleteVendorRequest(
-                                storn: String,
-                                vendorResourceRef: String,
-                                returnResourceRef: String
-                              )
+    storn: String,
+    vendorResourceRef: String,
+    returnResourceRef: String
+)
 
 object DeleteVendorRequest {
-  implicit val format: OFormat[DeleteVendorRequest] = Json.format[DeleteVendorRequest]
+  implicit val format: OFormat[DeleteVendorRequest] =
+    Json.format[DeleteVendorRequest]
 }
 
 case class DeleteVendorReturn(
-                               deleted: Boolean
-                             )
+    deleted: Boolean
+)
 
 object DeleteVendorReturn {
-  implicit val format: OFormat[DeleteVendorReturn] = Json.format[DeleteVendorReturn]
+  implicit val format: OFormat[DeleteVendorReturn] =
+    Json.format[DeleteVendorReturn]
 }

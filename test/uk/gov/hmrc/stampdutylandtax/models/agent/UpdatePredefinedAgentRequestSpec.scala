@@ -25,7 +25,7 @@ class UpdatePredefinedAgentRequestSpec extends AnyWordSpec with Matchers {
 
   "UpdatePredefinedAgentRequest (JSON)" should {
     "read and write a fully-populated with all optional fields" in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "agentResourceReference" : "123456",

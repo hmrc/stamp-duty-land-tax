@@ -21,11 +21,10 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json
 
-class SdltReturnRecordRequestSpec extends AnyWordSpec with Matchers{
+class SdltReturnRecordRequestSpec extends AnyWordSpec with Matchers {
   "SdltReturnRecordRequest" should {
     "read and write fully populated with all optional and mandatory fields " in {
-      val json = Json.parse(
-        s"""
+      val json = Json.parse(s"""
            |{
            |"storn":"123456",
            |"status": "IN-PROGRESS",
@@ -44,8 +43,7 @@ class SdltReturnRecordRequestSpec extends AnyWordSpec with Matchers{
     }
 
     "read and write fully populated with all mandatory fields only" in {
-      val json = Json.parse(
-        s"""
+      val json = Json.parse(s"""
            |{
            |"storn":"123456",
            |"deletionFlag":false

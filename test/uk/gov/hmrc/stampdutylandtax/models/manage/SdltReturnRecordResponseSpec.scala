@@ -23,10 +23,9 @@ import play.api.libs.json.Json
 
 class SdltReturnRecordResponseSpec extends AnyWordSpec with Matchers {
 
-  "SdltReturnRecordResponse" should{
+  "SdltReturnRecordResponse" should {
     "return and write with all fields " in {
-      val json = Json.parse(
-        s"""
+      val json = Json.parse(s"""
            |{
            |"returnSummaryCount": 2,
            |"returnSummaryList": [

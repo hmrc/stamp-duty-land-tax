@@ -24,9 +24,10 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class TransactionReturnsService @Inject()(formp: FilingFormpProxyConnector) {
+class TransactionReturnsService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def updateTransaction(updateTransactionRequest: UpdateTransactionRequest)
-                       (implicit hc: HeaderCarrier): Future[UpdateTransactionReturn] =
+  def updateTransaction(updateTransactionRequest: UpdateTransactionRequest)(
+      implicit hc: HeaderCarrier
+  ): Future[UpdateTransactionReturn] =
     formp.updateTransaction(updateTransactionRequest)
 }

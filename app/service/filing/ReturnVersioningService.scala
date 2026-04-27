@@ -24,9 +24,10 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class ReturnVersioningService @Inject()(formp: FilingFormpProxyConnector) {
+class ReturnVersioningService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def updateReturnVersion(returnVersionUpdateRequest: ReturnVersionUpdateRequest)
-                (implicit hc: HeaderCarrier): Future[ReturnVersionUpdateReturn] =
+  def updateReturnVersion(
+      returnVersionUpdateRequest: ReturnVersionUpdateRequest
+  )(implicit hc: HeaderCarrier): Future[ReturnVersionUpdateReturn] =
     formp.updateReturnVersioning(returnVersionUpdateRequest)
 }

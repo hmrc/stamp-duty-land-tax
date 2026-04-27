@@ -25,15 +25,21 @@ import play.api.http.Status.{CREATED, FORBIDDEN}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-class ReturnVersioningControllerISpec extends BaseSpec
-  with GuiceOneServerPerSuite with ApplicationWithWiremock {
+class ReturnVersioningControllerISpec
+    extends BaseSpec
+    with GuiceOneServerPerSuite
+    with ApplicationWithWiremock {
 
   val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
-  lazy val updateReturnVersionUrl = s"$servicePrefix/filing/update/return-version"
+  lazy val updateReturnVersionUrl =
+    s"$servicePrefix/filing/update/return-version"
 
   def stubUpdateReturnVersionResponse(): Unit = {
-    stubPost("/formp-proxy/filing/update/return-version", Status.CREATED,
-      Json.toJson( ReturnVersionUpdateReturn(newVersion = 1)).toString)
+    stubPost(
+      "/formp-proxy/filing/update/return-version",
+      Status.CREATED,
+      Json.toJson(ReturnVersionUpdateReturn(newVersion = 1)).toString
+    )
   }
 
   "ReturnsVersioning" should {
@@ -43,9 +49,16 @@ class ReturnVersioningControllerISpec extends BaseSpec
       "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubUpdateReturnVersionResponse()
-        val jsonBody = Json.toJson(ReturnVersionUpdateRequest(storn = "storn", returnResourceRef = "Ref", currentVersion = "2"))
+        val jsonBody = Json.toJson(
+          ReturnVersionUpdateRequest(
+            storn = "storn",
+            returnResourceRef = "Ref",
+            currentVersion = "2"
+          )
+        )
 
-        val result = wsClient.url(updateReturnVersionUrl)
+        val result = wsClient
+          .url(updateReturnVersionUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -55,9 +68,16 @@ class ReturnVersioningControllerISpec extends BaseSpec
       "return a 200:OK:: authorised request" in {
         stubAuthorisedAsActivated()
         stubUpdateReturnVersionResponse()
-        val jsonBody = Json.toJson(ReturnVersionUpdateRequest(storn = "storn", returnResourceRef = "Ref", currentVersion = "2"))
-        
-        val result = wsClient.url(updateReturnVersionUrl)
+        val jsonBody = Json.toJson(
+          ReturnVersionUpdateRequest(
+            storn = "storn",
+            returnResourceRef = "Ref",
+            currentVersion = "2"
+          )
+        )
+
+        val result = wsClient
+          .url(updateReturnVersionUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 

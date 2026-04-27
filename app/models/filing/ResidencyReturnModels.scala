@@ -19,63 +19,69 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class CreateResidencyRequest(
-                                   stornId: String,
-                                   returnResourceRef: String,
-                                   residency: ResidencyPayload
-                                 )
+    stornId: String,
+    returnResourceRef: String,
+    residency: ResidencyPayload
+)
 
 object CreateResidencyRequest {
-  implicit val format: OFormat[CreateResidencyRequest] = Json.format[CreateResidencyRequest]
+  implicit val format: OFormat[CreateResidencyRequest] =
+    Json.format[CreateResidencyRequest]
 }
 
 case class CreateResidencyReturn(
-                                  created: Boolean
-                                )
+    created: Boolean
+)
 
 object CreateResidencyReturn {
-  implicit val format: OFormat[CreateResidencyReturn] = Json.format[CreateResidencyReturn]
+  implicit val format: OFormat[CreateResidencyReturn] =
+    Json.format[CreateResidencyReturn]
 }
 
 case class UpdateResidencyRequest(
-                                   stornId: String,
-                                   returnResourceRef: String,
-                                   residency: ResidencyPayload
-                                 )
+    stornId: String,
+    returnResourceRef: String,
+    residency: ResidencyPayload
+)
 
 object UpdateResidencyRequest {
-  implicit val format: OFormat[UpdateResidencyRequest] = Json.format[UpdateResidencyRequest]
+  implicit val format: OFormat[UpdateResidencyRequest] =
+    Json.format[UpdateResidencyRequest]
 }
 
 case class UpdateResidencyReturn(
-                                  updated: Boolean
-                                )
+    updated: Boolean
+)
 
 object UpdateResidencyReturn {
-  implicit val format: OFormat[UpdateResidencyReturn] = Json.format[UpdateResidencyReturn]
+  implicit val format: OFormat[UpdateResidencyReturn] =
+    Json.format[UpdateResidencyReturn]
 }
 
 case class DeleteResidencyRequest(
-                                   storn: String,
-                                   returnResourceRef: String
-                                 )
+    storn: String,
+    returnResourceRef: String
+)
 
 object DeleteResidencyRequest {
-  implicit val format: OFormat[DeleteResidencyRequest] = Json.format[DeleteResidencyRequest]
+  implicit val format: OFormat[DeleteResidencyRequest] =
+    Json.format[DeleteResidencyRequest]
 }
 
 case class DeleteResidencyReturn(
-                                  deleted: Boolean
-                                )
+    deleted: Boolean
+)
 
 object DeleteResidencyReturn {
-  implicit val format: OFormat[DeleteResidencyReturn] = Json.format[DeleteResidencyReturn]
+  implicit val format: OFormat[DeleteResidencyReturn] =
+    Json.format[DeleteResidencyReturn]
 }
 
 case class ResidencyPayload(
-                             isNonUkResidents: String,
-                             isCompany: String,
-                             isCrownRelief: String
-                           )
+    isNonUkResidents: String,
+    isCompany: String,
+    isCrownRelief: String
+)
 
 object ResidencyPayload {
   implicit val format: OFormat[ResidencyPayload] = Json.format[ResidencyPayload]

@@ -24,30 +24,36 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class PurchaserReturnsService @Inject()(formp: FilingFormpProxyConnector) {
+class PurchaserReturnsService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def createPurchaser(createPurchaserRequest: CreatePurchaserRequest)
-                  (implicit hc: HeaderCarrier): Future[CreatePurchaserReturn] =
+  def createPurchaser(createPurchaserRequest: CreatePurchaserRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[CreatePurchaserReturn] =
     formp.createPurchaser(createPurchaserRequest)
 
-  def updatePurchaser(updatePurchaserRequest: UpdatePurchaserRequest)
-                  (implicit hc: HeaderCarrier): Future[UpdatePurchaserReturn] =
+  def updatePurchaser(updatePurchaserRequest: UpdatePurchaserRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[UpdatePurchaserReturn] =
     formp.updatePurchaser(updatePurchaserRequest)
 
-  def deletePurchaser(deletePurchaserRequest: DeletePurchaserRequest)
-                  (implicit hc: HeaderCarrier): Future[DeletePurchaserReturn] =
+  def deletePurchaser(deletePurchaserRequest: DeletePurchaserRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[DeletePurchaserReturn] =
     formp.deletePurchaser(deletePurchaserRequest)
 
-  def createCompanyDetails(createCompanyDetailsRequest: CreateCompanyDetailsRequest)
-                     (implicit hc: HeaderCarrier): Future[CreateCompanyDetailsReturn] =
+  def createCompanyDetails(
+      createCompanyDetailsRequest: CreateCompanyDetailsRequest
+  )(implicit hc: HeaderCarrier): Future[CreateCompanyDetailsReturn] =
     formp.createCompanyDetails(createCompanyDetailsRequest)
 
-  def updateCompanyDetails(updateCompanyDetailsRequest: UpdateCompanyDetailsRequest)
-                     (implicit hc: HeaderCarrier): Future[UpdateCompanyDetailsReturn] =
+  def updateCompanyDetails(
+      updateCompanyDetailsRequest: UpdateCompanyDetailsRequest
+  )(implicit hc: HeaderCarrier): Future[UpdateCompanyDetailsReturn] =
     formp.updateCompanyDetails(updateCompanyDetailsRequest)
 
-  def deleteCompanyDetails(deleteCompanyDetailsRequest: DeleteCompanyDetailsRequest)
-                     (implicit hc: HeaderCarrier): Future[DeleteCompanyDetailsReturn] =
+  def deleteCompanyDetails(
+      deleteCompanyDetailsRequest: DeleteCompanyDetailsRequest
+  )(implicit hc: HeaderCarrier): Future[DeleteCompanyDetailsReturn] =
     formp.deleteCompanyDetails(deleteCompanyDetailsRequest)
-    
-  }
+
+}

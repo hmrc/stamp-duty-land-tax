@@ -33,8 +33,8 @@ import uk.gov.hmrc.stampdutylandtax.controllers.actions.FakeIdentifierAction
 
 import scala.concurrent.ExecutionContext
 
-trait   SpecBase
-  extends AnyFreeSpec
+trait SpecBase
+    extends AnyFreeSpec
     with Matchers
     with DefaultAwaitTimeout
     with ScalaFutures
@@ -55,122 +55,128 @@ trait   SpecBase
       )
       .build()
 
-
   protected def applicationBuilder(): GuiceApplicationBuilder = {
     new GuiceApplicationBuilder()
   }
 
-  val testAgentDetailsRequest: CreatePredefinedAgentRequest = CreatePredefinedAgentRequest(
-    storn = "STN001",
-    agentName = "64Acme Property Agents Ltd",
-    addressLine1 = Some("Zoo Lane"),
-    addressLine2 = Some("Westminster"),
-    addressLine3 = Some("London"),
-    addressLine4 = None,
-    postcode = Some("SW1A 2AA"),
-    phone = Some("02079460000"),
-    email = Some("test@example.com")
-  )
+  val testAgentDetailsRequest: CreatePredefinedAgentRequest =
+    CreatePredefinedAgentRequest(
+      storn = "STN001",
+      agentName = "64Acme Property Agents Ltd",
+      addressLine1 = Some("Zoo Lane"),
+      addressLine2 = Some("Westminster"),
+      addressLine3 = Some("London"),
+      addressLine4 = None,
+      postcode = Some("SW1A 2AA"),
+      phone = Some("02079460000"),
+      email = Some("test@example.com")
+    )
 
   val testAgentDetailsAfterCreation: CreatedAgent = CreatedAgent(
-    agentId                = Some("AGT001"),
-    storn                  = Some("STN001"),
-    name                   = Some("64 Acme Property Agents Ltd"),
-    houseNumber            = None,
-    address1               = Some("Zoo Lane"),
-    address2               = Some("Westminster"),
-    address3               = Some("London"),
-    address4               = None,
-    postcode               = Some("SW1A 2AA"),
-    phone                  = Some("02079460000"),
-    email                  = Some("test@example.com"),
-    dxAddress              = None,
+    agentId = Some("AGT001"),
+    storn = Some("STN001"),
+    name = Some("64 Acme Property Agents Ltd"),
+    houseNumber = None,
+    address1 = Some("Zoo Lane"),
+    address2 = Some("Westminster"),
+    address3 = Some("London"),
+    address4 = None,
+    postcode = Some("SW1A 2AA"),
+    phone = Some("02079460000"),
+    email = Some("test@example.com"),
+    dxAddress = None,
     agentResourceReference = Some("ARN001")
   )
-  
-  val testUpdatePredefinedAgent: UpdatePredefinedAgentRequest = UpdatePredefinedAgentRequest (
-    agentResourceReference = "ARN001",
-    storn                  = "STN001",
-    agentName              = "64 Acme Property Agents Ltd",
-    houseNumber            = None,
-    addressLine1               = Some("Zoo Lane"),
-    addressLine2               = Some("Westminster"),
-    addressLine3               = Some("London"),
-    addressLine4               = None,
-    postcode               = Some("SW1A 2AA"),
-    phone                  = Some("02079460000"),
-    email                  = Some("test@example.com"),
-    dxAddress             = None
-  )
+
+  val testUpdatePredefinedAgent: UpdatePredefinedAgentRequest =
+    UpdatePredefinedAgentRequest(
+      agentResourceReference = "ARN001",
+      storn = "STN001",
+      agentName = "64 Acme Property Agents Ltd",
+      houseNumber = None,
+      addressLine1 = Some("Zoo Lane"),
+      addressLine2 = Some("Westminster"),
+      addressLine3 = Some("London"),
+      addressLine4 = None,
+      postcode = Some("SW1A 2AA"),
+      phone = Some("02079460000"),
+      email = Some("test@example.com"),
+      dxAddress = None
+    )
 
   val testAgentDetailsList: List[CreatedAgent] = List(
     CreatedAgent(
-      agentId                = Some("AGT001"),
-      storn                  = Some("STN001"),
-      name                   = Some("64 Acme Property Agents Ltd"),
-      houseNumber            = None,
-      address1               = Some("Zoo Lane"),
-      address2               = Some("Westminster"),
-      address3               = Some("London"),
-      address4               = None,
-      postcode               = Some("SW1A 2AA"),
-      phone                  = Some("02079460000"),
-      email                  = Some("test@example.com"),
-      dxAddress              = None,
+      agentId = Some("AGT001"),
+      storn = Some("STN001"),
+      name = Some("64 Acme Property Agents Ltd"),
+      houseNumber = None,
+      address1 = Some("Zoo Lane"),
+      address2 = Some("Westminster"),
+      address3 = Some("London"),
+      address4 = None,
+      postcode = Some("SW1A 2AA"),
+      phone = Some("02079460000"),
+      email = Some("test@example.com"),
+      dxAddress = None,
       agentResourceReference = Some("ARN001")
     ),
     CreatedAgent(
-      agentId                = Some("AGT001"),
-      storn                  = Some("STN001"),
-      name                   = Some("12B BrightHomes Estates"),
-      houseNumber            = None,
-      address1               = Some("Maple Street"),
-      address2               = Some("Camden"),
-      address3               = Some("London"),
-      address4               = Some("Greater London"),
-      postcode               = Some("NW1 5LE"),
-      phone                  = Some("02071234567"),
-      email                  = Some("info@brighthomes.co.uk"),
-      dxAddress              = None,
+      agentId = Some("AGT001"),
+      storn = Some("STN001"),
+      name = Some("12B BrightHomes Estates"),
+      houseNumber = None,
+      address1 = Some("Maple Street"),
+      address2 = Some("Camden"),
+      address3 = Some("London"),
+      address4 = Some("Greater London"),
+      postcode = Some("NW1 5LE"),
+      phone = Some("02071234567"),
+      email = Some("info@brighthomes.co.uk"),
+      dxAddress = None,
       agentResourceReference = Some("ARN001")
     )
   )
 
-  val testAgentDetailsSuccessResponse: CreatePredefinedAgentResponse = CreatePredefinedAgentResponse(
-    agentResourceRef = "some-id",
-    agentId = "4567"
-  )
+  val testAgentDetailsSuccessResponse: CreatePredefinedAgentResponse =
+    CreatePredefinedAgentResponse(
+      agentResourceRef = "some-id",
+      agentId = "4567"
+    )
 
-  val testDeletePredefinedAgentDetailsFailedResponse: DeletePredefinedAgentResponse = DeletePredefinedAgentResponse(
+  val testDeletePredefinedAgentDetailsFailedResponse
+      : DeletePredefinedAgentResponse = DeletePredefinedAgentResponse(
     false
   )
 
-  val testDeletePredefinedAgentRequest: DeletePredefinedAgentRequest = DeletePredefinedAgentRequest(
-    storn = "STN001",
-    agentReferenceNumber = "100001"
-  )
+  val testDeletePredefinedAgentRequest: DeletePredefinedAgentRequest =
+    DeletePredefinedAgentRequest(
+      storn = "STN001",
+      agentReferenceNumber = "100001"
+    )
 
-  //Update Agent Details Fixtures
-  val testUpdateAgentDetailsRequest: UpdatePredefinedAgentRequest = UpdatePredefinedAgentRequest(
-    agentResourceReference = "ARN001",
-    storn = "STN001",
-    agentName = "64 Acme Property Agents Ltd",
-    houseNumber = None,
-    addressLine1 = Some("Zoo Lane"),
-    addressLine2 = Some("Westminster"),
-    addressLine3 = Some("London"),
-    addressLine4 = None,
-    postcode = Some("SW1A 2AA"),
-    phone = Some("02079460000"),
-    email = Some("test@example.com"),
-    dxAddress = None
-  )
+  // Update Agent Details Fixtures
+  val testUpdateAgentDetailsRequest: UpdatePredefinedAgentRequest =
+    UpdatePredefinedAgentRequest(
+      agentResourceReference = "ARN001",
+      storn = "STN001",
+      agentName = "64 Acme Property Agents Ltd",
+      houseNumber = None,
+      addressLine1 = Some("Zoo Lane"),
+      addressLine2 = Some("Westminster"),
+      addressLine3 = Some("London"),
+      addressLine4 = None,
+      postcode = Some("SW1A 2AA"),
+      phone = Some("02079460000"),
+      email = Some("test@example.com"),
+      dxAddress = None
+    )
 
   val cc: ControllerComponents = stubControllerComponents()
   val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
   val bodyParsers: PlayBodyParsers = app.injector.instanceOf[PlayBodyParsers]
 
-  val fakeIdentifierAction: FakeIdentifierAction = app.injector.instanceOf[FakeIdentifierAction]
+  val fakeIdentifierAction: FakeIdentifierAction =
+    app.injector.instanceOf[FakeIdentifierAction]
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
   implicit val ec: ExecutionContext = cc.executionContext

@@ -26,15 +26,13 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.WSClient
 import play.api.{Application, Environment, Mode}
 
-
 trait ApplicationWithWiremock
-  extends AnyWordSpec
+    extends AnyWordSpec
     with GuiceOneServerPerSuite
     with BeforeAndAfterAll
     with BeforeAndAfterEach {
 
   lazy val wireMock = new WireMock
-
 
   val extraConfig: Map[String, Any] = {
     Map[String, Any](
@@ -71,18 +69,17 @@ trait ApplicationWithWiremock
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfig)
     .build()
-  
+
   lazy val appWithSubOn: Application = new GuiceApplicationBuilder()
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfigWithStubOnOrOff(true))
     .build()
-  
+
   lazy val appWithSubOff: Application = new GuiceApplicationBuilder()
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfigWithStubOnOrOff(false))
     .build()
-  
-  
+
   lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   override protected def beforeAll(): Unit =
@@ -99,21 +96,23 @@ trait ApplicationWithWiremock
   }
 
   def stubGet(url: String, status: Integer, body: String): StubMapping =
-    stubFor(get(urlEqualTo(url))
-      .willReturn(
-        aResponse().
-          withStatus(status).
-          withBody(body)
-      )
+    stubFor(
+      get(urlEqualTo(url))
+        .willReturn(
+          aResponse().withStatus(status).withBody(body)
+        )
     )
 
-  def stubPost(url: String, status: Integer, responseBody: String): StubMapping =
-    stubFor(post(urlMatching(url))
-      .willReturn(
-        aResponse().
-          withStatus(status).
-          withBody(responseBody)
-      )
+  def stubPost(
+      url: String,
+      status: Integer,
+      responseBody: String
+  ): StubMapping =
+    stubFor(
+      post(urlMatching(url))
+        .willReturn(
+          aResponse().withStatus(status).withBody(responseBody)
+        )
     )
 
   private val postAuthoriseUrl = "/auth/authorise"
@@ -142,7 +141,7 @@ trait ApplicationWithWiremock
       |}""".stripMargin
 
   private val authoriseBodyWithOrgEnrolmentsRetrievalAsNotYetActivated: String =
-      """{
+    """{
         |  "authorise": [{"confidenceLevel": 200}],
         |  "retrieve": ["allEnrolments"],
         |  "credId": "credId",
@@ -164,13 +163,20 @@ trait ApplicationWithWiremock
         |  "internalId": "internalId"
         |}""".stripMargin
 
-
   def stubAuthorisedAsActivated(): Unit = {
-    stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrievalAsActivated )
+    stubPost(
+      postAuthoriseUrl,
+      Status.OK,
+      authoriseBodyWithOrgEnrolmentsRetrievalAsActivated
+    )
   }
 
   def stubAuthorisedAsNotYetActivated(): Unit = {
-    stubPost(postAuthoriseUrl, Status.OK, authoriseBodyWithOrgEnrolmentsRetrievalAsNotYetActivated)
+    stubPost(
+      postAuthoriseUrl,
+      Status.OK,
+      authoriseBodyWithOrgEnrolmentsRetrievalAsNotYetActivated
+    )
   }
 
   def stubUnauthorised(): Unit = {

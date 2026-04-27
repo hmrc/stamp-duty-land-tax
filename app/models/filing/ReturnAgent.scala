@@ -19,78 +19,83 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class CreateReturnAgentRequest(
-                                     stornId: String,
-                                     returnResourceRef: String,
-                                     agentType: String,
-                                     name: String,
-                                     houseNumber: Option[String] = None,
-                                     addressLine1: String,
-                                     addressLine2: Option[String] = None,
-                                     addressLine3: Option[String] = None,
-                                     addressLine4: Option[String] = None,
-                                     postcode: String,
-                                     phoneNumber: Option[String] = None,
-                                     email: Option[String] = None,
-                                     agentReference: Option[String] = None,
-                                     isAuthorised: Option[String] = None
-                                   )
+    stornId: String,
+    returnResourceRef: String,
+    agentType: String,
+    name: String,
+    houseNumber: Option[String] = None,
+    addressLine1: String,
+    addressLine2: Option[String] = None,
+    addressLine3: Option[String] = None,
+    addressLine4: Option[String] = None,
+    postcode: String,
+    phoneNumber: Option[String] = None,
+    email: Option[String] = None,
+    agentReference: Option[String] = None,
+    isAuthorised: Option[String] = None
+)
 
 object CreateReturnAgentRequest {
-  implicit val format: OFormat[CreateReturnAgentRequest] = Json.format[CreateReturnAgentRequest]
+  implicit val format: OFormat[CreateReturnAgentRequest] =
+    Json.format[CreateReturnAgentRequest]
 }
 
 case class CreateReturnAgentReturn(
-                                    returnAgentID: String
-                                  )
+    returnAgentID: String
+)
 
 object CreateReturnAgentReturn {
-  implicit val format: OFormat[CreateReturnAgentReturn] = Json.format[CreateReturnAgentReturn]
+  implicit val format: OFormat[CreateReturnAgentReturn] =
+    Json.format[CreateReturnAgentReturn]
 }
 
-
 case class UpdateReturnAgentRequest(
-                                     stornId: String,
-                                     returnResourceRef: String,
-                                     agentType: String,
-                                     name: String,
-                                     houseNumber: Option[String] = None,
-                                     addressLine1: String,
-                                     addressLine2: Option[String] = None,
-                                     addressLine3: Option[String] = None,
-                                     addressLine4: Option[String] = None,
-                                     postcode: String,
-                                     phoneNumber: Option[String] = None,
-                                     email: Option[String] = None,
-                                     agentReference: Option[String] = None,
-                                     isAuthorised: Option[String] = None
-                                   )
+    stornId: String,
+    returnResourceRef: String,
+    agentType: String,
+    name: String,
+    houseNumber: Option[String] = None,
+    addressLine1: String,
+    addressLine2: Option[String] = None,
+    addressLine3: Option[String] = None,
+    addressLine4: Option[String] = None,
+    postcode: String,
+    phoneNumber: Option[String] = None,
+    email: Option[String] = None,
+    agentReference: Option[String] = None,
+    isAuthorised: Option[String] = None
+)
 
 object UpdateReturnAgentRequest {
-  implicit val format: OFormat[UpdateReturnAgentRequest] = Json.format[UpdateReturnAgentRequest]
+  implicit val format: OFormat[UpdateReturnAgentRequest] =
+    Json.format[UpdateReturnAgentRequest]
 }
 
 case class UpdateReturnAgentReturn(
-                                    updated: Boolean
-                                  )
+    updated: Boolean
+)
 
 object UpdateReturnAgentReturn {
-  implicit val format: OFormat[UpdateReturnAgentReturn] = Json.format[UpdateReturnAgentReturn]
+  implicit val format: OFormat[UpdateReturnAgentReturn] =
+    Json.format[UpdateReturnAgentReturn]
 }
 
 case class DeleteReturnAgentRequest(
-                                     storn: String,
-                                     returnResourceRef: String,
-                                     agentType: String
-                                   )
+    storn: String,
+    returnResourceRef: String,
+    agentType: String
+)
 
 object DeleteReturnAgentRequest {
-  implicit val format: OFormat[DeleteReturnAgentRequest] = Json.format[DeleteReturnAgentRequest]
+  implicit val format: OFormat[DeleteReturnAgentRequest] =
+    Json.format[DeleteReturnAgentRequest]
 }
 
 case class DeleteReturnAgentReturn(
-                                    deleted: Boolean
-                                  )
+    deleted: Boolean
+)
 
 object DeleteReturnAgentReturn {
-  implicit val format: OFormat[DeleteReturnAgentReturn] = Json.format[DeleteReturnAgentReturn]
+  implicit val format: OFormat[DeleteReturnAgentReturn] =
+    Json.format[DeleteReturnAgentReturn]
 }

@@ -25,8 +25,10 @@ import play.api.http.Status.{CREATED, FORBIDDEN, OK}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-class ResidencyReturnsControllerISpec extends BaseSpec
-  with GuiceOneServerPerSuite with ApplicationWithWiremock {
+class ResidencyReturnsControllerISpec
+    extends BaseSpec
+    with GuiceOneServerPerSuite
+    with ApplicationWithWiremock {
 
   val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
   lazy val createResidencyUrl = s"$servicePrefix/filing/create/residency"
@@ -34,18 +36,27 @@ class ResidencyReturnsControllerISpec extends BaseSpec
   lazy val deleteResidencyUrl = s"$servicePrefix/filing/delete/residency"
 
   def stubCreateResidencyResponse(): Unit = {
-    stubPost("/formp-proxy/filing/create/residency", Status.CREATED,
-      Json.toJson(CreateResidencyReturn(created = true)).toString)
+    stubPost(
+      "/formp-proxy/filing/create/residency",
+      Status.CREATED,
+      Json.toJson(CreateResidencyReturn(created = true)).toString
+    )
   }
 
   def stubUpdateResidencyResponse(): Unit = {
-    stubPost("/formp-proxy/filing/update/residency", Status.OK,
-      Json.toJson(UpdateResidencyReturn(updated = true)).toString)
+    stubPost(
+      "/formp-proxy/filing/update/residency",
+      Status.OK,
+      Json.toJson(UpdateResidencyReturn(updated = true)).toString
+    )
   }
 
   def stubDeleteResidencyResponse(): Unit = {
-    stubPost("/formp-proxy/filing/delete/residency", Status.OK,
-      Json.toJson(DeleteResidencyReturn(deleted = true)).toString)
+    stubPost(
+      "/formp-proxy/filing/delete/residency",
+      Status.OK,
+      Json.toJson(DeleteResidencyReturn(deleted = true)).toString
+    )
   }
 
   "ResidencyReturns" should {
@@ -61,13 +72,14 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             returnResourceRef = "ref",
             residency = ResidencyPayload(
               isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isCompany = "NO",
+              isCrownRelief = "NO"
             )
           )
         )
 
-        val result = wsClient.url(createResidencyUrl)
+        val result = wsClient
+          .url(createResidencyUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -83,13 +95,14 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             returnResourceRef = "ref",
             residency = ResidencyPayload(
               isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isCompany = "NO",
+              isCrownRelief = "NO"
             )
           )
         )
 
-        val result = wsClient.url(createResidencyUrl)
+        val result = wsClient
+          .url(createResidencyUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -108,13 +121,14 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             returnResourceRef = "ref",
             residency = ResidencyPayload(
               isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isCompany = "NO",
+              isCrownRelief = "NO"
             )
           )
         )
 
-        val result = wsClient.url(updateResidencyUrl)
+        val result = wsClient
+          .url(updateResidencyUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -130,13 +144,14 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             returnResourceRef = "ref",
             residency = ResidencyPayload(
               isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isCompany = "NO",
+              isCrownRelief = "NO"
             )
           )
         )
 
-        val result = wsClient.url(updateResidencyUrl)
+        val result = wsClient
+          .url(updateResidencyUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -150,9 +165,11 @@ class ResidencyReturnsControllerISpec extends BaseSpec
         stubUnauthorised()
         stubDeleteResidencyResponse()
         val jsonBody = Json.toJson(
-          DeleteResidencyRequest(storn = "storn", returnResourceRef = "ref"))
+          DeleteResidencyRequest(storn = "storn", returnResourceRef = "ref")
+        )
 
-        val result = wsClient.url(deleteResidencyUrl)
+        val result = wsClient
+          .url(deleteResidencyUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -163,9 +180,11 @@ class ResidencyReturnsControllerISpec extends BaseSpec
         stubAuthorisedAsActivated()
         stubDeleteResidencyResponse()
         val jsonBody = Json.toJson(
-          DeleteResidencyRequest(storn = "storn", returnResourceRef = "ref"))
+          DeleteResidencyRequest(storn = "storn", returnResourceRef = "ref")
+        )
 
-        val result = wsClient.url(deleteResidencyUrl)
+        val result = wsClient
+          .url(deleteResidencyUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 

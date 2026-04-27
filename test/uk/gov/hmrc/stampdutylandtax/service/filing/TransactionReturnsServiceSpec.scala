@@ -29,31 +29,34 @@ import scala.concurrent.Future
 final class TransactionReturnsServiceSpec extends SpecBase {
 
   private def mkUpdateTransactionRequest(
-                                          storn: String             = "STORN12345",
-                                          returnResourceRef: String = "RRF-2024-001",
-                                          transaction: TransactionPayload = TransactionPayload()
-                                        ): UpdateTransactionRequest =
+      storn: String = "STORN12345",
+      returnResourceRef: String = "RRF-2024-001",
+      transaction: TransactionPayload = TransactionPayload()
+  ): UpdateTransactionRequest =
     UpdateTransactionRequest(
-      storn             = storn,
+      storn = storn,
       returnResourceRef = returnResourceRef,
-      transaction       = transaction
+      transaction = transaction
     )
 
-  private def mkUpdateTransactionReturn(updated: Boolean = true): UpdateTransactionReturn =
+  private def mkUpdateTransactionReturn(
+      updated: Boolean = true
+  ): UpdateTransactionReturn =
     UpdateTransactionReturn(updated = updated)
 
   "TransactionReturnsService updateTransaction" - {
 
     "must delegate to connector (happy path)" in {
-      val connector                              = mock[FilingFormpProxyConnector]
-      val service                                = new TransactionReturnsService(connector)
-      val request: UpdateTransactionRequest      = mkUpdateTransactionRequest()
-      implicit val hc: HeaderCarrier             = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request: UpdateTransactionRequest = mkUpdateTransactionRequest()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn()))
 
-      val result: UpdateTransactionReturn = service.updateTransaction(request).futureValue
+      val result: UpdateTransactionReturn =
+        service.updateTransaction(request).futureValue
       result mustBe mkUpdateTransactionReturn()
 
       verify(connector).updateTransaction(eqTo(request))(any[HeaderCarrier])
@@ -61,19 +64,25 @@ final class TransactionReturnsServiceSpec extends SpecBase {
     }
 
     "must return different results for different requests" in {
-      val connector                              = mock[FilingFormpProxyConnector]
-      val service                                = new TransactionReturnsService(connector)
-      val request1: UpdateTransactionRequest     = mkUpdateTransactionRequest("STORN11111", "RRF-001")
-      val request2: UpdateTransactionRequest     = mkUpdateTransactionRequest("STORN22222", "RRF-002")
-      implicit val hc: HeaderCarrier             = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request1: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("STORN11111", "RRF-001")
+      val request2: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("STORN22222", "RRF-002")
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn(true)))
       when(connector.updateTransaction(eqTo(request2))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn(true)))
 
-      service.updateTransaction(request1).futureValue mustBe mkUpdateTransactionReturn(true)
-      service.updateTransaction(request2).futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request1)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request2)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
 
       verify(connector).updateTransaction(eqTo(request1))(any[HeaderCarrier])
       verify(connector).updateTransaction(eqTo(request2))(any[HeaderCarrier])
@@ -81,11 +90,11 @@ final class TransactionReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate failures from connector" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new TransactionReturnsService(connector)
-      val request: UpdateTransactionRequest  = mkUpdateTransactionRequest()
-      val boom                               = UpstreamErrorResponse("Service unavailable", 503)
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request: UpdateTransactionRequest = mkUpdateTransactionRequest()
+      val boom = UpstreamErrorResponse("Service unavailable", 503)
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -98,11 +107,11 @@ final class TransactionReturnsServiceSpec extends SpecBase {
     }
 
     "must propagate RuntimeException from connector" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new TransactionReturnsService(connector)
-      val request: UpdateTransactionRequest  = mkUpdateTransactionRequest()
-      val boom                               = new RuntimeException("Connection failed")
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request: UpdateTransactionRequest = mkUpdateTransactionRequest()
+      val boom = new RuntimeException("Connection failed")
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.failed(boom))
@@ -115,30 +124,33 @@ final class TransactionReturnsServiceSpec extends SpecBase {
     }
 
     "must call connector exactly once per request" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new TransactionReturnsService(connector)
-      val request: UpdateTransactionRequest  = mkUpdateTransactionRequest()
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request: UpdateTransactionRequest = mkUpdateTransactionRequest()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn()))
 
       service.updateTransaction(request).futureValue
 
-      verify(connector, times(1)).updateTransaction(eqTo(request))(any[HeaderCarrier])
+      verify(connector, times(1)).updateTransaction(eqTo(request))(
+        any[HeaderCarrier]
+      )
       verifyNoMoreInteractions(connector)
     }
 
     "must handle update result with false status" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new TransactionReturnsService(connector)
-      val request: UpdateTransactionRequest  = mkUpdateTransactionRequest()
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request: UpdateTransactionRequest = mkUpdateTransactionRequest()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn(false)))
 
-      val result: UpdateTransactionReturn = service.updateTransaction(request).futureValue
+      val result: UpdateTransactionReturn =
+        service.updateTransaction(request).futureValue
       result mustBe mkUpdateTransactionReturn(false)
       result.updated mustBe false
 
@@ -147,14 +159,14 @@ final class TransactionReturnsServiceSpec extends SpecBase {
     }
 
     "must handle request with complete transaction payload" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new TransactionReturnsService(connector)
-      val request: UpdateTransactionRequest  = mkUpdateTransactionRequest(
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request: UpdateTransactionRequest = mkUpdateTransactionRequest(
         transaction = TransactionPayload(
-          claimingRelief  = Some("YES"),
-          totalConsider   = Some("200000"),
-          effectiveDate   = Some("2024-02-01"),
-          contractDate    = Some("2024-01-15"),
+          claimingRelief = Some("YES"),
+          totalConsider = Some("200000"),
+          effectiveDate = Some("2024-02-01"),
+          contractDate = Some("2024-01-15"),
           isLandExchanged = Some("NO")
         )
       )
@@ -163,7 +175,8 @@ final class TransactionReturnsServiceSpec extends SpecBase {
       when(connector.updateTransaction(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn()))
 
-      val result: UpdateTransactionReturn = service.updateTransaction(request).futureValue
+      val result: UpdateTransactionReturn =
+        service.updateTransaction(request).futureValue
       result mustBe mkUpdateTransactionReturn()
 
       verify(connector).updateTransaction(eqTo(request))(any[HeaderCarrier])
@@ -171,12 +184,15 @@ final class TransactionReturnsServiceSpec extends SpecBase {
     }
 
     "must handle consecutive requests independently" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new TransactionReturnsService(connector)
-      val request1: UpdateTransactionRequest = mkUpdateTransactionRequest("STORN11111", "RRF-001")
-      val request2: UpdateTransactionRequest = mkUpdateTransactionRequest("STORN22222", "RRF-002")
-      val request3: UpdateTransactionRequest = mkUpdateTransactionRequest("STORN33333", "RRF-003")
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request1: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("STORN11111", "RRF-001")
+      val request2: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("STORN22222", "RRF-002")
+      val request3: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("STORN33333", "RRF-003")
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn(true)))
@@ -185,21 +201,32 @@ final class TransactionReturnsServiceSpec extends SpecBase {
       when(connector.updateTransaction(eqTo(request3))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn(true)))
 
-      service.updateTransaction(request1).futureValue mustBe mkUpdateTransactionReturn(true)
-      service.updateTransaction(request2).futureValue mustBe mkUpdateTransactionReturn(true)
-      service.updateTransaction(request3).futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request1)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request2)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request3)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
 
-      verify(connector, times(3)).updateTransaction(any[UpdateTransactionRequest])(any[HeaderCarrier])
+      verify(connector, times(3)).updateTransaction(
+        any[UpdateTransactionRequest]
+      )(any[HeaderCarrier])
       verifyNoMoreInteractions(connector)
     }
 
     "must handle different storn formats" in {
-      val connector                          = mock[FilingFormpProxyConnector]
-      val service                            = new TransactionReturnsService(connector)
-      val request1: UpdateTransactionRequest = mkUpdateTransactionRequest("STORN12345")
-      val request2: UpdateTransactionRequest = mkUpdateTransactionRequest("STORN-ABC-123")
-      val request3: UpdateTransactionRequest = mkUpdateTransactionRequest("12345678")
-      implicit val hc: HeaderCarrier         = HeaderCarrier()
+      val connector = mock[FilingFormpProxyConnector]
+      val service = new TransactionReturnsService(connector)
+      val request1: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("STORN12345")
+      val request2: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("STORN-ABC-123")
+      val request3: UpdateTransactionRequest =
+        mkUpdateTransactionRequest("12345678")
+      implicit val hc: HeaderCarrier = HeaderCarrier()
 
       when(connector.updateTransaction(eqTo(request1))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn(true)))
@@ -208,9 +235,15 @@ final class TransactionReturnsServiceSpec extends SpecBase {
       when(connector.updateTransaction(eqTo(request3))(any[HeaderCarrier]))
         .thenReturn(Future.successful(mkUpdateTransactionReturn(true)))
 
-      service.updateTransaction(request1).futureValue mustBe mkUpdateTransactionReturn(true)
-      service.updateTransaction(request2).futureValue mustBe mkUpdateTransactionReturn(true)
-      service.updateTransaction(request3).futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request1)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request2)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
+      service
+        .updateTransaction(request3)
+        .futureValue mustBe mkUpdateTransactionReturn(true)
 
       verify(connector).updateTransaction(eqTo(request1))(any[HeaderCarrier])
       verify(connector).updateTransaction(eqTo(request2))(any[HeaderCarrier])

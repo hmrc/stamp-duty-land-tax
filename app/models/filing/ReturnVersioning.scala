@@ -19,19 +19,21 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class ReturnVersionUpdateRequest(
-                                       storn: String,
-                                       returnResourceRef: String,
-                                       currentVersion: String
-                                     )
+    storn: String,
+    returnResourceRef: String,
+    currentVersion: String
+)
 
 object ReturnVersionUpdateRequest {
-  implicit val format: OFormat[ReturnVersionUpdateRequest] = Json.format[ReturnVersionUpdateRequest]
+  implicit val format: OFormat[ReturnVersionUpdateRequest] =
+    Json.format[ReturnVersionUpdateRequest]
 }
 
 case class ReturnVersionUpdateReturn(
-                                      newVersion: Int
-                                    )
+    newVersion: Int
+)
 
 object ReturnVersionUpdateReturn {
-  implicit val format: OFormat[ReturnVersionUpdateReturn] = Json.format[ReturnVersionUpdateReturn]
+  implicit val format: OFormat[ReturnVersionUpdateReturn] =
+    Json.format[ReturnVersionUpdateReturn]
 }

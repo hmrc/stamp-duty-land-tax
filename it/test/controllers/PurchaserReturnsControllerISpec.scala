@@ -18,69 +18,113 @@ package controllers
 
 import base.BaseSpec
 import itutil.ApplicationWithWiremock
-import models.filing.{CreateCompanyDetailsRequest, CreateCompanyDetailsReturn, CreatePurchaserRequest, CreatePurchaserReturn, DeleteCompanyDetailsRequest, DeleteCompanyDetailsReturn, DeletePurchaserRequest, DeletePurchaserReturn, UpdateCompanyDetailsRequest, UpdateCompanyDetailsReturn, UpdatePurchaserRequest, UpdatePurchaserReturn}
+import models.filing.{
+  CreateCompanyDetailsRequest,
+  CreateCompanyDetailsReturn,
+  CreatePurchaserRequest,
+  CreatePurchaserReturn,
+  DeleteCompanyDetailsRequest,
+  DeleteCompanyDetailsReturn,
+  DeletePurchaserRequest,
+  DeletePurchaserReturn,
+  UpdateCompanyDetailsRequest,
+  UpdateCompanyDetailsReturn,
+  UpdatePurchaserRequest,
+  UpdatePurchaserReturn
+}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status
 import play.api.http.Status.{FORBIDDEN, CREATED}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-class PurchaserReturnsControllerISpec extends BaseSpec
-  with GuiceOneServerPerSuite with ApplicationWithWiremock {
+class PurchaserReturnsControllerISpec
+    extends BaseSpec
+    with GuiceOneServerPerSuite
+    with ApplicationWithWiremock {
 
   val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
   lazy val deletePurchaser = s"$servicePrefix/filing/delete/purchaser"
   lazy val createPurchaser = s"$servicePrefix/filing/create/purchaser"
   lazy val updatePurchaser = s"$servicePrefix/filing/update/purchaser"
-  lazy val updateCompanyDetails = s"$servicePrefix/filing/update/company-details"
-  lazy val createCompanyDetails = s"$servicePrefix/filing/create/company-details"
-  lazy val deleteCompanyDetails = s"$servicePrefix/filing/delete/company-details"
-
+  lazy val updateCompanyDetails =
+    s"$servicePrefix/filing/update/company-details"
+  lazy val createCompanyDetails =
+    s"$servicePrefix/filing/create/company-details"
+  lazy val deleteCompanyDetails =
+    s"$servicePrefix/filing/delete/company-details"
 
   def stubDeletePurchaserResponse(): Unit = {
-    stubPost("/formp-proxy/filing/delete/purchaser", Status.OK,
-      Json.toJson(DeletePurchaserReturn(deleted = true)).toString)
+    stubPost(
+      "/formp-proxy/filing/delete/purchaser",
+      Status.OK,
+      Json.toJson(DeletePurchaserReturn(deleted = true)).toString
+    )
   }
 
   def stubCreatePurchaserResponse(): Unit = {
-    stubPost("/formp-proxy/filing/create/purchaser", Status.OK,
-      Json.toJson(
-        CreatePurchaserReturn(
-          purchaserResourceRef = "purchaseRef", purchaserId = "purchaseId"
+    stubPost(
+      "/formp-proxy/filing/create/purchaser",
+      Status.OK,
+      Json
+        .toJson(
+          CreatePurchaserReturn(
+            purchaserResourceRef = "purchaseRef",
+            purchaserId = "purchaseId"
+          )
         )
-      ).toString)
+        .toString
+    )
   }
 
   def stubUpdatePurchaserResponse(): Unit = {
-    stubPost("/formp-proxy/filing/update/purchaser", Status.OK,
-      Json.toJson(
-        UpdatePurchaserReturn(
-          updated = true
+    stubPost(
+      "/formp-proxy/filing/update/purchaser",
+      Status.OK,
+      Json
+        .toJson(
+          UpdatePurchaserReturn(
+            updated = true
+          )
         )
-      ).toString)
+        .toString
+    )
   }
 
   def stubUpdateCompanyDetailsResponse(): Unit = {
-    stubPost("/formp-proxy/filing/update/company-details", Status.OK,
-      Json.toJson(UpdateCompanyDetailsReturn(updated = true)).toString)
+    stubPost(
+      "/formp-proxy/filing/update/company-details",
+      Status.OK,
+      Json.toJson(UpdateCompanyDetailsReturn(updated = true)).toString
+    )
   }
 
   def stubCreateCompanyDetailsResponse(): Unit = {
-    stubPost("/formp-proxy/filing/create/company-details", Status.OK,
-      Json.toJson(
-        CreateCompanyDetailsReturn(
-          companyDetailsId = "companyId"
+    stubPost(
+      "/formp-proxy/filing/create/company-details",
+      Status.OK,
+      Json
+        .toJson(
+          CreateCompanyDetailsReturn(
+            companyDetailsId = "companyId"
+          )
         )
-      ).toString)
+        .toString
+    )
   }
 
   def stubDeleteCompanyDetailsResponse(): Unit = {
-    stubPost("/formp-proxy/filing/delete/company-details", Status.OK,
-      Json.toJson(
-        DeleteCompanyDetailsReturn(
-          deleted = true
+    stubPost(
+      "/formp-proxy/filing/delete/company-details",
+      Status.OK,
+      Json
+        .toJson(
+          DeleteCompanyDetailsReturn(
+            deleted = true
+          )
         )
-      ).toString)
+        .toString
+    )
   }
 
   "Purchaser Returns" should {
@@ -90,8 +134,15 @@ class PurchaserReturnsControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request" in {
         stubAuthorisedAsActivated()
         stubDeletePurchaserResponse()
-        val jsonBody = Json.toJson(DeletePurchaserRequest(storn = "storn", purchaserResourceRef = "purchaseRef", returnResourceRef = "returnRef"))
-        val result = wsClient.url(deletePurchaser)
+        val jsonBody = Json.toJson(
+          DeletePurchaserRequest(
+            storn = "storn",
+            purchaserResourceRef = "purchaseRef",
+            returnResourceRef = "returnRef"
+          )
+        )
+        val result = wsClient
+          .url(deletePurchaser)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -101,8 +152,15 @@ class PurchaserReturnsControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request with not yet activated enrollment" in {
         stubAuthorisedAsNotYetActivated()
         stubDeletePurchaserResponse()
-        val jsonBody = Json.toJson(DeletePurchaserRequest(storn = "storn", purchaserResourceRef = "purchaseRef", returnResourceRef = "returnRef"))
-        val result = wsClient.url(deletePurchaser)
+        val jsonBody = Json.toJson(
+          DeletePurchaserRequest(
+            storn = "storn",
+            purchaserResourceRef = "purchaseRef",
+            returnResourceRef = "returnRef"
+          )
+        )
+        val result = wsClient
+          .url(deletePurchaser)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -112,8 +170,15 @@ class PurchaserReturnsControllerISpec extends BaseSpec
       "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubDeletePurchaserResponse()
-        val jsonBody = Json.toJson(DeletePurchaserRequest(storn = "storn", purchaserResourceRef = "purchaseRef", returnResourceRef = "returnRef"))
-        val result = wsClient.url(deletePurchaser)
+        val jsonBody = Json.toJson(
+          DeletePurchaserRequest(
+            storn = "storn",
+            purchaserResourceRef = "purchaseRef",
+            returnResourceRef = "returnRef"
+          )
+        )
+        val result = wsClient
+          .url(deletePurchaser)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -138,7 +203,8 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             address1 = Some("address1")
           )
         )
-        val result = wsClient.url(createPurchaser)
+        val result = wsClient
+          .url(createPurchaser)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -159,7 +225,8 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             address1 = Some("address1")
           )
         )
-        val result = wsClient.url(createPurchaser)
+        val result = wsClient
+          .url(createPurchaser)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -184,7 +251,8 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             address1 = Some("address1")
           )
         )
-        val result = wsClient.url(updatePurchaser)
+        val result = wsClient
+          .url(updatePurchaser)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -206,7 +274,8 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             address1 = Some("address1")
           )
         )
-        val result = wsClient.url(updatePurchaser)
+        val result = wsClient
+          .url(updatePurchaser)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -223,8 +292,14 @@ class PurchaserReturnsControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request" in {
         stubAuthorisedAsActivated()
         stubDeleteCompanyDetailsResponse()
-        val jsonBody = Json.toJson(DeleteCompanyDetailsRequest(storn = "storn", returnResourceRef = "returnRef"))
-        val result = wsClient.url(deleteCompanyDetails)
+        val jsonBody = Json.toJson(
+          DeleteCompanyDetailsRequest(
+            storn = "storn",
+            returnResourceRef = "returnRef"
+          )
+        )
+        val result = wsClient
+          .url(deleteCompanyDetails)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -234,8 +309,14 @@ class PurchaserReturnsControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request with not yet activated enrollment" in {
         stubAuthorisedAsNotYetActivated()
         stubDeleteCompanyDetailsResponse()
-        val jsonBody = Json.toJson(DeleteCompanyDetailsRequest(storn = "storn", returnResourceRef = "returnRef"))
-        val result = wsClient.url(deleteCompanyDetails)
+        val jsonBody = Json.toJson(
+          DeleteCompanyDetailsRequest(
+            storn = "storn",
+            returnResourceRef = "returnRef"
+          )
+        )
+        val result = wsClient
+          .url(deleteCompanyDetails)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -245,8 +326,14 @@ class PurchaserReturnsControllerISpec extends BaseSpec
       "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubDeleteCompanyDetailsResponse()
-        val jsonBody = Json.toJson(DeleteCompanyDetailsRequest(storn = "storn", returnResourceRef = "returnRef"))
-        val result = wsClient.url(deleteCompanyDetails)
+        val jsonBody = Json.toJson(
+          DeleteCompanyDetailsRequest(
+            storn = "storn",
+            returnResourceRef = "returnRef"
+          )
+        )
+        val result = wsClient
+          .url(deleteCompanyDetails)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -267,7 +354,8 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             purchaserResourceRef = "purchaserResourceRef"
           )
         )
-        val result = wsClient.url(createCompanyDetails)
+        val result = wsClient
+          .url(createCompanyDetails)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -284,7 +372,8 @@ class PurchaserReturnsControllerISpec extends BaseSpec
             purchaserResourceRef = "purchaserResourceRef"
           )
         )
-        val result = wsClient.url(createCompanyDetails)
+        val result = wsClient
+          .url(createCompanyDetails)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -301,10 +390,11 @@ class PurchaserReturnsControllerISpec extends BaseSpec
           UpdateCompanyDetailsRequest(
             stornId = "stornId",
             returnResourceRef = "returnResourceRef",
-            purchaserResourceRef = "purchaserResourceRef",
+            purchaserResourceRef = "purchaserResourceRef"
           )
         )
-        val result = wsClient.url(updateCompanyDetails)
+        val result = wsClient
+          .url(updateCompanyDetails)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -318,10 +408,11 @@ class PurchaserReturnsControllerISpec extends BaseSpec
           UpdateCompanyDetailsRequest(
             stornId = "stornId",
             returnResourceRef = "returnResourceRef",
-            purchaserResourceRef = "purchaserResourceRef",
+            purchaserResourceRef = "purchaserResourceRef"
           )
         )
-        val result = wsClient.url(updateCompanyDetails)
+        val result = wsClient
+          .url(updateCompanyDetails)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 

@@ -30,18 +30,23 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuthenticatedIdentifierAction @Inject()(
-                                               override val authConnector: AuthConnector,
-                                               val parser: BodyParsers.Default
-                                             )
-                                             (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
+class AuthenticatedIdentifierAction @Inject() (
+    override val authConnector: AuthConnector,
+    val parser: BodyParsers.Default
+)(implicit val executionContext: ExecutionContext)
+    extends IdentifierAction
+    with AuthorisedFunctions
+    with Logging {
 
   private val orgEnrollment: String = "IR-SDLT-ORG"
   private val agentEnrollment: String = "IR-SDLT-AGENT"
-  private val permittedEnrollmentStates : Set[String] = Set("activated", "notyetactivated")
+  private val permittedEnrollmentStates: Set[String] =
+    Set("activated", "notyetactivated")
 
-  override def invokeBlock[A](request: Request[A],
-                              block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
+  override def invokeBlock[A](
+      request: Request[A],
+      block: IdentifierRequest[A] => Future[Result]
+  ): Future[Result] = {
     given hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     authorised()
@@ -51,19 +56,33 @@ class AuthenticatedIdentifierAction @Inject()(
           Retrievals.affinityGroup and
           Retrievals.credentialRole
       ) {
-        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(s => permittedEnrollmentStates.contains(s.state.toLowerCase)) =>
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User)
+            if enrolments
+              .find(_.key == orgEnrollment)
+              .exists(s =>
+                permittedEnrollmentStates.contains(s.state.toLowerCase)
+              ) =>
           block(IdentifierRequest(request))
 
-        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(e => permittedEnrollmentStates.contains(e.state.toLowerCase())) =>
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User)
+            if enrolments
+              .find(_.key == agentEnrollment)
+              .exists(e =>
+                permittedEnrollmentStates.contains(e.state.toLowerCase())
+              ) =>
           block(IdentifierRequest(request))
 
         case _ ~ _ ~ _ ~ _ =>
-          throw InternalError("Authentication error: expected enrollments and/or affinity group not found")
+          throw InternalError(
+            "Authentication error: expected enrollments and/or affinity group not found"
+          )
 
-      }.recoverWith {
-        case ex =>
-          logger.error(s"[AuthenticatedIdentifierAction][authorised] - Authentication failed: ${ex.getCause}-${ex.getMessage}")
-          Future.successful(Forbidden)
+      }
+      .recoverWith { case ex =>
+        logger.error(
+          s"[AuthenticatedIdentifierAction][authorised] - Authentication failed: ${ex.getCause}-${ex.getMessage}"
+        )
+        Future.successful(Forbidden)
       }
   }
 

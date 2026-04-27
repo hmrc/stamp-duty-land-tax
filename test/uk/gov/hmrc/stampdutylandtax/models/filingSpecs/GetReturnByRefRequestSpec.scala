@@ -175,15 +175,15 @@ class GetReturnByRefRequestSpec extends AnyWordSpec with Matchers {
 
       val result = json.validate[GetReturnByRefRequest]
       result mustBe a[JsSuccess[_]]
-      val model  = result.get
+      val model = result.get
       model.returnResourceRef mustBe ""
       model.storn mustBe ""
     }
 
     "handle very long strings" in {
-      val longRef   = "R" * 500
+      val longRef = "R" * 500
       val longStorn = "S" * 500
-      val json      = Json.parse(
+      val json = Json.parse(
         s"""
            |{
            |  "returnResourceRef": "$longRef",
@@ -218,7 +218,7 @@ class GetReturnByRefRequestSpec extends AnyWordSpec with Matchers {
         storn = "STORN88888"
       )
 
-      val json         = Json.toJson(original)
+      val json = Json.toJson(original)
       val deserialized = json.as[GetReturnByRefRequest]
 
       deserialized mustBe original

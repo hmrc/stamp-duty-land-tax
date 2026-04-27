@@ -29,81 +29,122 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class ManageAgentsController @Inject()(
-  cc: ControllerComponents,
-  service: ManageAgentsService,
-  auth: IdentifierAction
-)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class ManageAgentsController @Inject() (
+    cc: ControllerComponents,
+    service: ManageAgentsService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
-  def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async { implicit request =>
-    service.getSdltOrganisation(storn) map { sdltOrganisation =>
-      Ok(Json.toJson(
-        sdltOrganisation
-      ))
-    } recover {
-      case u: UpstreamErrorResponse =>
-        Status(u.statusCode)(Json.obj("message" -> u.message))
-      case t: Throwable =>
-        logger.error("[ManageAgentsController][getSdltOrganisation] failed", t)
-        InternalServerError(Json.obj("message" -> "Unexpected error"))
-    }
+  def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async {
+    implicit request =>
+      service.getSdltOrganisation(storn) map { sdltOrganisation =>
+        Ok(
+          Json.toJson(
+            sdltOrganisation
+          )
+        )
+      } recover {
+        case u: UpstreamErrorResponse =>
+          Status(u.statusCode)(Json.obj("message" -> u.message))
+        case t: Throwable =>
+          logger.error(
+            "[ManageAgentsController][getSdltOrganisation] failed",
+            t
+          )
+          InternalServerError(Json.obj("message" -> "Unexpected error"))
+      }
   }
 
-  def deletePredefinedAgent: Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[DeletePredefinedAgentRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .deletePredefinedAgent(body)
-            .map { result =>
-              Ok(Json.toJson(result))
-            }
-            .recover {
+  def deletePredefinedAgent: Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[DeletePredefinedAgentRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .deletePredefinedAgent(body)
+              .map { result =>
+                Ok(Json.toJson(result))
+              }
+              .recover {
+                case u: UpstreamErrorResponse =>
+                  Status(u.statusCode)(Json.obj("message" -> u.message))
+                case t: Throwable =>
+                  logger.error(
+                    "[ManageAgentsController][deletePredefinedAgent] failed",
+                    t
+                  )
+                  InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
+  }
+
+  def submitAgentDetails: Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[CreatePredefinedAgentRequest]
+        .fold(
+          invalid =>
+            Future.successful(
+              BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))
+            ),
+          payload =>
+            service.submitAgentDetails(payload) map { submissionResponse =>
+              Ok(
+                Json.toJson(
+                  submissionResponse
+                )
+              )
+            } recover {
               case u: UpstreamErrorResponse =>
                 Status(u.statusCode)(Json.obj("message" -> u.message))
               case t: Throwable =>
-                logger.error("[ManageAgentsController][deletePredefinedAgent] failed", t)
+                logger.error(
+                  "[ManageAgentsController][submitAgentDetails] failed",
+                  t
+                )
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
-      )
-    }
-
-  def submitAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body.validate[CreatePredefinedAgentRequest].fold(
-      invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
-      payload =>
-        service.submitAgentDetails(payload) map { submissionResponse =>
-          Ok(Json.toJson(
-            submissionResponse
-          ))
-        } recover {
-          case u: UpstreamErrorResponse =>
-            Status(u.statusCode)(Json.obj("message" -> u.message))
-          case t: Throwable =>
-            logger.error("[ManageAgentsController][submitAgentDetails] failed", t)
-            InternalServerError(Json.obj("message" -> "Unexpected error"))
-        }
-    )
+        )
   }
 
-  def updateAgentDetails: Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body.validate[UpdatePredefinedAgentRequest].fold(
-      invalid => Future.successful(BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))),
-      payload =>
-        service.updateAgentDetails(payload) map { response =>
-          Ok(Json.toJson(
-            response
-          ))
-        } recover {
-          case u: UpstreamErrorResponse =>
-            Status(u.statusCode)(Json.obj("message" -> u.message))
-          case t: Throwable =>
-            logger.error("[ManageAgentsController][updateAgentDetails] failed", t)
-            InternalServerError(Json.obj("message" -> "Unexpected error"))
-        }
-    )
+  def updateAgentDetails: Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[UpdatePredefinedAgentRequest]
+        .fold(
+          invalid =>
+            Future.successful(
+              BadRequest(Json.obj("message" -> s"Invalid payload: $invalid"))
+            ),
+          payload =>
+            service.updateAgentDetails(payload) map { response =>
+              Ok(
+                Json.toJson(
+                  response
+                )
+              )
+            } recover {
+              case u: UpstreamErrorResponse =>
+                Status(u.statusCode)(Json.obj("message" -> u.message))
+              case t: Throwable =>
+                logger.error(
+                  "[ManageAgentsController][updateAgentDetails] failed",
+                  t
+                )
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+        )
   }
 }

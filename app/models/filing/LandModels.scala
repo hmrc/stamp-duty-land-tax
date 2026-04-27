@@ -19,32 +19,33 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class CreateLandRequest(
-  stornId: String,
-  returnResourceRef: String,
-  propertyType: String,
-  interestTransferredCreated: String,
-  houseNumber: Option[String] = None,
-  addressLine1: String,
-  addressLine2: Option[String] = None,
-  addressLine3: Option[String] = None,
-  addressLine4: Option[String] = None,
-  postcode: Option[String] = None,
-  landArea: Option[String] = None,
-  areaUnit: Option[String] = None,
-  localAuthorityNumber: Option[String] = None,
-  mineralRights: Option[String] = None,
-  nlpgUprn: Option[String] = None,
-  willSendPlansByPost: Option[String] = None,
-  titleNumber: Option[String] = None
+    stornId: String,
+    returnResourceRef: String,
+    propertyType: String,
+    interestTransferredCreated: String,
+    houseNumber: Option[String] = None,
+    addressLine1: String,
+    addressLine2: Option[String] = None,
+    addressLine3: Option[String] = None,
+    addressLine4: Option[String] = None,
+    postcode: Option[String] = None,
+    landArea: Option[String] = None,
+    areaUnit: Option[String] = None,
+    localAuthorityNumber: Option[String] = None,
+    mineralRights: Option[String] = None,
+    nlpgUprn: Option[String] = None,
+    willSendPlansByPost: Option[String] = None,
+    titleNumber: Option[String] = None
 )
 
 object CreateLandRequest {
-  implicit val format: OFormat[CreateLandRequest] = Json.format[CreateLandRequest]
+  implicit val format: OFormat[CreateLandRequest] =
+    Json.format[CreateLandRequest]
 }
 
 case class CreateLandReturn(
-  landResourceRef: String,
-  landId: String
+    landResourceRef: String,
+    landId: String
 )
 
 object CreateLandReturn {
@@ -52,33 +53,34 @@ object CreateLandReturn {
 }
 
 case class UpdateLandRequest(
-  stornId: String,
-  returnResourceRef: String,
-  landResourceRef: String,
-  propertyType: String,
-  interestTransferredCreated: String,
-  houseNumber: Option[String] = None,
-  addressLine1: String,
-  addressLine2: Option[String] = None,
-  addressLine3: Option[String] = None,
-  addressLine4: Option[String] = None,
-  postcode: Option[String] = None,
-  landArea: Option[String] = None,
-  areaUnit: Option[String] = None,
-  localAuthorityNumber: Option[String] = None,
-  mineralRights: Option[String] = None,
-  nlpgUprn: Option[String] = None,
-  willSendPlansByPost: Option[String] = None,
-  titleNumber: Option[String] = None,
-  nextLandId: Option[String] = None
+    stornId: String,
+    returnResourceRef: String,
+    landResourceRef: String,
+    propertyType: String,
+    interestTransferredCreated: String,
+    houseNumber: Option[String] = None,
+    addressLine1: String,
+    addressLine2: Option[String] = None,
+    addressLine3: Option[String] = None,
+    addressLine4: Option[String] = None,
+    postcode: Option[String] = None,
+    landArea: Option[String] = None,
+    areaUnit: Option[String] = None,
+    localAuthorityNumber: Option[String] = None,
+    mineralRights: Option[String] = None,
+    nlpgUprn: Option[String] = None,
+    willSendPlansByPost: Option[String] = None,
+    titleNumber: Option[String] = None,
+    nextLandId: Option[String] = None
 )
 
 object UpdateLandRequest {
-  implicit val format: OFormat[UpdateLandRequest] = Json.format[UpdateLandRequest]
+  implicit val format: OFormat[UpdateLandRequest] =
+    Json.format[UpdateLandRequest]
 }
 
 case class UpdateLandReturn(
-  updated: Boolean
+    updated: Boolean
 )
 
 object UpdateLandReturn {
@@ -86,17 +88,18 @@ object UpdateLandReturn {
 }
 
 case class DeleteLandRequest(
-  storn: String,
-  returnResourceRef: String,
-  landResourceRef: String
+    storn: String,
+    returnResourceRef: String,
+    landResourceRef: String
 )
 
 object DeleteLandRequest {
-  implicit val format: OFormat[DeleteLandRequest] = Json.format[DeleteLandRequest]
+  implicit val format: OFormat[DeleteLandRequest] =
+    Json.format[DeleteLandRequest]
 }
 
 case class DeleteLandReturn(
-  deleted: Boolean
+    deleted: Boolean
 )
 
 object DeleteLandReturn {

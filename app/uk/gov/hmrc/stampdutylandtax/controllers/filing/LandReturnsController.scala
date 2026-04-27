@@ -28,67 +28,93 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class LandReturnsController @Inject()(
-                                       cc: ControllerComponents,
-                                       service: FilingLandService,
-                                       auth: IdentifierAction
-                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class LandReturnsController @Inject() (
+    cc: ControllerComponents,
+    service: FilingLandService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
-  def createLand(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[CreateLandRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .createLand(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[createLand] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def createLand(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[CreateLandRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .createLand(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[createLand] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def updateLand(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdateLandRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updateLand(body)
-            .map { result =>
-              Ok(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[updateLand] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def updateLand(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[UpdateLandRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .updateLand(body)
+              .map { result =>
+                Ok(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[updateLand] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def deleteLand(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[DeleteLandRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .deleteLand(body)
-            .map { result =>
-              Ok(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[deleteLand] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def deleteLand(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[DeleteLandRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .deleteLand(body)
+              .map { result =>
+                Ok(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[deleteLand] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
 }

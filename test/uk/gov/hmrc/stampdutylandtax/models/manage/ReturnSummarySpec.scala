@@ -27,8 +27,7 @@ class ReturnSummarySpec extends AnyWordSpec with Matchers {
 
   "ReturnSummarySpec" should {
     "read and write fully populated with all optional and mandatory fields " in {
-      val json = Json.parse(
-        s"""
+      val json = Json.parse(s"""
            |{
            |"returnReference":"123456",
            |"utrn":"UTRN123",
@@ -51,8 +50,7 @@ class ReturnSummarySpec extends AnyWordSpec with Matchers {
     }
 
     "read and write fully populated with all mandatory fields only" in {
-      val json = Json.parse(
-        s"""
+      val json = Json.parse(s"""
            |{
            |"returnReference": "123456",
            |"status":"IN-PROGRESS",

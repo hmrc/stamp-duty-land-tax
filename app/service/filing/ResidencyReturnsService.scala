@@ -24,17 +24,20 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class ResidencyReturnsService @Inject()(formp: FilingFormpProxyConnector) {
+class ResidencyReturnsService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def createResidency(createResidencyRequest: CreateResidencyRequest)
-                     (implicit hc: HeaderCarrier): Future[CreateResidencyReturn] =
+  def createResidency(createResidencyRequest: CreateResidencyRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[CreateResidencyReturn] =
     formp.createResidency(createResidencyRequest)
 
-  def updateResidency(updateResidencyRequest: UpdateResidencyRequest)
-                     (implicit hc: HeaderCarrier): Future[UpdateResidencyReturn] =
+  def updateResidency(updateResidencyRequest: UpdateResidencyRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[UpdateResidencyReturn] =
     formp.updateResidency(updateResidencyRequest)
 
-  def deleteResidency(deleteResidencyRequest: DeleteResidencyRequest)
-                     (implicit hc: HeaderCarrier): Future[DeleteResidencyReturn] =
+  def deleteResidency(deleteResidencyRequest: DeleteResidencyRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[DeleteResidencyReturn] =
     formp.deleteResidency(deleteResidencyRequest)
 }

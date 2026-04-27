@@ -25,7 +25,7 @@ class CreatePredefinedAgentResponseSpec extends AnyWordSpec with Matchers {
 
   "CreatePredefinedAgentResponse (JSON)" should {
     "read and write a fully-populated with all mandatory fields" in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "agentResourceRef":"agentReference",

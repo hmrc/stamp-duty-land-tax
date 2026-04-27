@@ -22,7 +22,11 @@ import org.scalatest.{EitherValues, OptionValues}
 import play.api.libs.json.*
 import models.filing._
 
-class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues with OptionValues {
+class PurchaserReturnSpec
+    extends AnyFreeSpec
+    with Matchers
+    with EitherValues
+    with OptionValues {
 
   private val validCreatePurchaserRequestJsonComplete = Json.obj(
     "stornId" -> "STORN12345",
@@ -186,7 +190,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
   private val validUpdatePurchaserReturnJsonTrue = Json.obj("updated" -> true)
   private val validUpdatePurchaserReturnJsonFalse = Json.obj("updated" -> false)
   private val updatePurchaserReturnTrue = UpdatePurchaserReturn(updated = true)
-  private val updatePurchaserReturnFalse = UpdatePurchaserReturn(updated = false)
+  private val updatePurchaserReturnFalse =
+    UpdatePurchaserReturn(updated = false)
 
   // DeletePurchaserRequest test data
   private val validDeletePurchaserRequestJson = Json.obj(
@@ -266,8 +271,10 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
   )
 
   // CreateCompanyDetailsReturn test data
-  private val validCreateCompanyDetailsReturnJson = Json.obj("companyDetailsId" -> "CID-001")
-  private val createCompanyDetailsReturn = CreateCompanyDetailsReturn(companyDetailsId = "CID-001")
+  private val validCreateCompanyDetailsReturnJson =
+    Json.obj("companyDetailsId" -> "CID-001")
+  private val createCompanyDetailsReturn =
+    CreateCompanyDetailsReturn(companyDetailsId = "CID-001")
 
   // UpdateCompanyDetailsRequest test data
   private val validUpdateCompanyDetailsRequestJsonComplete = Json.obj(
@@ -323,9 +330,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
   )
 
   // UpdateCompanyDetailsReturn test data
-  private val validUpdateCompanyDetailsReturnJsonTrue = Json.obj("updated" -> true)
-  private val validUpdateCompanyDetailsReturnJsonFalse = Json.obj("updated" -> false)
-  private val updateCompanyDetailsReturnTrue = UpdateCompanyDetailsReturn(updated = true)
+  private val validUpdateCompanyDetailsReturnJsonTrue =
+    Json.obj("updated" -> true)
+  private val validUpdateCompanyDetailsReturnJsonFalse =
+    Json.obj("updated" -> false)
+  private val updateCompanyDetailsReturnTrue =
+    UpdateCompanyDetailsReturn(updated = true)
 
   // DeleteCompanyDetailsRequest test data
   private val validDeleteCompanyDetailsRequestJson = Json.obj(
@@ -339,9 +349,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
   )
 
   // DeleteCompanyDetailsReturn test data
-  private val validDeleteCompanyDetailsReturnJsonTrue = Json.obj("deleted" -> true)
-  private val validDeleteCompanyDetailsReturnJsonFalse = Json.obj("deleted" -> false)
-  private val deleteCompanyDetailsReturnTrue = DeleteCompanyDetailsReturn(deleted = true)
+  private val validDeleteCompanyDetailsReturnJsonTrue =
+    Json.obj("deleted" -> true)
+  private val validDeleteCompanyDetailsReturnJsonFalse =
+    Json.obj("deleted" -> false)
+  private val deleteCompanyDetailsReturnTrue =
+    DeleteCompanyDetailsReturn(deleted = true)
 
   "CreatePurchaserRequest" - {
 
@@ -352,7 +365,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[CreatePurchaserRequest](validCreatePurchaserRequestJsonComplete).asEither.value
+        val result = Json
+          .fromJson[CreatePurchaserRequest](
+            validCreatePurchaserRequestJsonComplete
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -377,7 +395,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with only required fields" in {
-        val result = Json.fromJson[CreatePurchaserRequest](validCreatePurchaserRequestJsonMinimal).asEither.value
+        val result = Json
+          .fromJson[CreatePurchaserRequest](
+            validCreatePurchaserRequestJsonMinimal
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -441,13 +464,15 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must pass to deserialize when isConnectedToVendor is missing" in {
-        val json = validCreatePurchaserRequestJsonComplete - "isConnectedToVendor"
+        val json =
+          validCreatePurchaserRequestJsonComplete - "isConnectedToVendor"
         val result = Json.fromJson[CreatePurchaserRequest](json).asEither
         result.isLeft mustBe false
       }
 
       "must pass to deserialize when isRepresentedByAgent is missing" in {
-        val json = validCreatePurchaserRequestJsonComplete - "isRepresentedByAgent"
+        val json =
+          validCreatePurchaserRequestJsonComplete - "isRepresentedByAgent"
         val result = Json.fromJson[CreatePurchaserRequest](json).asEither
         result.isLeft mustBe false
       }
@@ -459,7 +484,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must fail to deserialize when required field has invalid type" in {
-        val json = validCreatePurchaserRequestJsonComplete ++ Json.obj("stornId" -> 123)
+        val json =
+          validCreatePurchaserRequestJsonComplete ++ Json.obj("stornId" -> 123)
         val result = Json.fromJson[CreatePurchaserRequest](json).asEither
         result.isLeft mustBe true
       }
@@ -511,7 +537,15 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
         val json = Json.toJson(completeCreatePurchaserRequest)
 
         json mustBe a[JsObject]
-        json.as[JsObject].keys must contain allOf("stornId", "returnResourceRef", "isCompany", "isTrustee", "isConnectedToVendor", "isRepresentedByAgent", "address1")
+        json.as[JsObject].keys must contain allOf (
+          "stornId",
+          "returnResourceRef",
+          "isCompany",
+          "isTrustee",
+          "isConnectedToVendor",
+          "isRepresentedByAgent",
+          "address1"
+        )
       }
     }
 
@@ -585,7 +619,10 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON" in {
-        val result = Json.fromJson[CreatePurchaserReturn](validCreatePurchaserReturnJson).asEither.value
+        val result = Json
+          .fromJson[CreatePurchaserReturn](validCreatePurchaserReturnJson)
+          .asEither
+          .value
 
         result.purchaserResourceRef mustBe "PRF-001"
         result.purchaserId mustBe "PID-001"
@@ -642,7 +679,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[UpdatePurchaserRequest](validUpdatePurchaserRequestJsonComplete).asEither.value
+        val result = Json
+          .fromJson[UpdatePurchaserRequest](
+            validUpdatePurchaserRequestJsonComplete
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -656,7 +698,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with only required fields" in {
-        val result = Json.fromJson[UpdatePurchaserRequest](validUpdatePurchaserRequestJsonMinimal).asEither.value
+        val result = Json
+          .fromJson[UpdatePurchaserRequest](
+            validUpdatePurchaserRequestJsonMinimal
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.purchaserResourceRef mustBe "PRF-001"
@@ -664,7 +711,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must fail to deserialize when purchaserResourceRef is missing" in {
-        val json = validUpdatePurchaserRequestJsonComplete - "purchaserResourceRef"
+        val json =
+          validUpdatePurchaserRequestJsonComplete - "purchaserResourceRef"
         val result = Json.fromJson[UpdatePurchaserRequest](json).asEither
         result.isLeft mustBe true
       }
@@ -702,7 +750,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
     "case class" - {
 
       "must support copy with modifications" in {
-        val modified = minimalUpdatePurchaserRequest.copy(nextPurchaserId = Some("PID-999"))
+        val modified =
+          minimalUpdatePurchaserRequest.copy(nextPurchaserId = Some("PID-999"))
 
         modified.nextPurchaserId mustBe Some("PID-999")
       }
@@ -718,12 +767,18 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with updated true" in {
-        val result = Json.fromJson[UpdatePurchaserReturn](validUpdatePurchaserReturnJsonTrue).asEither.value
+        val result = Json
+          .fromJson[UpdatePurchaserReturn](validUpdatePurchaserReturnJsonTrue)
+          .asEither
+          .value
         result.updated mustBe true
       }
 
       "must deserialize valid JSON with updated false" in {
-        val result = Json.fromJson[UpdatePurchaserReturn](validUpdatePurchaserReturnJsonFalse).asEither.value
+        val result = Json
+          .fromJson[UpdatePurchaserReturn](validUpdatePurchaserReturnJsonFalse)
+          .asEither
+          .value
         result.updated mustBe false
       }
 
@@ -789,7 +844,10 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[DeletePurchaserRequest](validDeletePurchaserRequestJson).asEither.value
+        val result = Json
+          .fromJson[DeletePurchaserRequest](validDeletePurchaserRequestJson)
+          .asEither
+          .value
 
         result.storn mustBe "STORN12345"
         result.purchaserResourceRef mustBe "PRF-001"
@@ -864,12 +922,18 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with deleted true" in {
-        val result = Json.fromJson[DeletePurchaserReturn](validDeletePurchaserReturnJsonTrue).asEither.value
+        val result = Json
+          .fromJson[DeletePurchaserReturn](validDeletePurchaserReturnJsonTrue)
+          .asEither
+          .value
         result.deleted mustBe true
       }
 
       "must deserialize valid JSON with deleted false" in {
-        val result = Json.fromJson[DeletePurchaserReturn](validDeletePurchaserReturnJsonFalse).asEither.value
+        val result = Json
+          .fromJson[DeletePurchaserReturn](validDeletePurchaserReturnJsonFalse)
+          .asEither
+          .value
         result.deleted mustBe false
       }
     }
@@ -910,7 +974,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[CreateCompanyDetailsRequest](validCreateCompanyDetailsRequestJsonComplete).asEither.value
+        val result = Json
+          .fromJson[CreateCompanyDetailsRequest](
+            validCreateCompanyDetailsRequestJsonComplete
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -921,7 +990,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with only required fields" in {
-        val result = Json.fromJson[CreateCompanyDetailsRequest](validCreateCompanyDetailsRequestJsonMinimal).asEither.value
+        val result = Json
+          .fromJson[CreateCompanyDetailsRequest](
+            validCreateCompanyDetailsRequestJsonMinimal
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -937,13 +1011,15 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must fail to deserialize when returnResourceRef is missing" in {
-        val json = validCreateCompanyDetailsRequestJsonComplete - "returnResourceRef"
+        val json =
+          validCreateCompanyDetailsRequestJsonComplete - "returnResourceRef"
         val result = Json.fromJson[CreateCompanyDetailsRequest](json).asEither
         result.isLeft mustBe true
       }
 
       "must fail to deserialize when purchaserResourceRef is missing" in {
-        val json = validCreateCompanyDetailsRequestJsonComplete - "purchaserResourceRef"
+        val json =
+          validCreateCompanyDetailsRequestJsonComplete - "purchaserResourceRef"
         val result = Json.fromJson[CreateCompanyDetailsRequest](json).asEither
         result.isLeft mustBe true
       }
@@ -974,14 +1050,16 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
       "must round-trip serialize and deserialize with all fields" in {
         val json = Json.toJson(completeCreateCompanyDetailsRequest)
-        val result = Json.fromJson[CreateCompanyDetailsRequest](json).asEither.value
+        val result =
+          Json.fromJson[CreateCompanyDetailsRequest](json).asEither.value
 
         result mustEqual completeCreateCompanyDetailsRequest
       }
 
       "must round-trip serialize and deserialize with only required fields" in {
         val json = Json.toJson(minimalCreateCompanyDetailsRequest)
-        val result = Json.fromJson[CreateCompanyDetailsRequest](json).asEither.value
+        val result =
+          Json.fromJson[CreateCompanyDetailsRequest](json).asEither.value
 
         result mustEqual minimalCreateCompanyDetailsRequest
       }
@@ -1012,7 +1090,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON" in {
-        val result = Json.fromJson[CreateCompanyDetailsReturn](validCreateCompanyDetailsReturnJson).asEither.value
+        val result = Json
+          .fromJson[CreateCompanyDetailsReturn](
+            validCreateCompanyDetailsReturnJson
+          )
+          .asEither
+          .value
         result.companyDetailsId mustBe "CID-001"
       }
 
@@ -1043,7 +1126,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
       "must round-trip serialize and deserialize" in {
         val json = Json.toJson(createCompanyDetailsReturn)
-        val result = Json.fromJson[CreateCompanyDetailsReturn](json).asEither.value
+        val result =
+          Json.fromJson[CreateCompanyDetailsReturn](json).asEither.value
 
         result mustEqual createCompanyDetailsReturn
       }
@@ -1059,7 +1143,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[UpdateCompanyDetailsRequest](validUpdateCompanyDetailsRequestJsonComplete).asEither.value
+        val result = Json
+          .fromJson[UpdateCompanyDetailsRequest](
+            validUpdateCompanyDetailsRequestJsonComplete
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -1068,7 +1157,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with only required fields" in {
-        val result = Json.fromJson[UpdateCompanyDetailsRequest](validUpdateCompanyDetailsRequestJsonMinimal).asEither.value
+        val result = Json
+          .fromJson[UpdateCompanyDetailsRequest](
+            validUpdateCompanyDetailsRequestJsonMinimal
+          )
+          .asEither
+          .value
 
         result.stornId mustBe "STORN12345"
         result.utr must not be defined
@@ -1097,7 +1191,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
       "must round-trip serialize and deserialize" in {
         val json = Json.toJson(completeUpdateCompanyDetailsRequest)
-        val result = Json.fromJson[UpdateCompanyDetailsRequest](json).asEither.value
+        val result =
+          Json.fromJson[UpdateCompanyDetailsRequest](json).asEither.value
 
         result mustEqual completeUpdateCompanyDetailsRequest
       }
@@ -1113,12 +1208,22 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with updated true" in {
-        val result = Json.fromJson[UpdateCompanyDetailsReturn](validUpdateCompanyDetailsReturnJsonTrue).asEither.value
+        val result = Json
+          .fromJson[UpdateCompanyDetailsReturn](
+            validUpdateCompanyDetailsReturnJsonTrue
+          )
+          .asEither
+          .value
         result.updated mustBe true
       }
 
       "must deserialize valid JSON with updated false" in {
-        val result = Json.fromJson[UpdateCompanyDetailsReturn](validUpdateCompanyDetailsReturnJsonFalse).asEither.value
+        val result = Json
+          .fromJson[UpdateCompanyDetailsReturn](
+            validUpdateCompanyDetailsReturnJsonFalse
+          )
+          .asEither
+          .value
         result.updated mustBe false
       }
     }
@@ -1143,7 +1248,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
       "must round-trip serialize and deserialize" in {
         val json = Json.toJson(updateCompanyDetailsReturnTrue)
-        val result = Json.fromJson[UpdateCompanyDetailsReturn](json).asEither.value
+        val result =
+          Json.fromJson[UpdateCompanyDetailsReturn](json).asEither.value
 
         result mustEqual updateCompanyDetailsReturnTrue
       }
@@ -1159,7 +1265,12 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[DeleteCompanyDetailsRequest](validDeleteCompanyDetailsRequestJson).asEither.value
+        val result = Json
+          .fromJson[DeleteCompanyDetailsRequest](
+            validDeleteCompanyDetailsRequestJson
+          )
+          .asEither
+          .value
 
         result.storn mustBe "STORN12345"
         result.returnResourceRef mustBe "RRF-2024-001"
@@ -1200,7 +1311,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
       "must round-trip serialize and deserialize" in {
         val json = Json.toJson(deleteCompanyDetailsRequest)
-        val result = Json.fromJson[DeleteCompanyDetailsRequest](json).asEither.value
+        val result =
+          Json.fromJson[DeleteCompanyDetailsRequest](json).asEither.value
 
         result mustEqual deleteCompanyDetailsRequest
       }
@@ -1216,12 +1328,22 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must deserialize valid JSON with deleted true" in {
-        val result = Json.fromJson[DeleteCompanyDetailsReturn](validDeleteCompanyDetailsReturnJsonTrue).asEither.value
+        val result = Json
+          .fromJson[DeleteCompanyDetailsReturn](
+            validDeleteCompanyDetailsReturnJsonTrue
+          )
+          .asEither
+          .value
         result.deleted mustBe true
       }
 
       "must deserialize valid JSON with deleted false" in {
-        val result = Json.fromJson[DeleteCompanyDetailsReturn](validDeleteCompanyDetailsReturnJsonFalse).asEither.value
+        val result = Json
+          .fromJson[DeleteCompanyDetailsReturn](
+            validDeleteCompanyDetailsReturnJsonFalse
+          )
+          .asEither
+          .value
         result.deleted mustBe false
       }
     }
@@ -1246,7 +1368,8 @@ class PurchaserReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
       "must round-trip serialize and deserialize" in {
         val json = Json.toJson(deleteCompanyDetailsReturnTrue)
-        val result = Json.fromJson[DeleteCompanyDetailsReturn](json).asEither.value
+        val result =
+          Json.fromJson[DeleteCompanyDetailsReturn](json).asEither.value
 
         result mustEqual deleteCompanyDetailsReturnTrue
       }

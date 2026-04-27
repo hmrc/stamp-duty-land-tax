@@ -22,13 +22,18 @@ import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.{JsObject, Json, Reads, Writes}
 import models.filing._
 
-class CreateReturnResultSpec extends AnyFreeSpec with Matchers with EitherValues {
+class CreateReturnResultSpec
+    extends AnyFreeSpec
+    with Matchers
+    with EitherValues {
 
   "CreateReturnResultSpec" - {
 
-    def validCreateReturnResultJson: JsObject = Json.obj("returnResourceRef" -> "12345")
+    def validCreateReturnResultJson: JsObject =
+      Json.obj("returnResourceRef" -> "12345")
 
-    def inValidCreateReturnResultJson: JsObject = Json.obj("returnResourceRef" -> true)
+    def inValidCreateReturnResultJson: JsObject =
+      Json.obj("returnResourceRef" -> true)
 
     def validCreateReturnResult = CreateReturnResult("12345")
 
@@ -39,13 +44,18 @@ class CreateReturnResultSpec extends AnyFreeSpec with Matchers with EitherValues
       }
 
       "must deserialize valid JSON" in {
-        val result = Json.fromJson[CreateReturnResult](validCreateReturnResultJson).asEither.value
+        val result = Json
+          .fromJson[CreateReturnResult](validCreateReturnResultJson)
+          .asEither
+          .value
 
         result mustBe CreateReturnResult("12345")
       }
 
       "must fail when field has wrong type" in {
-        val result = Json.fromJson[CreateReturnResult](inValidCreateReturnResultJson).asEither
+        val result = Json
+          .fromJson[CreateReturnResult](inValidCreateReturnResultJson)
+          .asEither
 
         result.isLeft mustBe true
       }

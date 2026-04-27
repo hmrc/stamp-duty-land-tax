@@ -19,24 +19,26 @@ package models.filing
 import play.api.libs.json.{Json, OFormat}
 
 case class UpdateReturnRequest(
-  storn: String,
-  returnResourceRef: String,
-  mainPurchaserID: Option[String] = None,
-  mainVendorID: Option[String] = None,
-  mainLandID: Option[String] = None,
-  IRMarkGenerated: Option[String] = None,
-  landCertForEachProp: Option[String] = None,
-  declaration: Option[String] = None
+    storn: String,
+    returnResourceRef: String,
+    mainPurchaserID: Option[String] = None,
+    mainVendorID: Option[String] = None,
+    mainLandID: Option[String] = None,
+    IRMarkGenerated: Option[String] = None,
+    landCertForEachProp: Option[String] = None,
+    declaration: Option[String] = None
 )
 
 object UpdateReturnRequest {
-  implicit val format: OFormat[UpdateReturnRequest] = Json.format[UpdateReturnRequest]
+  implicit val format: OFormat[UpdateReturnRequest] =
+    Json.format[UpdateReturnRequest]
 }
 
 case class UpdateReturnReturn(
-  updated: Boolean
+    updated: Boolean
 )
 
 object UpdateReturnReturn {
-  implicit val format: OFormat[UpdateReturnReturn] = Json.format[UpdateReturnReturn]
+  implicit val format: OFormat[UpdateReturnReturn] =
+    Json.format[UpdateReturnReturn]
 }

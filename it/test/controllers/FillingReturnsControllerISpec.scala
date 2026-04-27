@@ -25,27 +25,36 @@ import play.api.http.Status.{CREATED, FORBIDDEN}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-class FillingReturnsControllerISpec extends BaseSpec
-  with GuiceOneServerPerSuite with ApplicationWithWiremock {
+class FillingReturnsControllerISpec
+    extends BaseSpec
+    with GuiceOneServerPerSuite
+    with ApplicationWithWiremock {
 
   val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
   lazy val createReturn = s"$servicePrefix/filing/create/return"
   lazy val getFullReturn = s"$servicePrefix/filing/receive/full-return"
 
-
-
   def stubCreateReturnResponse(): Unit = {
-    stubPost("/formp-proxy/create/return", Status.OK,
-      Json.toJson(CreateReturnResult(returnResourceRef = "returnResourceRef")).toString)
+    stubPost(
+      "/formp-proxy/create/return",
+      Status.OK,
+      Json
+        .toJson(CreateReturnResult(returnResourceRef = "returnResourceRef"))
+        .toString
+    )
   }
 
   def stubGetFullReturnResponse(): Unit = {
-    stubPost("/formp-proxy/retrieve-return", Status.OK,
-      Json.toJson(
-        GetReturnRequest ()
-      ).toString)
+    stubPost(
+      "/formp-proxy/retrieve-return",
+      Status.OK,
+      Json
+        .toJson(
+          GetReturnRequest()
+        )
+        .toString
+    )
   }
-
 
   "Filling Returns" should {
 
@@ -54,19 +63,22 @@ class FillingReturnsControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request" in {
         stubAuthorisedAsActivated()
         stubCreateReturnResponse()
-        val jsonBody = Json.toJson(CreateReturnRequest(
-          stornId = "stornId",
-          purchaserIsCompany = "true",
-          surNameOrCompanyName = "surNameOrCompanyName",
-          houseNumber =  None,
-          addressLine1 = "addressLine1",
-          addressLine2 = None,
-          addressLine3 = None,
-          addressLine4 = None,
-          postcode = None,
-          transactionType = "transactionType"
-        ))
-        val result = wsClient.url(createReturn)
+        val jsonBody = Json.toJson(
+          CreateReturnRequest(
+            stornId = "stornId",
+            purchaserIsCompany = "true",
+            surNameOrCompanyName = "surNameOrCompanyName",
+            houseNumber = None,
+            addressLine1 = "addressLine1",
+            addressLine2 = None,
+            addressLine3 = None,
+            addressLine4 = None,
+            postcode = None,
+            transactionType = "transactionType"
+          )
+        )
+        val result = wsClient
+          .url(createReturn)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -76,19 +88,22 @@ class FillingReturnsControllerISpec extends BaseSpec
       "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubCreateReturnResponse()
-        val jsonBody = Json.toJson(CreateReturnRequest(
-          stornId = "stornId",
-          purchaserIsCompany = "true",
-          surNameOrCompanyName = "surNameOrCompanyName",
-          houseNumber = None,
-          addressLine1 = "addressLine1",
-          addressLine2 = None,
-          addressLine3 = None,
-          addressLine4 = None,
-          postcode = None,
-          transactionType = "transactionType"
-        ))
-        val result = wsClient.url(createReturn)
+        val jsonBody = Json.toJson(
+          CreateReturnRequest(
+            stornId = "stornId",
+            purchaserIsCompany = "true",
+            surNameOrCompanyName = "surNameOrCompanyName",
+            houseNumber = None,
+            addressLine1 = "addressLine1",
+            addressLine2 = None,
+            addressLine3 = None,
+            addressLine4 = None,
+            postcode = None,
+            transactionType = "transactionType"
+          )
+        )
+        val result = wsClient
+          .url(createReturn)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -102,11 +117,14 @@ class FillingReturnsControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request" in {
         stubAuthorisedAsActivated()
         stubGetFullReturnResponse()
-        val jsonBody = Json.toJson(GetReturnByRefRequest(
-          returnResourceRef = "purchaseRef", storn = "storn",
+        val jsonBody = Json.toJson(
+          GetReturnByRefRequest(
+            returnResourceRef = "purchaseRef",
+            storn = "storn"
           )
         )
-        val result = wsClient.url(getFullReturn)
+        val result = wsClient
+          .url(getFullReturn)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -116,11 +134,14 @@ class FillingReturnsControllerISpec extends BaseSpec
       "return a 404:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubGetFullReturnResponse()
-        val jsonBody = Json.toJson(GetReturnByRefRequest(
-          returnResourceRef = "purchaseRef", storn = "storn",
+        val jsonBody = Json.toJson(
+          GetReturnByRefRequest(
+            returnResourceRef = "purchaseRef",
+            storn = "storn"
+          )
         )
-        )
-        val result = wsClient.url(getFullReturn)
+        val result = wsClient
+          .url(getFullReturn)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 

@@ -28,29 +28,38 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class ManageReturnsController @Inject()(
-                                         cc: ControllerComponents,
-                                         service: ManageReturnsService,
-                                         auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class ManageReturnsController @Inject() (
+    cc: ControllerComponents,
+    service: ManageReturnsService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
   def getReturns: Action[JsValue] = auth.async(parse.json) { implicit request =>
-      request.body
-        .validate[SdltReturnRecordRequest]
-        .fold(
-          errs =>
-            Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-          returnRecordRequest =>
-            service
-              .getReturns(returnRecordRequest)
-              .map { result =>
-                Ok(Json.toJson(result))
-              }
-              .recover { case t =>
-                logger.error("[ManageReturnsController][getReturns] failed", t)
-                InternalServerError(Json.obj("message" -> "Unexpected error"))
-              }
-        )
-    }
+    request.body
+      .validate[SdltReturnRecordRequest]
+      .fold(
+        errs =>
+          Future.successful(
+            BadRequest(
+              Json.obj(
+                "message" -> "Invalid payload",
+                "errors" -> JsError.toJson(errs)
+              )
+            )
+          ),
+        returnRecordRequest =>
+          service
+            .getReturns(returnRecordRequest)
+            .map { result =>
+              Ok(Json.toJson(result))
+            }
+            .recover { case t =>
+              logger.error("[ManageReturnsController][getReturns] failed", t)
+              InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
+  }
 
 }

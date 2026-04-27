@@ -24,17 +24,20 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class FilingLandService @Inject()(formp: FilingFormpProxyConnector) {
+class FilingLandService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def createLand(createLandRequest: CreateLandRequest)
-                (implicit hc: HeaderCarrier): Future[CreateLandReturn] =
+  def createLand(createLandRequest: CreateLandRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[CreateLandReturn] =
     formp.createLand(createLandRequest)
 
-  def updateLand(updateLandRequest: UpdateLandRequest)
-                (implicit hc: HeaderCarrier): Future[UpdateLandReturn] =
+  def updateLand(updateLandRequest: UpdateLandRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[UpdateLandReturn] =
     formp.updateLand(updateLandRequest)
 
-  def deleteLand(deleteLandRequest: DeleteLandRequest)
-                (implicit hc: HeaderCarrier): Future[DeleteLandReturn] =
+  def deleteLand(deleteLandRequest: DeleteLandRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[DeleteLandReturn] =
     formp.deleteLand(deleteLandRequest)
 }

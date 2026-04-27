@@ -36,18 +36,28 @@ class ReturnVersioningControllerSpec extends SpecBase {
     "POST /update-return-version (updateReturnVersion)" - {
 
       "return CREATED with return version update response when service returns successfully" in new BaseSetup {
-        when(mockReturnVersioningService.updateReturnVersion(eqTo(testReturnVersionUpdateRequest))(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            eqTo(testReturnVersionUpdateRequest)
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest)))
+        val result: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest))
+        )
 
         status(result) mustBe CREATED
         contentAsJson(result) mustBe Json.toJson(testReturnVersionUpdateReturn)
-        verify(mockReturnVersioningService).updateReturnVersion(eqTo(testReturnVersionUpdateRequest))(any[HeaderCarrier])
+        verify(mockReturnVersioningService).updateReturnVersion(
+          eqTo(testReturnVersionUpdateRequest)
+        )(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+        val result: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.obj("invalid" -> "data"))
+        )
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -55,7 +65,8 @@ class ReturnVersioningControllerSpec extends SpecBase {
       }
 
       "return BAD_REQUEST when required fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -66,7 +77,8 @@ class ReturnVersioningControllerSpec extends SpecBase {
           "returnResourceRef" -> "RRF-2024-001",
           "currentVersion" -> "1.0"
         )
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -77,7 +89,8 @@ class ReturnVersioningControllerSpec extends SpecBase {
           "storn" -> "STORN12345",
           "currentVersion" -> "1.0"
         )
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -88,60 +101,95 @@ class ReturnVersioningControllerSpec extends SpecBase {
           "storn" -> "STORN12345",
           "returnResourceRef" -> "RRF-2024-001"
         )
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return BAD_REQUEST when all fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest)))
+        val result: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "return 500 when service fails with exception" in new BaseSetup {
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.failed(new Exception("Service failure")))
 
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest)))
+        val result: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "handle newVersion false response" in new BaseSetup {
-        when(mockReturnVersioningService.updateReturnVersion(eqTo(testReturnVersionUpdateRequest))(any[HeaderCarrier]))
-          .thenReturn(Future.successful(ReturnVersionUpdateReturn(newVersion = 1)))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            eqTo(testReturnVersionUpdateRequest)
+          )(any[HeaderCarrier])
+        )
+          .thenReturn(
+            Future.successful(ReturnVersionUpdateReturn(newVersion = 1))
+          )
 
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest)))
+        val result: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest))
+        )
 
         status(result) mustBe CREATED
         (contentAsJson(result) \ "newVersion").as[Int] mustBe 1
       }
 
       "handle different version formats" in new BaseSetup {
-        val request1: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "1.0")
-        val request2: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "2.5.1")
-        val request3: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "10")
+        val request1: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "1.0")
+        val request2: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "2.5.1")
+        val request3: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "10")
 
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result1: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request1))
+        )
+        val result2: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request2))
+        )
+        val result3: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request3))
+        )
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -149,16 +197,29 @@ class ReturnVersioningControllerSpec extends SpecBase {
       }
 
       "handle complex version strings" in new BaseSetup {
-        val request1: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "1.0.0")
-        val request2: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "2.5.1-beta")
-        val request3: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "3.14.159")
+        val request1: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "1.0.0")
+        val request2: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "2.5.1-beta")
+        val request3: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "3.14.159")
 
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result1: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request1))
+        )
+        val result2: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request2))
+        )
+        val result3: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request3))
+        )
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -166,16 +227,29 @@ class ReturnVersioningControllerSpec extends SpecBase {
       }
 
       "handle different storn formats" in new BaseSetup {
-        val request1: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(storn = "STORN12345")
-        val request2: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(storn = "STORN-ABC-123")
-        val request3: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(storn = "12345678")
+        val request1: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(storn = "STORN12345")
+        val request2: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(storn = "STORN-ABC-123")
+        val request3: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(storn = "12345678")
 
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result1: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request1))
+        )
+        val result2: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request2))
+        )
+        val result3: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request3))
+        )
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -183,16 +257,31 @@ class ReturnVersioningControllerSpec extends SpecBase {
       }
 
       "handle different returnResourceRef formats" in new BaseSetup {
-        val request1: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(returnResourceRef = "RRF-2024-001")
-        val request2: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(returnResourceRef = "123456")
-        val request3: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(returnResourceRef = "ABC-123-XYZ")
+        val request1: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(returnResourceRef =
+            "RRF-2024-001"
+          )
+        val request2: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(returnResourceRef = "123456")
+        val request3: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(returnResourceRef = "ABC-123-XYZ")
 
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result1: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request1))
+        )
+        val result2: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request2))
+        )
+        val result3: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request3))
+        )
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -200,24 +289,43 @@ class ReturnVersioningControllerSpec extends SpecBase {
       }
 
       "handle version increment scenario" in new BaseSetup {
-        val request1: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "1.0")
-        val request2: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "1.1")
-        val request3: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "2.0")
+        val request1: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "1.0")
+        val request2: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "1.1")
+        val request3: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "2.0")
 
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result1: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request1))
+        )
+        val result2: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request2))
+        )
+        val result3: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request3))
+        )
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
         status(result3) mustBe CREATED
 
-        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request1))(any[HeaderCarrier])
-        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request2))(any[HeaderCarrier])
-        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request3))(any[HeaderCarrier])
+        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request1))(
+          any[HeaderCarrier]
+        )
+        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request2))(
+          any[HeaderCarrier]
+        )
+        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request3))(
+          any[HeaderCarrier]
+        )
       }
 
       "return BAD_REQUEST when field has invalid type" in new BaseSetup {
@@ -226,7 +334,8 @@ class ReturnVersioningControllerSpec extends SpecBase {
           "returnResourceRef" -> "RRF-2024-001",
           "currentVersion" -> "1.0"
         )
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -238,10 +347,15 @@ class ReturnVersioningControllerSpec extends SpecBase {
           "returnResourceRef" -> "RRF-2024-001",
           "currentVersion" -> "1.0"
         )
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe CREATED
       }
@@ -252,65 +366,105 @@ class ReturnVersioningControllerSpec extends SpecBase {
           "returnResourceRef" -> "RRF-2024-001",
           "currentVersion" -> "1.0"
         )
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateReturnVersion()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "handle timeout exception from service" in new BaseSetup {
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new java.util.concurrent.TimeoutException("Request timeout")))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
+          .thenReturn(
+            Future.failed(
+              new java.util.concurrent.TimeoutException("Request timeout")
+            )
+          )
 
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest)))
+        val result: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "verify service is called exactly once per request" in new BaseSetup {
-        when(mockReturnVersioningService.updateReturnVersion(eqTo(testReturnVersionUpdateRequest))(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            eqTo(testReturnVersionUpdateRequest)
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest)))
+        val result: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(testReturnVersionUpdateRequest))
+        )
 
         status(result) mustBe CREATED
-        verify(mockReturnVersioningService).updateReturnVersion(eqTo(testReturnVersionUpdateRequest))(any[HeaderCarrier])
+        verify(mockReturnVersioningService).updateReturnVersion(
+          eqTo(testReturnVersionUpdateRequest)
+        )(any[HeaderCarrier])
       }
 
       "handle consecutive requests independently" in new BaseSetup {
-        val request1: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "1.0")
-        val request2: ReturnVersionUpdateRequest = testReturnVersionUpdateRequest.copy(currentVersion = "2.0")
+        val request1: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "1.0")
+        val request2: ReturnVersionUpdateRequest =
+          testReturnVersionUpdateRequest.copy(currentVersion = "2.0")
 
-        when(mockReturnVersioningService.updateReturnVersion(any[ReturnVersionUpdateRequest])(any[HeaderCarrier]))
+        when(
+          mockReturnVersioningService.updateReturnVersion(
+            any[ReturnVersionUpdateRequest]
+          )(any[HeaderCarrier])
+        )
           .thenReturn(Future.successful(testReturnVersionUpdateReturn))
 
-        val result1: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.updateReturnVersion()(fakeRequest.withBody(Json.toJson(request2)))
+        val result1: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request1))
+        )
+        val result2: Future[Result] = controller.updateReturnVersion()(
+          fakeRequest.withBody(Json.toJson(request2))
+        )
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
 
-        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request1))(any[HeaderCarrier])
-        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request2))(any[HeaderCarrier])
+        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request1))(
+          any[HeaderCarrier]
+        )
+        verify(mockReturnVersioningService).updateReturnVersion(eqTo(request2))(
+          any[HeaderCarrier]
+        )
       }
     }
   }
 
   private trait BaseSetup {
-    val mockReturnVersioningService: ReturnVersioningService = mock[ReturnVersioningService]
+    val mockReturnVersioningService: ReturnVersioningService =
+      mock[ReturnVersioningService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new ReturnVersioningController(cc, mockReturnVersioningService, fakeIdentifierAction)
-
-    val testReturnVersionUpdateRequest: ReturnVersionUpdateRequest = ReturnVersionUpdateRequest(
-      storn = "STORN12345",
-      returnResourceRef = "RRF-2024-001",
-      currentVersion = "1.0"
+    val controller = new ReturnVersioningController(
+      cc,
+      mockReturnVersioningService,
+      fakeIdentifierAction
     )
 
-    val testReturnVersionUpdateReturn: ReturnVersionUpdateReturn = ReturnVersionUpdateReturn(
-      newVersion = 2
-    )
+    val testReturnVersionUpdateRequest: ReturnVersionUpdateRequest =
+      ReturnVersionUpdateRequest(
+        storn = "STORN12345",
+        returnResourceRef = "RRF-2024-001",
+        currentVersion = "1.0"
+      )
+
+    val testReturnVersionUpdateReturn: ReturnVersionUpdateReturn =
+      ReturnVersionUpdateReturn(
+        newVersion = 2
+      )
   }
 }

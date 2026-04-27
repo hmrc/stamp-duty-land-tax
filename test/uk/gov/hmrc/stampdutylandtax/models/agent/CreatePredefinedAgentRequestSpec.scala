@@ -25,7 +25,7 @@ class CreatePredefinedAgentRequestSpec extends AnyWordSpec with Matchers {
 
   "CreatePredefinedAgentRequest (JSON)" should {
     "read and write a fully-populated with all optional and mandatory fields" in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "storn": "STORN12345",
@@ -53,7 +53,7 @@ class CreatePredefinedAgentRequestSpec extends AnyWordSpec with Matchers {
       model.email mustBe Some("hello@email.com")
     }
     "read and write a partially-populated with all mandatory fields " in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "storn": "STORN12345",

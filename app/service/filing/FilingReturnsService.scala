@@ -24,17 +24,20 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class FilingReturnsService @Inject()(formp: FilingFormpProxyConnector) {
+class FilingReturnsService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def createReturn(createReturnRequest: CreateReturnRequest)
-                  (implicit hc: HeaderCarrier): Future[CreateReturnResult] =
+  def createReturn(createReturnRequest: CreateReturnRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[CreateReturnResult] =
     formp.createReturn(createReturnRequest)
 
-  def getFullReturn(getReturnByRefRequest: GetReturnByRefRequest)
-                   (implicit hc: HeaderCarrier): Future[GetReturnRequest] =
+  def getFullReturn(getReturnByRefRequest: GetReturnByRefRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[GetReturnRequest] =
     formp.getFullReturn(getReturnByRefRequest)
 
-  def updateReturnInfo(updateReturnRequest: UpdateReturnRequest)
-                      (implicit hc: HeaderCarrier): Future[UpdateReturnReturn] =
+  def updateReturnInfo(updateReturnRequest: UpdateReturnRequest)(implicit
+      hc: HeaderCarrier
+  ): Future[UpdateReturnReturn] =
     formp.updateReturnInfo(updateReturnRequest)
 }

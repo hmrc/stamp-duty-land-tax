@@ -25,7 +25,7 @@ class CreatedAgentSpec extends AnyWordSpec with Matchers {
 
   "CreatedAgent (JSON)" should {
     "read and write a fully-populated when all fields are present " in {
-    val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "storn": "STORN12345",
@@ -62,7 +62,7 @@ class CreatedAgentSpec extends AnyWordSpec with Matchers {
 
     }
     "read and write a partially-populated with mandatory fields" in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "storn": "STORN12345",

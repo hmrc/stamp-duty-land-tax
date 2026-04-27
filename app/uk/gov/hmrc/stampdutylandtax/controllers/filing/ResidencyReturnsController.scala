@@ -16,7 +16,11 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import models.filing.{CreateResidencyRequest, DeleteResidencyRequest, UpdateResidencyRequest}
+import models.filing.{
+  CreateResidencyRequest,
+  DeleteResidencyRequest,
+  UpdateResidencyRequest
+}
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
@@ -28,66 +32,92 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class ResidencyReturnsController @Inject()(
-                                            cc: ControllerComponents,
-                                            service: ResidencyReturnsService,
-                                            auth: IdentifierAction
-                                          )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class ResidencyReturnsController @Inject() (
+    cc: ControllerComponents,
+    service: ResidencyReturnsService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
-  def createResidency(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[CreateResidencyRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .createResidency(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[createResidency] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def createResidency(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[CreateResidencyRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .createResidency(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[createResidency] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def updateResidency(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdateResidencyRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updateResidency(body)
-            .map { result =>
-              Ok(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[updateResidency] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def updateResidency(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[UpdateResidencyRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .updateResidency(body)
+              .map { result =>
+                Ok(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[updateResidency] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def deleteResidency(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[DeleteResidencyRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .deleteResidency(body)
-            .map { result =>
-              Ok(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[deleteResidency] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def deleteResidency(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[DeleteResidencyRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .deleteResidency(body)
+              .map { result =>
+                Ok(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[deleteResidency] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 }

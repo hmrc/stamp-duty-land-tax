@@ -16,7 +16,11 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import models.filing.{CreateReturnRequest, GetReturnByRefRequest, UpdateReturnRequest}
+import models.filing.{
+  CreateReturnRequest,
+  GetReturnByRefRequest,
+  UpdateReturnRequest
+}
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
@@ -28,67 +32,93 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class FilingReturnsController @Inject()(
-                                         cc: ControllerComponents,
-                                         service: FilingReturnsService,
-                                         auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class FilingReturnsController @Inject() (
+    cc: ControllerComponents,
+    service: FilingReturnsService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
-  def createReturn(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[CreateReturnRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .createReturn(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[createReturn] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def createReturn(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[CreateReturnRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .createReturn(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[createReturn] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def getFullReturn(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[GetReturnByRefRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .getFullReturn(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[createReturn] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def getFullReturn(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[GetReturnByRefRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .getFullReturn(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[createReturn] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
-  def updateReturnInfo(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdateReturnRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updateReturnInfo(body)
-            .map { result =>
-              Ok(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[updateReturnInfo] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def updateReturnInfo(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[UpdateReturnRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .updateReturnInfo(body)
+              .map { result =>
+                Ok(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[updateReturnInfo] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 
 }

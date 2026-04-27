@@ -19,7 +19,11 @@ package connectors
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import itutil.ApplicationWithWiremock
 import models.agent.*
-import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.manage.{
+  ReturnSummary,
+  SdltReturnRecordRequest,
+  SdltReturnRecordResponse
+}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -29,19 +33,22 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.LocalDate
 
-class FormpProxyConnectorISpec extends AnyWordSpec
-  with Matchers
-  with ScalaFutures
-  with IntegrationPatience
-  with ApplicationWithWiremock {
-  
+class FormpProxyConnectorISpec
+    extends AnyWordSpec
+    with Matchers
+    with ScalaFutures
+    with IntegrationPatience
+    with ApplicationWithWiremock {
+
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
-  private val connectorWithStub: FormpProxyConnector = appWithSubOn.injector.instanceOf[FormpProxyConnector]
-  private val connectorWithFormP: FormpProxyConnector = appWithSubOff.injector.instanceOf[FormpProxyConnector]
+  private val connectorWithStub: FormpProxyConnector =
+    appWithSubOn.injector.instanceOf[FormpProxyConnector]
+  private val connectorWithFormP: FormpProxyConnector =
+    appWithSubOff.injector.instanceOf[FormpProxyConnector]
 
   private val storn = "STN001"
-  private val arn   = "ARN001"
+  private val arn = "ARN001"
 
   "submitAgentDetails" should {
 
@@ -49,62 +56,94 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     val formpUrl = "/formp-proxy/create/predefined-agent"
 
     val payload = CreatePredefinedAgentRequest(
-      storn       = "STN001",
-      agentName   = "Acme Property Agents Ltd",
+      storn = "STN001",
+      agentName = "Acme Property Agents Ltd",
       addressLine1 = Some("42 High Street"),
       addressLine2 = Some("Westminster"),
       addressLine3 = Some("London"),
       addressLine4 = Some("Greater London"),
-      postcode     = Some("SW1A 2AA"),
-      phone        = Some("02079460000"),
-      email        = Some("info@acmeagents.co.uk")
+      postcode = Some("SW1A 2AA"),
+      phone = Some("02079460000"),
+      email = Some("info@acmeagents.co.uk")
     )
 
     "select stubUrl when stubFormPBool = true and return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(payload)), true, true)
+          )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                """{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""
+              )
+          )
       )
 
       val result = connectorWithStub.submitAgentDetails(payload).futureValue
-      result mustBe CreatePredefinedAgentResponse(agentResourceRef = "ARN4324234", agentId = "1234")
+      result mustBe CreatePredefinedAgentResponse(
+        agentResourceRef = "ARN4324234",
+        agentId = "1234"
+      )
     }
     "select formpUrl when stubFormPBool = false and return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
       stubFor(
         post(urlPathEqualTo(formpUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(payload)), true, true)
+          )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(
+                """{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""
+              )
+          )
       )
 
       val result = connectorWithFormP.submitAgentDetails(payload).futureValue
-      result mustBe CreatePredefinedAgentResponse(agentResourceRef = "ARN4324234", agentId = "1234")
+      result mustBe CreatePredefinedAgentResponse(
+        agentResourceRef = "ARN4324234",
+        agentId = "1234"
+      )
     }
 
     "fail when BE returns OK with invalid JSON" in {
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(payload)), true, true)
+          )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody("""{ "unexpectedField": true }""")
+          )
       )
 
       val ex = intercept[Exception] {
         connectorWithStub.submitAgentDetails(payload).futureValue
       }
-      ex.getMessage.toLowerCase must include ("agentresourceref")
+      ex.getMessage.toLowerCase must include("agentresourceref")
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(payload)), true, true)
+          )
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
         connectorWithStub.submitAgentDetails(payload).futureValue
       }
-      ex.getMessage must include ("returned 500")
+      ex.getMessage must include("returned 500")
     }
   }
 
@@ -118,8 +157,16 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     "select formPUrl when stubFormPBool = true and return OK with valid JSON object" in {
       stubFor(
         post(urlPathEqualTo(formpUrl))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
+          .withRequestBody(
+            equalToJson(
+              s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""",
+              true,
+              true
+            )
+          )
+          .willReturn(
+            aResponse().withStatus(OK).withBody("""{ "deleted": true }""")
+          )
       )
 
       val result = connectorWithFormP.deletePredefinedAgent(req).futureValue
@@ -129,8 +176,16 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     "select stubURL when stubFormPBool = false and return OK with valid JSON object" in {
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
+          .withRequestBody(
+            equalToJson(
+              s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""",
+              true,
+              true
+            )
+          )
+          .willReturn(
+            aResponse().withStatus(OK).withBody("""{ "deleted": true }""")
+          )
       )
 
       val result = connectorWithStub.deletePredefinedAgent(req).futureValue
@@ -140,20 +195,36 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .withRequestBody(
+            equalToJson(
+              s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""",
+              true,
+              true
+            )
+          )
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
         connectorWithStub.deletePredefinedAgent(req).futureValue
       }
-      ex.getMessage must include ("boom")
+      ex.getMessage must include("boom")
     }
     "propagate Exception  when BE throws unexpected JSResult " in {
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}"""))
+          .withRequestBody(
+            equalToJson(
+              s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""",
+              true,
+              true
+            )
+          )
+          .willReturn(
+            aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}""")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -193,7 +264,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       stubFor(
         post(urlPathEqualTo(formpUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(request)), true, true)
+          )
           .willReturn(aResponse().withStatus(OK).withBody(responseBody))
       )
 
@@ -236,7 +309,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(request)), true, true)
+          )
           .willReturn(aResponse().withStatus(OK).withBody(responseBody))
       )
 
@@ -279,7 +354,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(request)), true, true)
+          )
           .willReturn(aResponse().withStatus(OK).withBody(responseBody))
       )
 
@@ -304,8 +381,14 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(request)), true, true)
+          )
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody("""{ "unexpectedField": true }""")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -318,8 +401,12 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
       stubFor(
         post(urlPathEqualTo(stubUrl))
-          .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .withRequestBody(
+            equalToJson(Json.stringify(Json.toJson(request)), true, true)
+          )
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -376,18 +463,18 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         doNotDisplayWelcomePage = Some("Yes"),
         agents = Seq(
           CreatedAgent(
-            storn                  = Some(storn),
-            agentId                = Some("AGT001"),
-            name                   = Some("John"),
-            houseNumber            = None,
-            address1               = Some("1 High Street"),
-            address2               = Some("Westminster"),
-            address3               = Some("London"),
-            address4               = Some("Greater London"),
-            postcode               = Some("SW72AZ"),
-            phone                  = Some("02079460000"),
-            email                  = Some("info@acme.co.uk"),
-            dxAddress              = None,
+            storn = Some(storn),
+            agentId = Some("AGT001"),
+            name = Some("John"),
+            houseNumber = None,
+            address1 = Some("1 High Street"),
+            address2 = Some("Westminster"),
+            address3 = Some("London"),
+            address4 = Some("Greater London"),
+            postcode = Some("SW72AZ"),
+            phone = Some("02079460000"),
+            email = Some("info@acme.co.uk"),
+            dxAddress = None,
             agentResourceReference = Some("ARN001")
           )
         )
@@ -446,18 +533,18 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         doNotDisplayWelcomePage = Some("Yes"),
         agents = Seq(
           CreatedAgent(
-            storn                  = Some(storn),
-            agentId                = Some("AGT001"),
-            name                   = Some("John"),
-            houseNumber            = None,
-            address1               = Some("1 High Street"),
-            address2               = Some("Westminster"),
-            address3               = Some("London"),
-            address4               = Some("Greater London"),
-            postcode               = Some("SW72AZ"),
-            phone                  = Some("02079460000"),
-            email                  = Some("info@acme.co.uk"),
-            dxAddress              = None,
+            storn = Some(storn),
+            agentId = Some("AGT001"),
+            name = Some("John"),
+            houseNumber = None,
+            address1 = Some("1 High Street"),
+            address2 = Some("Westminster"),
+            address3 = Some("London"),
+            address4 = Some("Greater London"),
+            postcode = Some("SW72AZ"),
+            phone = Some("02079460000"),
+            email = Some("info@acme.co.uk"),
+            dxAddress = None,
             agentResourceReference = Some("ARN001")
           )
         )
@@ -479,7 +566,11 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody("""{ "unexpectedField": true }""")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -492,7 +583,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -528,7 +621,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(formpUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "updated": true }"""))
+          .willReturn(
+            aResponse().withStatus(OK).withBody("""{ "updated": true }""")
+          )
       )
 
       val result = connectorWithFormP.updateAgentDetails(req).futureValue
@@ -539,7 +634,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{ "updated": true }"""))
+          .willReturn(
+            aResponse().withStatus(OK).withBody("""{ "updated": true }""")
+          )
       )
 
       val result = connectorWithStub.updateAgentDetails(req).futureValue
@@ -550,7 +647,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
-          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+          .willReturn(
+            aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom")
+          )
       )
 
       val ex = intercept[Exception] {
@@ -562,7 +661,9 @@ class FormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(stubUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
-          .willReturn(aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}"""))
+          .willReturn(
+            aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}""")
+          )
       )
 
       val ex = intercept[Exception] {

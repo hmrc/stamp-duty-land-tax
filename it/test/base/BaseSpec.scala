@@ -24,13 +24,14 @@ import scala.language.{implicitConversions, postfixOps}
 
 trait BaseSpec extends AnyWordSpec with Matchers with OptionValues {
 
-    import scala.concurrent.duration.*
-    import scala.concurrent.{Await, Future}
+  import scala.concurrent.duration.*
+  import scala.concurrent.{Await, Future}
 
-    implicit val defaultTimeout: FiniteDuration = 5 seconds
+  implicit val defaultTimeout: FiniteDuration = 5 seconds
 
-    implicit def extractAwait[A](future: Future[A]): A = await[A](future)
+  implicit def extractAwait[A](future: Future[A]): A = await[A](future)
 
-    def await[A](future: Future[A])(implicit timeout: Duration): A = Await.result(future, timeout)
+  def await[A](future: Future[A])(implicit timeout: Duration): A =
+    Await.result(future, timeout)
 
 }

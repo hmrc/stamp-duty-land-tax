@@ -24,21 +24,29 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class ManageAgentsService @Inject()(formp: FormpProxyConnector) {
+class ManageAgentsService @Inject() (formp: FormpProxyConnector) {
 
-  def submitAgentDetails(createPredefinedAgentRequest: CreatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[CreatePredefinedAgentResponse] =
+  def submitAgentDetails(
+      createPredefinedAgentRequest: CreatePredefinedAgentRequest
+  )(implicit hc: HeaderCarrier): Future[CreatePredefinedAgentResponse] =
     formp
       .submitAgentDetails(createPredefinedAgentRequest)
 
-  def updateAgentDetails(agentDetails: UpdatePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[UpdatePredefinedAgentResponse] =
+  def updateAgentDetails(
+      agentDetails: UpdatePredefinedAgentRequest
+  )(implicit hc: HeaderCarrier): Future[UpdatePredefinedAgentResponse] =
     formp
       .updateAgentDetails(agentDetails)
 
-  def getSdltOrganisation(storn: String)(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
+  def getSdltOrganisation(
+      storn: String
+  )(implicit hc: HeaderCarrier): Future[SdltOrganisationResponse] =
     formp
       .getSdltOrganisation(storn)
 
-  def deletePredefinedAgent(deletePredefinedAgentRequest: DeletePredefinedAgentRequest)(implicit hc: HeaderCarrier): Future[DeletePredefinedAgentResponse] =
+  def deletePredefinedAgent(
+      deletePredefinedAgentRequest: DeletePredefinedAgentRequest
+  )(implicit hc: HeaderCarrier): Future[DeletePredefinedAgentResponse] =
     formp
       .deletePredefinedAgent(deletePredefinedAgentRequest)
 }

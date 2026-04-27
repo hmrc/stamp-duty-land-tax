@@ -25,38 +25,51 @@ import play.api.http.Status.{CREATED, FORBIDDEN}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-class ReturnAgentControllerISpec extends BaseSpec
-  with GuiceOneServerPerSuite with ApplicationWithWiremock {
+class ReturnAgentControllerISpec
+    extends BaseSpec
+    with GuiceOneServerPerSuite
+    with ApplicationWithWiremock {
 
   val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
   lazy val deleteReturnAgent = s"$servicePrefix/filing/delete/return-agent"
   lazy val createReturnAgent = s"$servicePrefix/filing/create/return-agent"
   lazy val updateReturnAgent = s"$servicePrefix/filing/update/return-agent"
 
-
   def stubDeleteReturnAgentResponse(): Unit = {
-    stubPost("/formp-proxy/filing/delete/return-agent", Status.OK,
-      Json.toJson(DeleteReturnAgentReturn(deleted = true)).toString)
+    stubPost(
+      "/formp-proxy/filing/delete/return-agent",
+      Status.OK,
+      Json.toJson(DeleteReturnAgentReturn(deleted = true)).toString
+    )
   }
 
   def stubCreateReturnAgentResponse(): Unit = {
-    stubPost("/formp-proxy/filing/create/return-agent", Status.OK,
-      Json.toJson(
-        CreateReturnAgentReturn(
-          returnAgentID = "returnAgentID"
+    stubPost(
+      "/formp-proxy/filing/create/return-agent",
+      Status.OK,
+      Json
+        .toJson(
+          CreateReturnAgentReturn(
+            returnAgentID = "returnAgentID"
+          )
         )
-      ).toString)
+        .toString
+    )
   }
 
   def stubUpdateReturnAgentResponse(): Unit = {
-    stubPost("/formp-proxy/filing/update/return-agent", Status.OK,
-      Json.toJson(
-        UpdateReturnAgentReturn(
-          updated = true
+    stubPost(
+      "/formp-proxy/filing/update/return-agent",
+      Status.OK,
+      Json
+        .toJson(
+          UpdateReturnAgentReturn(
+            updated = true
+          )
         )
-      ).toString)
+        .toString
+    )
   }
-
 
   "Agent Returns" should {
 
@@ -65,8 +78,15 @@ class ReturnAgentControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request" in {
         stubAuthorisedAsActivated()
         stubDeleteReturnAgentResponse()
-        val jsonBody = Json.toJson(DeleteReturnAgentRequest(storn = "storn", returnResourceRef = "returnRef", agentType = "agentType"))
-        val result = wsClient.url(deleteReturnAgent)
+        val jsonBody = Json.toJson(
+          DeleteReturnAgentRequest(
+            storn = "storn",
+            returnResourceRef = "returnRef",
+            agentType = "agentType"
+          )
+        )
+        val result = wsClient
+          .url(deleteReturnAgent)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -76,8 +96,15 @@ class ReturnAgentControllerISpec extends BaseSpec
       "return a 201:CREATED:: authorised request with not yet activated enrollment" in {
         stubAuthorisedAsNotYetActivated()
         stubDeleteReturnAgentResponse()
-        val jsonBody = Json.toJson(DeleteReturnAgentRequest(storn = "storn", returnResourceRef = "returnRef", agentType = "agentType"))
-        val result = wsClient.url(deleteReturnAgent)
+        val jsonBody = Json.toJson(
+          DeleteReturnAgentRequest(
+            storn = "storn",
+            returnResourceRef = "returnRef",
+            agentType = "agentType"
+          )
+        )
+        val result = wsClient
+          .url(deleteReturnAgent)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -87,8 +114,15 @@ class ReturnAgentControllerISpec extends BaseSpec
       "return a 403:Forbidden:: unauthorised request" in {
         stubUnauthorised()
         stubDeleteReturnAgentResponse()
-        val jsonBody = Json.toJson(DeleteReturnAgentRequest(storn = "storn", returnResourceRef = "returnRef", agentType = "agentType"))
-        val result = wsClient.url(deleteReturnAgent)
+        val jsonBody = Json.toJson(
+          DeleteReturnAgentRequest(
+            storn = "storn",
+            returnResourceRef = "returnRef",
+            agentType = "agentType"
+          )
+        )
+        val result = wsClient
+          .url(deleteReturnAgent)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -108,19 +142,20 @@ class ReturnAgentControllerISpec extends BaseSpec
             returnResourceRef = "returnResourceRef",
             agentType = "agentType",
             name = "name",
-            houseNumber= None,
+            houseNumber = None,
             addressLine1 = "addressLine1",
-            addressLine2= None,
+            addressLine2 = None,
             addressLine3 = None,
-            addressLine4= None,
+            addressLine4 = None,
             postcode = "postcode",
-            phoneNumber= None,
+            phoneNumber = None,
             email = None,
             agentReference = None,
             isAuthorised = None
           )
         )
-        val result = wsClient.url(createReturnAgent)
+        val result = wsClient
+          .url(createReturnAgent)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -148,7 +183,8 @@ class ReturnAgentControllerISpec extends BaseSpec
             isAuthorised = None
           )
         )
-        val result = wsClient.url(createReturnAgent)
+        val result = wsClient
+          .url(createReturnAgent)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -179,7 +215,8 @@ class ReturnAgentControllerISpec extends BaseSpec
             isAuthorised = None
           )
         )
-        val result = wsClient.url(updateReturnAgent)
+        val result = wsClient
+          .url(updateReturnAgent)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -207,7 +244,8 @@ class ReturnAgentControllerISpec extends BaseSpec
             isAuthorised = None
           )
         )
-        val result = wsClient.url(updateReturnAgent)
+        val result = wsClient
+          .url(updateReturnAgent)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 

@@ -18,7 +18,15 @@ package uk.gov.hmrc.stampdutylandtax.service
 
 import base.SpecBase
 import connectors.FormpProxyConnector
-import models.agent.{CreatePredefinedAgentRequest, CreatePredefinedAgentResponse, CreatedAgent, DeletePredefinedAgentRequest, DeletePredefinedAgentResponse, SdltOrganisationResponse, UpdatePredefinedAgentResponse}
+import models.agent.{
+  CreatePredefinedAgentRequest,
+  CreatePredefinedAgentResponse,
+  CreatedAgent,
+  DeletePredefinedAgentRequest,
+  DeletePredefinedAgentResponse,
+  SdltOrganisationResponse,
+  UpdatePredefinedAgentResponse
+}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import service.ManageAgentsService
@@ -34,15 +42,15 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should delegate to connector and successfully return CreatePredefinedAgentResponse" in new BaseSetup {
         private val req = CreatePredefinedAgentRequest(
-          storn        = "STN001",
-          agentName    = "22A Harborview Estates",
+          storn = "STN001",
+          agentName = "22A Harborview Estates",
           addressLine1 = Some("Queensway"),
           addressLine2 = None,
           addressLine3 = Some("Birmingham"),
           addressLine4 = None,
-          postcode     = Some("B2 4ND"),
-          phone        = Some("01214567890"),
-          email        = Some("info@harborviewestates.co.uk")
+          postcode = Some("B2 4ND"),
+          phone = Some("01214567890"),
+          email = Some("info@harborviewestates.co.uk")
         )
         private val resp = CreatePredefinedAgentResponse("ARN123456", "07524")
 
@@ -51,20 +59,22 @@ class ManageAgentsServiceSpec extends SpecBase {
 
         val result = service.submitAgentDetails(req).futureValue
         result mustBe resp
-        verify(mockFormp, times(1)).submitAgentDetails(eqTo(req))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).submitAgentDetails(eqTo(req))(
+          any[HeaderCarrier]
+        )
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
         private val req = CreatePredefinedAgentRequest(
-          storn        = "STN001",
-          agentName    = "?? Bad Data Inc",
+          storn = "STN001",
+          agentName = "?? Bad Data Inc",
           addressLine1 = Some("Unknown"),
           addressLine2 = None,
           addressLine3 = Some("Nowhere"),
           addressLine4 = None,
-          postcode     = None,
-          phone        = None,
-          email        = Some("bad@example.com")
+          postcode = None,
+          phone = None,
+          email = Some("bad@example.com")
         )
 
         when(mockFormp.submitAgentDetails(eqTo(req))(any[HeaderCarrier]))
@@ -74,7 +84,9 @@ class ManageAgentsServiceSpec extends SpecBase {
           service.submitAgentDetails(req).futureValue
         }
         ex.getMessage must include("kaboom")
-        verify(mockFormp, times(1)).submitAgentDetails(eqTo(req))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).submitAgentDetails(eqTo(req))(
+          any[HeaderCarrier]
+        )
       }
     }
 
@@ -82,24 +94,37 @@ class ManageAgentsServiceSpec extends SpecBase {
 
       "should return Unit when the connector successfully updates an agent" in new BaseSetup {
 
-        when(mockFormp.updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier]))
+        when(
+          mockFormp.updateAgentDetails(eqTo(testUpdatePredefinedAgent))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(UpdatePredefinedAgentResponse(true)))
 
-        val result = service.updateAgentDetails(testUpdatePredefinedAgent).futureValue
+        val result =
+          service.updateAgentDetails(testUpdatePredefinedAgent).futureValue
         result mustBe UpdatePredefinedAgentResponse(true)
-        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).updateAgentDetails(
+          eqTo(testUpdatePredefinedAgent)
+        )(any[HeaderCarrier])
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
 
-        when(mockFormp.updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier]))
+        when(
+          mockFormp.updateAgentDetails(eqTo(testUpdatePredefinedAgent))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("boom")))
 
         val ex = intercept[RuntimeException] {
           service.updateAgentDetails(testUpdatePredefinedAgent).futureValue
         }
         ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).updateAgentDetails(eqTo(testUpdatePredefinedAgent))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).updateAgentDetails(
+          eqTo(testUpdatePredefinedAgent)
+        )(any[HeaderCarrier])
       }
     }
 
@@ -111,13 +136,17 @@ class ManageAgentsServiceSpec extends SpecBase {
         when(mockFormp.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.successful(DeletePredefinedAgentResponse(true)))
 
-        val result: DeletePredefinedAgentResponse = service.deletePredefinedAgent(req).futureValue
+        val result: DeletePredefinedAgentResponse =
+          service.deletePredefinedAgent(req).futureValue
         result mustBe DeletePredefinedAgentResponse(true)
-        verify(mockFormp, times(1)).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).deletePredefinedAgent(eqTo(req))(
+          any[HeaderCarrier]
+        )
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
-        private val req = DeletePredefinedAgentRequest("STN001-ERR", "100001-ERR")
+        private val req =
+          DeletePredefinedAgentRequest("STN001-ERR", "100001-ERR")
 
         when(mockFormp.deletePredefinedAgent(eqTo(req))(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("boom")))
@@ -126,10 +155,12 @@ class ManageAgentsServiceSpec extends SpecBase {
           service.deletePredefinedAgent(req).futureValue
         }
         ex.getMessage must include("boom")
-        verify(mockFormp, times(1)).deletePredefinedAgent(eqTo(req))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).deletePredefinedAgent(eqTo(req))(
+          any[HeaderCarrier]
+        )
       }
     }
-    
+
     "getSdltOrganisation" - {
 
       "should delegate to connector and return SdltOrganisation" in new BaseSetup {
@@ -137,24 +168,24 @@ class ManageAgentsServiceSpec extends SpecBase {
         private val storn = "STN-ORG"
 
         private val expected = SdltOrganisationResponse(
-          storn                   = storn,
-          version                 = Some("1"),
-          isReturnUser            = Some("true"),
+          storn = storn,
+          version = Some("1"),
+          isReturnUser = Some("true"),
           doNotDisplayWelcomePage = Some("Yes"),
           agents = Seq(
             CreatedAgent(
-              agentId                = Some("AGT001"),
-              storn                  = Some(storn),
-              name                   = Some("John"),
-              houseNumber            = None,
-              address1               = Some("1 High Street"),
-              address2               = Some("Westminster"),
-              address3               = Some("London"),
-              address4               = Some("Greater London"),
-              postcode               = Some("SW72AZ"),
-              phone                  = Some("02079460000"),
-              email                  = Some("info@acme.co.uk"),
-              dxAddress              = None,
+              agentId = Some("AGT001"),
+              storn = Some(storn),
+              name = Some("John"),
+              houseNumber = None,
+              address1 = Some("1 High Street"),
+              address2 = Some("Westminster"),
+              address3 = Some("London"),
+              address4 = Some("Greater London"),
+              postcode = Some("SW72AZ"),
+              phone = Some("02079460000"),
+              email = Some("info@acme.co.uk"),
+              dxAddress = None,
               agentResourceReference = Some("ARN001")
             )
           )
@@ -166,7 +197,9 @@ class ManageAgentsServiceSpec extends SpecBase {
         val result = service.getSdltOrganisation(storn).futureValue
         result mustBe expected
 
-        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(
+          any[HeaderCarrier]
+        )
       }
 
       "should propagate exceptions from the connector" in new BaseSetup {
@@ -180,15 +213,17 @@ class ManageAgentsServiceSpec extends SpecBase {
         }
         ex.getMessage must include("boom")
 
-        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(any[HeaderCarrier])
+        verify(mockFormp, times(1)).getSdltOrganisation(eqTo(storn))(
+          any[HeaderCarrier]
+        )
       }
     }
   }
 
   private trait BaseSetup {
     val mockFormp: FormpProxyConnector = mock[FormpProxyConnector]
-    implicit val ec: ExecutionContext   = cc.executionContext
-    implicit val hc: HeaderCarrier      = HeaderCarrier()
+    implicit val ec: ExecutionContext = cc.executionContext
+    implicit val hc: HeaderCarrier = HeaderCarrier()
     val service = new ManageAgentsService(mockFormp)
   }
 }

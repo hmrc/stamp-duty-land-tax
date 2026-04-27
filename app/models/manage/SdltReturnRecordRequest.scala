@@ -19,13 +19,14 @@ package models.manage
 import play.api.libs.json.{Json, OFormat}
 
 case class SdltReturnRecordRequest(
-                                     storn        : String,
-                                     status       : Option[String],
-                                     deletionFlag : Boolean,
-                                     pageType     : Option[String],
-                                     pageNumber   : Option[String] = None
-                                   )
+    storn: String,
+    status: Option[String],
+    deletionFlag: Boolean,
+    pageType: Option[String],
+    pageNumber: Option[String] = None
+)
 
 object SdltReturnRecordRequest {
-  implicit val format: OFormat[SdltReturnRecordRequest] = Json.format[SdltReturnRecordRequest]
+  implicit val format: OFormat[SdltReturnRecordRequest] =
+    Json.format[SdltReturnRecordRequest]
 }

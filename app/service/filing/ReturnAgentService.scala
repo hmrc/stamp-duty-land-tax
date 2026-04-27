@@ -24,19 +24,21 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class ReturnAgentService @Inject()(formp: FilingFormpProxyConnector) {
+class ReturnAgentService @Inject() (formp: FilingFormpProxyConnector) {
 
-  def createReturnAgent(createReturnAgentRequest: CreateReturnAgentRequest)
-                  (implicit hc: HeaderCarrier): Future[CreateReturnAgentReturn] =
+  def createReturnAgent(createReturnAgentRequest: CreateReturnAgentRequest)(
+      implicit hc: HeaderCarrier
+  ): Future[CreateReturnAgentReturn] =
     formp.createReturnAgent(createReturnAgentRequest)
 
-  def updateReturnAgent(updateReturnAgentRequest: UpdateReturnAgentRequest)
-                  (implicit hc: HeaderCarrier): Future[UpdateReturnAgentReturn] =
+  def updateReturnAgent(updateReturnAgentRequest: UpdateReturnAgentRequest)(
+      implicit hc: HeaderCarrier
+  ): Future[UpdateReturnAgentReturn] =
     formp.updateReturnAgent(updateReturnAgentRequest)
 
-  def deleteReturnAgent(deleteReturnAgentRequest: DeleteReturnAgentRequest)
-                  (implicit hc: HeaderCarrier): Future[DeleteReturnAgentReturn] =
+  def deleteReturnAgent(deleteReturnAgentRequest: DeleteReturnAgentRequest)(
+      implicit hc: HeaderCarrier
+  ): Future[DeleteReturnAgentReturn] =
     formp.deleteReturnAgent(deleteReturnAgentRequest)
 
-  
 }

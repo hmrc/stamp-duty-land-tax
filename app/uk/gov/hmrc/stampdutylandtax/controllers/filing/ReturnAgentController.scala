@@ -28,18 +28,28 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class ReturnAgentController @Inject()(
-                                         cc: ControllerComponents,
-                                         service: ReturnAgentService,
-                                         auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class ReturnAgentController @Inject() (
+    cc: ControllerComponents,
+    service: ReturnAgentService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
-  def createReturnAgent(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+  def createReturnAgent(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
       request.body
         .validate[CreateReturnAgentRequest]
         .fold(
           errs =>
-            Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
           body =>
             service
               .createReturnAgent(body)
@@ -51,14 +61,22 @@ class ReturnAgentController @Inject()(
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )
-    }
+  }
 
-  def updateReturnAgent(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+  def updateReturnAgent(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
       request.body
         .validate[UpdateReturnAgentRequest]
         .fold(
           errs =>
-            Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
           body =>
             service
               .updateReturnAgent(body)
@@ -70,14 +88,22 @@ class ReturnAgentController @Inject()(
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )
-    }
+  }
 
-  def deleteReturnAgent(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+  def deleteReturnAgent(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
       request.body
         .validate[DeleteReturnAgentRequest]
         .fold(
           errs =>
-            Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
           body =>
             service
               .deleteReturnAgent(body)
@@ -89,6 +115,6 @@ class ReturnAgentController @Inject()(
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )
-    }
+  }
 
 }

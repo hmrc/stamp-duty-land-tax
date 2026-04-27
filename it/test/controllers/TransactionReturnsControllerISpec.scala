@@ -25,15 +25,20 @@ import play.api.http.Status.{CREATED, FORBIDDEN}
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
-class TransactionReturnsControllerISpec extends BaseSpec
-  with GuiceOneServerPerSuite with ApplicationWithWiremock {
+class TransactionReturnsControllerISpec
+    extends BaseSpec
+    with GuiceOneServerPerSuite
+    with ApplicationWithWiremock {
 
-  val servicePrefix            = s"http://localhost:$port/stamp-duty-land-tax"
+  val servicePrefix = s"http://localhost:$port/stamp-duty-land-tax"
   lazy val updateTransactionUrl = s"$servicePrefix/filing/update/transaction"
 
   def stubUpdateTransactionResponse(): Unit = {
-    stubPost("/formp-proxy/filing/update/transaction", Status.CREATED,
-      Json.toJson(UpdateTransactionReturn(updated = true)).toString)
+    stubPost(
+      "/formp-proxy/filing/update/transaction",
+      Status.CREATED,
+      Json.toJson(UpdateTransactionReturn(updated = true)).toString
+    )
   }
 
   "TransactionReturns" should {
@@ -45,13 +50,14 @@ class TransactionReturnsControllerISpec extends BaseSpec
         stubUpdateTransactionResponse()
         val jsonBody = Json.toJson(
           UpdateTransactionRequest(
-            storn             = "storn",
+            storn = "storn",
             returnResourceRef = "ref",
-            transaction       = TransactionPayload()
+            transaction = TransactionPayload()
           )
         )
 
-        val result = wsClient.url(updateTransactionUrl)
+        val result = wsClient
+          .url(updateTransactionUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -63,13 +69,14 @@ class TransactionReturnsControllerISpec extends BaseSpec
         stubUpdateTransactionResponse()
         val jsonBody = Json.toJson(
           UpdateTransactionRequest(
-            storn             = "storn",
+            storn = "storn",
             returnResourceRef = "ref",
-            transaction       = TransactionPayload()
+            transaction = TransactionPayload()
           )
         )
 
-        val result = wsClient.url(updateTransactionUrl)
+        val result = wsClient
+          .url(updateTransactionUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 
@@ -81,19 +88,20 @@ class TransactionReturnsControllerISpec extends BaseSpec
         stubUpdateTransactionResponse()
         val jsonBody = Json.toJson(
           UpdateTransactionRequest(
-            storn             = "storn",
+            storn = "storn",
             returnResourceRef = "ref",
-            transaction       = TransactionPayload(
-              claimingRelief  = Some("YES"),
-              totalConsider   = Some("200000"),
-              effectiveDate   = Some("2024-02-01"),
-              contractDate    = Some("2024-01-15"),
+            transaction = TransactionPayload(
+              claimingRelief = Some("YES"),
+              totalConsider = Some("200000"),
+              effectiveDate = Some("2024-02-01"),
+              contractDate = Some("2024-01-15"),
               isLandExchanged = Some("NO")
             )
           )
         )
 
-        val result = wsClient.url(updateTransactionUrl)
+        val result = wsClient
+          .url(updateTransactionUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
           .post(jsonBody)
 

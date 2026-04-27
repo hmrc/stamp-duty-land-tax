@@ -28,28 +28,38 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
-class TransactionReturnsController @Inject()(
-                                              cc:      ControllerComponents,
-                                              service: TransactionReturnsService,
-                                              auth:    IdentifierAction
-                                            )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+class TransactionReturnsController @Inject() (
+    cc: ControllerComponents,
+    service: TransactionReturnsService,
+    auth: IdentifierAction
+)(implicit ec: ExecutionContext)
+    extends BackendController(cc)
+    with Logging {
 
-  def updateTransaction(): Action[JsValue] = auth.async(parse.json) { implicit request =>
-    request.body
-      .validate[UpdateTransactionRequest]
-      .fold(
-        errs =>
-          Future.successful(BadRequest(Json.obj("message" -> "Invalid payload", "errors" -> JsError.toJson(errs)))),
-        body =>
-          service
-            .updateTransaction(body)
-            .map { result =>
-              Created(Json.toJson(result))
-            }
-            .recover { case t =>
-              logger.error("[updateTransaction] failed", t)
-              InternalServerError(Json.obj("message" -> "Unexpected error"))
-            }
-      )
+  def updateTransaction(): Action[JsValue] = auth.async(parse.json) {
+    implicit request =>
+      request.body
+        .validate[UpdateTransactionRequest]
+        .fold(
+          errs =>
+            Future.successful(
+              BadRequest(
+                Json.obj(
+                  "message" -> "Invalid payload",
+                  "errors" -> JsError.toJson(errs)
+                )
+              )
+            ),
+          body =>
+            service
+              .updateTransaction(body)
+              .map { result =>
+                Created(Json.toJson(result))
+              }
+              .recover { case t =>
+                logger.error("[updateTransaction] failed", t)
+                InternalServerError(Json.obj("message" -> "Unexpected error"))
+              }
+        )
   }
 }

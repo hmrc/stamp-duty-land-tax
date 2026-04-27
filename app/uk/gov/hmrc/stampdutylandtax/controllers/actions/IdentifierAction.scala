@@ -19,4 +19,6 @@ package uk.gov.hmrc.stampdutylandtax.controllers.actions
 import models.auth.IdentifierRequest
 import play.api.mvc.{ActionBuilder, ActionFunction, AnyContent, Request}
 
-trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest]
+trait IdentifierAction
+    extends ActionBuilder[IdentifierRequest, AnyContent]
+    with ActionFunction[Request, IdentifierRequest]

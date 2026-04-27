@@ -25,7 +25,7 @@ class DeletePredefinedAgentRequestSpec extends AnyWordSpec with Matchers {
 
   "DeletePredefinedAgentRequest (JSON)" should {
     "read and write a fully-populated with all optional fields" in {
-      val json = Json.parse (
+      val json = Json.parse(
         """
           |{
           | "storn": "STORN12345",

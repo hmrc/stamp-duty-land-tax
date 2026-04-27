@@ -36,18 +36,28 @@ class VendorReturnsControllerSpec extends SpecBase {
     "POST /create-vendor (createVendor)" - {
 
       "return CREATED with vendor response when service returns successfully" in new BaseSetup {
-        when(mockVendorReturnsService.createVendor(eqTo(testCreateVendorRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.createVendor(eqTo(testCreateVendorRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateVendorReturn))
 
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(testCreateVendorRequest)))
+        val result: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.toJson(testCreateVendorRequest))
+        )
 
         status(result) mustBe CREATED
         contentAsJson(result) mustBe Json.toJson(testCreateVendorReturn)
-        verify(mockVendorReturnsService).createVendor(eqTo(testCreateVendorRequest))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).createVendor(
+          eqTo(testCreateVendorRequest)
+        )(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+        val result: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.obj("invalid" -> "data"))
+        )
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -55,7 +65,8 @@ class VendorReturnsControllerSpec extends SpecBase {
       }
 
       "return BAD_REQUEST when required fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -68,7 +79,8 @@ class VendorReturnsControllerSpec extends SpecBase {
           "addressLine1" -> "Main Street",
           "isRepresentedByAgent" -> "YES"
         )
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -81,7 +93,8 @@ class VendorReturnsControllerSpec extends SpecBase {
           "addressLine1" -> "Main Street",
           "isRepresentedByAgent" -> "YES"
         )
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -94,7 +107,8 @@ class VendorReturnsControllerSpec extends SpecBase {
           "addressLine1" -> "Main Street",
           "isRepresentedByAgent" -> "YES"
         )
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -107,7 +121,8 @@ class VendorReturnsControllerSpec extends SpecBase {
           "name" -> "Smith",
           "isRepresentedByAgent" -> "YES"
         )
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -120,27 +135,40 @@ class VendorReturnsControllerSpec extends SpecBase {
           "name" -> "Smith",
           "addressLine1" -> "Main Street"
         )
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockVendorReturnsService.createVendor(any[CreateVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.createVendor(any[CreateVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(testCreateVendorRequest)))
+        val result: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.toJson(testCreateVendorRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "return 500 when service fails with exception" in new BaseSetup {
-        when(mockVendorReturnsService.createVendor(any[CreateVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.createVendor(any[CreateVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new Exception("Service failure")))
 
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(testCreateVendorRequest)))
+        val result: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.toJson(testCreateVendorRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
@@ -148,51 +176,87 @@ class VendorReturnsControllerSpec extends SpecBase {
 
       "handle valid payload with all optional fields" in new BaseSetup {
         val completeRequest: CreateVendorRequest = testCreateVendorRequest
-        when(mockVendorReturnsService.createVendor(eqTo(completeRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.createVendor(eqTo(completeRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateVendorReturn))
 
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(completeRequest)))
+        val result: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.toJson(completeRequest))
+        )
 
         status(result) mustBe CREATED
-        verify(mockVendorReturnsService).createVendor(eqTo(completeRequest))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).createVendor(eqTo(completeRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle valid payload with minimal required fields" in new BaseSetup {
         val minimalRequest: CreateVendorRequest = testCreateVendorRequestMinimal
-        when(mockVendorReturnsService.createVendor(eqTo(minimalRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.createVendor(eqTo(minimalRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateVendorReturn))
 
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(minimalRequest)))
+        val result: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.toJson(minimalRequest))
+        )
 
         status(result) mustBe CREATED
-        verify(mockVendorReturnsService).createVendor(eqTo(minimalRequest))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).createVendor(eqTo(minimalRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle different isRepresentedByAgent values" in new BaseSetup {
-        val yesRequest: CreateVendorRequest = testCreateVendorRequest.copy(isRepresentedByAgent = "YES")
-        val noRequest: CreateVendorRequest = testCreateVendorRequest.copy(isRepresentedByAgent = "NO")
+        val yesRequest: CreateVendorRequest =
+          testCreateVendorRequest.copy(isRepresentedByAgent = "YES")
+        val noRequest: CreateVendorRequest =
+          testCreateVendorRequest.copy(isRepresentedByAgent = "NO")
 
-        when(mockVendorReturnsService.createVendor(any[CreateVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.createVendor(any[CreateVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateVendorReturn))
 
-        val result1: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(yesRequest)))
-        val result2: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(noRequest)))
+        val result1: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.toJson(yesRequest))
+        )
+        val result2: Future[Result] = controller.createVendor()(
+          fakeRequest.withBody(Json.toJson(noRequest))
+        )
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
       }
 
       "handle different stornId formats" in new BaseSetup {
-        val request1: CreateVendorRequest = testCreateVendorRequest.copy(stornId = "STORN12345")
-        val request2: CreateVendorRequest = testCreateVendorRequest.copy(stornId = "STORN-ABC-123")
-        val request3: CreateVendorRequest = testCreateVendorRequest.copy(stornId = "12345678")
+        val request1: CreateVendorRequest =
+          testCreateVendorRequest.copy(stornId = "STORN12345")
+        val request2: CreateVendorRequest =
+          testCreateVendorRequest.copy(stornId = "STORN-ABC-123")
+        val request3: CreateVendorRequest =
+          testCreateVendorRequest.copy(stornId = "12345678")
 
-        when(mockVendorReturnsService.createVendor(any[CreateVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.createVendor(any[CreateVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testCreateVendorReturn))
 
-        val result1: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.createVendor()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] =
+          controller.createVendor()(fakeRequest.withBody(Json.toJson(request3)))
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -203,18 +267,28 @@ class VendorReturnsControllerSpec extends SpecBase {
     "POST /update-vendor (updateVendor)" - {
 
       "return CREATED with update response when service returns successfully" in new BaseSetup {
-        when(mockVendorReturnsService.updateVendor(eqTo(testUpdateVendorRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.updateVendor(eqTo(testUpdateVendorRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateVendorReturn))
 
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.toJson(testUpdateVendorRequest)))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.toJson(testUpdateVendorRequest))
+        )
 
         status(result) mustBe CREATED
         contentAsJson(result) mustBe Json.toJson(testUpdateVendorReturn)
-        verify(mockVendorReturnsService).updateVendor(eqTo(testUpdateVendorRequest))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).updateVendor(
+          eqTo(testUpdateVendorRequest)
+        )(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.obj("invalid" -> "data"))
+        )
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -222,7 +296,8 @@ class VendorReturnsControllerSpec extends SpecBase {
       }
 
       "return BAD_REQUEST when required fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.updateVendor()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -236,7 +311,8 @@ class VendorReturnsControllerSpec extends SpecBase {
           "isRepresentedByAgent" -> "YES",
           "vendorResourceRef" -> "VRF-001"
         )
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -250,27 +326,40 @@ class VendorReturnsControllerSpec extends SpecBase {
           "addressLine1" -> "Main Street",
           "isRepresentedByAgent" -> "YES"
         )
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.updateVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockVendorReturnsService.updateVendor(any[UpdateVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.updateVendor(any[UpdateVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.toJson(testUpdateVendorRequest)))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.toJson(testUpdateVendorRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "return 500 when service fails with exception" in new BaseSetup {
-        when(mockVendorReturnsService.updateVendor(any[UpdateVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.updateVendor(any[UpdateVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new Exception("Service failure")))
 
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.toJson(testUpdateVendorRequest)))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.toJson(testUpdateVendorRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
@@ -278,63 +367,104 @@ class VendorReturnsControllerSpec extends SpecBase {
 
       "handle valid payload with all optional fields" in new BaseSetup {
         val completeRequest: UpdateVendorRequest = testUpdateVendorRequest
-        when(mockVendorReturnsService.updateVendor(eqTo(completeRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.updateVendor(eqTo(completeRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateVendorReturn))
 
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.toJson(completeRequest)))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.toJson(completeRequest))
+        )
 
         status(result) mustBe CREATED
-        verify(mockVendorReturnsService).updateVendor(eqTo(completeRequest))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).updateVendor(eqTo(completeRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle valid payload with minimal required fields" in new BaseSetup {
         val minimalRequest: UpdateVendorRequest = testUpdateVendorRequestMinimal
-        when(mockVendorReturnsService.updateVendor(eqTo(minimalRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.updateVendor(eqTo(minimalRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateVendorReturn))
 
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.toJson(minimalRequest)))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.toJson(minimalRequest))
+        )
 
         status(result) mustBe CREATED
-        verify(mockVendorReturnsService).updateVendor(eqTo(minimalRequest))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).updateVendor(eqTo(minimalRequest))(
+          any[HeaderCarrier]
+        )
       }
 
       "handle updated false response" in new BaseSetup {
-        when(mockVendorReturnsService.updateVendor(eqTo(testUpdateVendorRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.updateVendor(eqTo(testUpdateVendorRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(UpdateVendorReturn(updated = false)))
 
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.toJson(testUpdateVendorRequest)))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.toJson(testUpdateVendorRequest))
+        )
 
         status(result) mustBe CREATED
         (contentAsJson(result) \ "updated").as[Boolean] mustBe false
       }
 
       "handle request with nextVendorId" in new BaseSetup {
-        val requestWithNextVendor: UpdateVendorRequest = testUpdateVendorRequest.copy(nextVendorId = Some("VID-999"))
-        when(mockVendorReturnsService.updateVendor(eqTo(requestWithNextVendor))(any[HeaderCarrier]))
+        val requestWithNextVendor: UpdateVendorRequest =
+          testUpdateVendorRequest.copy(nextVendorId = Some("VID-999"))
+        when(
+          mockVendorReturnsService.updateVendor(eqTo(requestWithNextVendor))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testUpdateVendorReturn))
 
-        val result: Future[Result] = controller.updateVendor()(fakeRequest.withBody(Json.toJson(requestWithNextVendor)))
+        val result: Future[Result] = controller.updateVendor()(
+          fakeRequest.withBody(Json.toJson(requestWithNextVendor))
+        )
 
         status(result) mustBe CREATED
-        verify(mockVendorReturnsService).updateVendor(eqTo(requestWithNextVendor))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).updateVendor(
+          eqTo(requestWithNextVendor)
+        )(any[HeaderCarrier])
       }
     }
 
     "POST /delete-vendor (deleteVendor)" - {
 
       "return CREATED with delete response when service returns successfully" in new BaseSetup {
-        when(mockVendorReturnsService.deleteVendor(eqTo(testDeleteVendorRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.deleteVendor(eqTo(testDeleteVendorRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testDeleteVendorReturn))
 
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(testDeleteVendorRequest)))
+        val result: Future[Result] = controller.deleteVendor()(
+          fakeRequest.withBody(Json.toJson(testDeleteVendorRequest))
+        )
 
         status(result) mustBe CREATED
         contentAsJson(result) mustBe Json.toJson(testDeleteVendorReturn)
-        verify(mockVendorReturnsService).deleteVendor(eqTo(testDeleteVendorRequest))(any[HeaderCarrier])
+        verify(mockVendorReturnsService).deleteVendor(
+          eqTo(testDeleteVendorRequest)
+        )(any[HeaderCarrier])
       }
 
       "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+        val result: Future[Result] = controller.deleteVendor()(
+          fakeRequest.withBody(Json.obj("invalid" -> "data"))
+        )
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -342,7 +472,8 @@ class VendorReturnsControllerSpec extends SpecBase {
       }
 
       "return BAD_REQUEST when required fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -353,7 +484,8 @@ class VendorReturnsControllerSpec extends SpecBase {
           "vendorResourceRef" -> "VRF-001",
           "vendorId" -> "VID-001"
         )
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -364,7 +496,8 @@ class VendorReturnsControllerSpec extends SpecBase {
           "storn" -> "STORN12345",
           "vendorId" -> "VID-001"
         )
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
@@ -375,60 +508,90 @@ class VendorReturnsControllerSpec extends SpecBase {
           "storn" -> "STORN12345",
           "vendorResourceRef" -> "VRF-001"
         )
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(invalidRequest))
+        val result: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(invalidRequest))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return BAD_REQUEST when all fields are missing" in new BaseSetup {
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.obj()))
+        val result: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.obj()))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
-        when(mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
 
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(testDeleteVendorRequest)))
+        val result: Future[Result] = controller.deleteVendor()(
+          fakeRequest.withBody(Json.toJson(testDeleteVendorRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "return 500 when service fails with exception" in new BaseSetup {
-        when(mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.failed(new Exception("Service failure")))
 
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(testDeleteVendorRequest)))
+        val result: Future[Result] = controller.deleteVendor()(
+          fakeRequest.withBody(Json.toJson(testDeleteVendorRequest))
+        )
 
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
       }
 
       "handle deleted false response" in new BaseSetup {
-        when(mockVendorReturnsService.deleteVendor(eqTo(testDeleteVendorRequest))(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.deleteVendor(eqTo(testDeleteVendorRequest))(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(DeleteVendorReturn(deleted = false)))
 
-        val result: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(testDeleteVendorRequest)))
+        val result: Future[Result] = controller.deleteVendor()(
+          fakeRequest.withBody(Json.toJson(testDeleteVendorRequest))
+        )
 
         status(result) mustBe CREATED
         (contentAsJson(result) \ "deleted").as[Boolean] mustBe false
       }
 
       "handle different storn formats" in new BaseSetup {
-        val request1: DeleteVendorRequest = testDeleteVendorRequest.copy(storn = "STORN12345")
-        val request2: DeleteVendorRequest = testDeleteVendorRequest.copy(storn = "STORN-ABC-123")
-        val request3: DeleteVendorRequest = testDeleteVendorRequest.copy(storn = "12345678")
+        val request1: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(storn = "STORN12345")
+        val request2: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(storn = "STORN-ABC-123")
+        val request3: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(storn = "12345678")
 
-        when(mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testDeleteVendorReturn))
 
-        val result1: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request3)))
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -436,16 +599,26 @@ class VendorReturnsControllerSpec extends SpecBase {
       }
 
       "handle different vendorResourceRef formats" in new BaseSetup {
-        val request1: DeleteVendorRequest = testDeleteVendorRequest.copy(vendorResourceRef = "VRF-001")
-        val request2: DeleteVendorRequest = testDeleteVendorRequest.copy(vendorResourceRef = "123456")
-        val request3: DeleteVendorRequest = testDeleteVendorRequest.copy(vendorResourceRef = "ABC-123-XYZ")
+        val request1: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(vendorResourceRef = "VRF-001")
+        val request2: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(vendorResourceRef = "123456")
+        val request3: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(vendorResourceRef = "ABC-123-XYZ")
 
-        when(mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testDeleteVendorReturn))
 
-        val result1: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request3)))
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -453,16 +626,26 @@ class VendorReturnsControllerSpec extends SpecBase {
       }
 
       "handle different returnResourceRef formats" in new BaseSetup {
-        val request1: DeleteVendorRequest = testDeleteVendorRequest.copy(returnResourceRef = "VID-001")
-        val request2: DeleteVendorRequest = testDeleteVendorRequest.copy(returnResourceRef = "VID-ABC-123")
-        val request3: DeleteVendorRequest = testDeleteVendorRequest.copy(returnResourceRef = "12345678")
+        val request1: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(returnResourceRef = "VID-001")
+        val request2: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(returnResourceRef = "VID-ABC-123")
+        val request3: DeleteVendorRequest =
+          testDeleteVendorRequest.copy(returnResourceRef = "12345678")
 
-        when(mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(any[HeaderCarrier]))
+        when(
+          mockVendorReturnsService.deleteVendor(any[DeleteVendorRequest])(
+            any[HeaderCarrier]
+          )
+        )
           .thenReturn(Future.successful(testDeleteVendorReturn))
 
-        val result1: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request1)))
-        val result2: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request2)))
-        val result3: Future[Result] = controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request3)))
+        val result1: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request1)))
+        val result2: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request2)))
+        val result3: Future[Result] =
+          controller.deleteVendor()(fakeRequest.withBody(Json.toJson(request3)))
 
         status(result1) mustBe CREATED
         status(result2) mustBe CREATED
@@ -472,10 +655,15 @@ class VendorReturnsControllerSpec extends SpecBase {
   }
 
   private trait BaseSetup {
-    val mockVendorReturnsService: VendorReturnsService = mock[VendorReturnsService]
+    val mockVendorReturnsService: VendorReturnsService =
+      mock[VendorReturnsService]
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
-    val controller = new VendorReturnsController(cc, mockVendorReturnsService, fakeIdentifierAction)
+    val controller = new VendorReturnsController(
+      cc,
+      mockVendorReturnsService,
+      fakeIdentifierAction
+    )
 
     val testCreateVendorRequest: CreateVendorRequest = CreateVendorRequest(
       stornId = "STORN12345",
@@ -493,21 +681,22 @@ class VendorReturnsControllerSpec extends SpecBase {
       isRepresentedByAgent = "YES"
     )
 
-    val testCreateVendorRequestMinimal: CreateVendorRequest = CreateVendorRequest(
-      stornId = "STORN12345",
-      returnResourceRef = "RRF-2024-001",
-      title = None,
-      forename1 = None,
-      forename2 = None,
-      name = "Smith",
-      houseNumber = None,
-      addressLine1 = "Main Street",
-      addressLine2 = None,
-      addressLine3 = None,
-      addressLine4 = None,
-      postcode = None,
-      isRepresentedByAgent = "YES"
-    )
+    val testCreateVendorRequestMinimal: CreateVendorRequest =
+      CreateVendorRequest(
+        stornId = "STORN12345",
+        returnResourceRef = "RRF-2024-001",
+        title = None,
+        forename1 = None,
+        forename2 = None,
+        name = "Smith",
+        houseNumber = None,
+        addressLine1 = "Main Street",
+        addressLine2 = None,
+        addressLine3 = None,
+        addressLine4 = None,
+        postcode = None,
+        isRepresentedByAgent = "YES"
+      )
 
     val testCreateVendorReturn: CreateVendorReturn = CreateVendorReturn(
       vendorResourceRef = "VRF-001",
@@ -532,23 +721,24 @@ class VendorReturnsControllerSpec extends SpecBase {
       nextVendorId = Some("VID-002")
     )
 
-    val testUpdateVendorRequestMinimal: UpdateVendorRequest = UpdateVendorRequest(
-      stornId = "STORN12345",
-      returnResourceRef = "RRF-2024-001",
-      title = None,
-      forename1 = None,
-      forename2 = None,
-      name = "Smith",
-      houseNumber = None,
-      addressLine1 = "Main Street",
-      addressLine2 = None,
-      addressLine3 = None,
-      addressLine4 = None,
-      postcode = None,
-      isRepresentedByAgent = "YES",
-      vendorResourceRef = "VRF-001",
-      nextVendorId = None
-    )
+    val testUpdateVendorRequestMinimal: UpdateVendorRequest =
+      UpdateVendorRequest(
+        stornId = "STORN12345",
+        returnResourceRef = "RRF-2024-001",
+        title = None,
+        forename1 = None,
+        forename2 = None,
+        name = "Smith",
+        houseNumber = None,
+        addressLine1 = "Main Street",
+        addressLine2 = None,
+        addressLine3 = None,
+        addressLine4 = None,
+        postcode = None,
+        isRepresentedByAgent = "YES",
+        vendorResourceRef = "VRF-001",
+        nextVendorId = None
+      )
 
     val testUpdateVendorReturn: UpdateVendorReturn = UpdateVendorReturn(
       updated = true
