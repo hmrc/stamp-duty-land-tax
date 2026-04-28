@@ -18,6 +18,18 @@ Execute next set of commands or run switchToFormP.sh
 sm -stop STAMP-DUTY-LAND-TAX
 sm --start STAMP-DUTY-LAND-TAX --appendArgs '{"STAMP-DUTY-LAND-TAX":["-Dfeatures.stub-formp-enabled=false"]}'
 
+## Tool to generate random Returns data:
+
+* Operation status:
+http://localhost:10914/stamp-duty-land-tax-stub/returns/getStatus
+
+* Delete all data:
+http://localhost:10914/stamp-duty-land-tax-stub/returns/deleteAll
+
+* Create a set of returns records:
+http://localhost:10914/stamp-duty-land-tax-stub/returns/createData?storn=STN001&returnType=inprogress&records=49
+
+
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
