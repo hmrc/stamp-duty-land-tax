@@ -337,4 +337,17 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][updateTransaction]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
+
+  def updateTaxCalculation(updateTaxCalculationRequest: UpdateTaxCalculationRequest)(implicit hc: HeaderCarrier): Future[UpdateTaxCalculationReturn] =
+    http.post(url"$formpPath/filing/update/tax-calculation")
+      .withBody(Json.toJson(updateTaxCalculationRequest))
+      .execute[UpdateTaxCalculationReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateTaxCalculation]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateTaxCalculation]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
 }
