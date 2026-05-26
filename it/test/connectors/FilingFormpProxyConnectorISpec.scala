@@ -2654,4 +2654,115 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     }
   }
 
+  "updateTaxCalculationInfo" should {
+
+    val url = "/formp-proxy/filing/update/tax-calculation"
+
+    val payload = UpdateTaxCalculationRequest(
+      stornId = "STORN12345",
+      returnResourceRef = "100001",
+      amountPaid = Some("2000"),
+      includesPenalty = Some("YES"),
+      taxDue = Some("8000"),
+      calcPenaltyDue = Some("500"),
+      calcTaxDue = Some("8000"),
+      calcTaxRate1 = Some("3"),
+      calcTaxRate2 = Some("7"),
+      calcTotalTaxPenaltyDue = Some("8500"),
+      calcTotalNpvTax = Some("1000"),
+      calcTotalPremiumTax = Some("7500"),
+      taxDuePremium = Some("7500"),
+      taxDueNpv = Some("1000"),
+      honestyDeclaration = Some("YES")
+    )
+
+    "return UpdateTaxCalculationReturn with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+                .withBody(Json.stringify(Json.toJson(UpdateTaxCalculationReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTaxCalculationInfo(payload).futureValue
+
+      result mustBe UpdateTaxCalculationReturn(updated = true)
+    }
+
+    "return UpdateTaxCalculationReturn when minimal request is sent with updated=true when BE returns OK" in {
+      val payloadJson = Json.toJson(
+        UpdateTaxCalculationRequest(
+        stornId = "STORN12345",
+        returnResourceRef = "100001"
+        )
+      )
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(
+            aResponse()
+              .withStatus(OK)
+              .withBody(Json.stringify(Json.toJson(UpdateTaxCalculationReturn(updated = true))))
+          )
+      )
+
+      val result = connector.updateTaxCalculationInfo(payload).futureValue
+
+      result mustBe UpdateTaxCalculationReturn(updated = true)
+    }
+
+
+    "return 500 when BE returns INTERNAL_SERVER_ERROR" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTaxCalculationInfo(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "return 404 when BE returns NOT_FOUND" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTaxCalculationInfo(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+
+    "return 400 when BE returns BAD_REQUEST" in {
+      val payloadJson = Json.toJson(payload)
+
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateTaxCalculationInfo(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+
 }
