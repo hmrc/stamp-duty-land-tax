@@ -338,6 +338,45 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
+  def createLease(createLeaseRequest: CreateLeaseRequest)(implicit hc: HeaderCarrier): Future[CreateLeaseReturn] =
+    http.post(url"$formpPath/filing/create/lease")
+      .withBody(Json.toJson(createLeaseRequest))
+      .execute[CreateLeaseReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createLease]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createLease]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def updateLease(updateLeaseRequest: UpdateLeaseRequest)(implicit hc: HeaderCarrier): Future[UpdateLeaseReturn] =
+    http.post(url"$formpPath/filing/update/lease")
+      .withBody(Json.toJson(updateLeaseRequest))
+      .execute[UpdateLeaseReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateLease]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateLease]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def deleteLease(deleteLeaseRequest: DeleteLeaseRequest)(implicit hc: HeaderCarrier): Future[DeleteLeaseReturn] =
+    http.post(url"$formpPath/filing/delete/lease")
+      .withBody(Json.toJson(deleteLeaseRequest))
+      .execute[DeleteLeaseReturn]
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deleteLease]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deleteLease]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
   def updateTransaction(updateTransactionRequest: UpdateTransactionRequest)(implicit hc: HeaderCarrier): Future[UpdateTransactionReturn] =
     http.post(url"$formpPath/filing/update/transaction")
       .withBody(Json.toJson(updateTransactionRequest))
