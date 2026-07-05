@@ -18,6 +18,7 @@ package uk.gov.hmrc.stampdutylandtax
 
 import play.api.inject.{Binding, Module as AppModule}
 import play.api.{Configuration, Environment}
+import scheduler.jobs.PurgeReturnsJob
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.{AuthenticatedIdentifierAction, IdentifierAction}
 
 import java.time.Clock
@@ -30,5 +31,6 @@ class Module extends AppModule:
   ): Seq[Binding[_]] = {
       bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
       bind[IdentifierAction].to(classOf[AuthenticatedIdentifierAction]) :: // TODO: clarify how to change instantiation level :: asEagerSingleton() ??
+      bind[PurgeReturnsJob].toSelf.eagerly() ::
       Nil
   }

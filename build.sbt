@@ -9,6 +9,7 @@ lazy val microservice = Project("stamp-duty-land-tax", file("."))
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    dependencyOverrides ++= AppDependencies.overrides,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
@@ -19,4 +20,7 @@ lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test")
   .settings(DefaultBuildSettings.itSettings())
-  .settings(libraryDependencies ++= AppDependencies.it)
+  .settings(
+    libraryDependencies ++= AppDependencies.it,
+    dependencyOverrides ++= AppDependencies.overrides
+  )
