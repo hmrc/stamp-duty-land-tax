@@ -31,7 +31,7 @@ class FilingReturnsService @Inject()(formp: FilingFormpProxyConnector) {
     formp.createReturn(createReturnRequest)
 
   def getFullReturn(getReturnByRefRequest: GetReturnByRefRequest)
-                   (implicit hc: HeaderCarrier): Future[GetReturnRequest] =
+                   (implicit hc: HeaderCarrier): Future[FullReturn] =
     formp.getFullReturn(getReturnByRefRequest)
 
   def updateReturnInfo(updateReturnRequest: UpdateReturnRequest)

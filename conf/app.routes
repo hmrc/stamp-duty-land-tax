@@ -47,3 +47,5 @@ POST       /filing/delete/lease                             uk.gov.hmrc.stampdut
 POST        /filing/update/transaction                      uk.gov.hmrc.stampdutylandtax.controllers.filing.TransactionReturnsController.updateTransaction()
 
 POST       /filing/update/tax-calculation                   uk.gov.hmrc.stampdutylandtax.controllers.filing.TaxCalculationReturnsController.updateTaxCalculation()
+
+POST       /filing/chris/submission                          uk.gov.hmrc.stampdutylandtax.controllers.filing.SubmissionController.submit()

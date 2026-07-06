@@ -71,18 +71,18 @@ trait ApplicationWithWiremock
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfig)
     .build()
-  
+
   lazy val appWithSubOn: Application = new GuiceApplicationBuilder()
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfigWithStubOnOrOff(true))
     .build()
-  
+
   lazy val appWithSubOff: Application = new GuiceApplicationBuilder()
     .in(Environment.simple(mode = Mode.Dev))
     .configure(extraConfigWithStubOnOrOff(false))
     .build()
-  
-  
+
+
   lazy val wsClient: WSClient = app.injector.instanceOf[WSClient]
 
   override protected def beforeAll(): Unit =
@@ -118,6 +118,14 @@ trait ApplicationWithWiremock
 
   private val postAuthoriseUrl = "/auth/authorise"
 
+  // NOTE on the JSON shape:
+  // AuthenticatedIdentifierAction retrieves five things in order:
+  //   internalId and allEnrolments and affinityGroup and credentialRole and credentials
+  // The auth-client v2 reads Retrievals.credentials from the JSON path "optionalCredentials".
+  // If that field is missing the credentials retrieval is None, the pattern-match fails on
+  // Some(Credentials(...)), the wildcard branch throws InternalError, and the recoverWith
+  // converts it to 403. The "credId" field below is unused by the action — kept only so the
+  // JSON shape matches existing tests in other repos that read it.
   private val authoriseBodyWithOrgEnrolmentsRetrievalAsActivated: String =
     """{
       |  "authorise": [{"confidenceLevel": 200}],
@@ -138,31 +146,39 @@ trait ApplicationWithWiremock
       |  ],
       |  "affinityGroup": "Organisation",
       |  "credentialRole": "User",
-      |  "internalId": "internalId"
+      |  "internalId": "internalId",
+      |  "optionalCredentials": {
+      |    "providerId": "credId",
+      |    "providerType": "GovernmentGateway"
+      |  }
       |}""".stripMargin
 
   private val authoriseBodyWithOrgEnrolmentsRetrievalAsNotYetActivated: String =
-      """{
-        |  "authorise": [{"confidenceLevel": 200}],
-        |  "retrieve": ["allEnrolments"],
-        |  "credId": "credId",
-        |  "individualEnrolments":{"sa":"1111111111"},
-        |  "allEnrolments": [
-        |               {
-        |                 "key":"IR-SDLT-ORG",
-        |                 "identifiers": [
-        |                    {
-        |                       "key":"IR-SDLT-ORG",
-        |                       "value": "value"
-        |                    }
-        |                   ],
-        |                "state": "NotYetActivated"
-        |              }
-        |  ],
-        |  "affinityGroup": "Organisation",
-        |  "credentialRole": "User",
-        |  "internalId": "internalId"
-        |}""".stripMargin
+    """{
+      |  "authorise": [{"confidenceLevel": 200}],
+      |  "retrieve": ["allEnrolments"],
+      |  "credId": "credId",
+      |  "individualEnrolments":{"sa":"1111111111"},
+      |  "allEnrolments": [
+      |               {
+      |                 "key":"IR-SDLT-ORG",
+      |                 "identifiers": [
+      |                    {
+      |                       "key":"IR-SDLT-ORG",
+      |                       "value": "value"
+      |                    }
+      |                   ],
+      |                "state": "NotYetActivated"
+      |              }
+      |  ],
+      |  "affinityGroup": "Organisation",
+      |  "credentialRole": "User",
+      |  "internalId": "internalId",
+      |  "optionalCredentials": {
+      |    "providerId": "credId",
+      |    "providerType": "GovernmentGateway"
+      |  }
+      |}""".stripMargin
 
 
   def stubAuthorisedAsActivated(): Unit = {

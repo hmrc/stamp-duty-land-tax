@@ -22,7 +22,7 @@ import org.scalatest.{EitherValues, OptionValues}
 import play.api.libs.json.*
 import models.filing._
 
-class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues with OptionValues {
+class FullReturnSpec extends AnyFreeSpec with Matchers with EitherValues with OptionValues {
 
   private val validSdltOrganisationJson = Json.obj(
     "isReturnUser"            -> "true",
@@ -113,7 +113,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
     "isNonUkResidents" -> "yes"
   )
 
-  private val validGetReturnRequestJson = Json.obj(
+  private val validFullReturnJson = Json.obj(
     "stornId"           -> "STORN123456",
     "returnResourceRef" -> "RRF-2024-001",
     "sdltOrganisation"  -> validSdltOrganisationJson,
@@ -635,16 +635,16 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
     }
   }
 
-  "GetReturnRequest" - {
+  "FullReturn" - {
 
     ".reads" - {
 
       "must be found implicitly" in {
-        implicitly[Reads[GetReturnRequest]]
+        implicitly[Reads[FullReturn]]
       }
 
       "must deserialize valid JSON with all fields" in {
-        val result = Json.fromJson[GetReturnRequest](validGetReturnRequestJson).asEither.value
+        val result = Json.fromJson[FullReturn](validFullReturnJson).asEither.value
 
         result.stornId mustBe Some("STORN123456")
         result.returnResourceRef mustBe Some("RRF-2024-001")
@@ -659,7 +659,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
           "stornId" -> "STORN123456"
         )
 
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result.stornId mustBe Some("STORN123456")
         result.returnResourceRef must not be defined
@@ -673,7 +673,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
           "sdltOrganisation"  -> JsNull
         )
 
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result.stornId           must not be defined
         result.returnResourceRef must not be defined
@@ -683,7 +683,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       "must deserialize successfully when fields are missing and set to None" in {
         val json = Json.obj()
 
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result.stornId           must not be defined
         result.returnResourceRef must not be defined
@@ -692,14 +692,14 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must deserialize valid JSON with nested objects" in {
-        val result = Json.fromJson[GetReturnRequest](validGetReturnRequestJson).asEither.value
+        val result = Json.fromJson[FullReturn](validFullReturnJson).asEither.value
 
         result.sdltOrganisation.value.storn mustBe Some("STORN123456")
         result.returnInfo.value.returnID mustBe Some("RET123456789")
       }
 
       "must deserialize valid JSON with sequences" in {
-        val result = Json.fromJson[GetReturnRequest](validGetReturnRequestJson).asEither.value
+        val result = Json.fromJson[FullReturn](validFullReturnJson).asEither.value
 
         result.purchaser mustBe defined
         result.purchaser.value must have size 1
@@ -718,7 +718,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
           )
         )
 
-        val result = Json.fromJson[GetReturnRequest](json).asEither
+        val result = Json.fromJson[FullReturn](json).asEither
 
         result.isLeft mustBe true
       }
@@ -731,7 +731,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
           )
         )
 
-        val result = Json.fromJson[GetReturnRequest](json).asEither
+        val result = Json.fromJson[FullReturn](json).asEither
 
         result.isLeft mustBe true
       }
@@ -743,7 +743,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
           "vendor"    -> Json.arr()
         )
 
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result.purchaser mustBe defined
         result.purchaser.value mustBe empty
@@ -758,7 +758,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
           "vendor"    -> Json.arr(validVendorJson, validVendorJson)
         )
 
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result.purchaser.value must have size 2
         result.vendor.value    must have size 2
@@ -768,11 +768,11 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
     ".writes" - {
 
       "must be found implicitly" in {
-        implicitly[Writes[GetReturnRequest]]
+        implicitly[Writes[FullReturn]]
       }
 
-      "must serialize GetReturnRequest with all fields" in {
-        val fullReturn = GetReturnRequest(
+      "must serialize FullReturn with all fields" in {
+        val fullReturn = FullReturn(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001"),
           sdltOrganisation = Some(validSdltOrganisation),
@@ -791,16 +791,16 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
         (json \ "vendor").isDefined mustBe true
       }
 
-      "must serialize GetReturnRequest with None values" in {
-        val fullReturn = GetReturnRequest()
+      "must serialize FullReturn with None values" in {
+        val fullReturn = FullReturn()
 
         val json = Json.toJson(fullReturn)
 
         json mustBe a[JsObject]
       }
 
-      "must serialize GetReturnRequest with Some nested objects" in {
-        val fullReturn = GetReturnRequest(
+      "must serialize FullReturn with Some nested objects" in {
+        val fullReturn = FullReturn(
           stornId = Some("STORN123456"),
           sdltOrganisation = Some(validSdltOrganisation)
         )
@@ -812,8 +812,8 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
         (json \ "sdltOrganisation" \ "storn").as[String] mustBe "STORN123456"
       }
 
-      "must serialize GetReturnRequest with sequences" in {
-        val fullReturn = GetReturnRequest(
+      "must serialize FullReturn with sequences" in {
+        val fullReturn = FullReturn(
           purchaser = Some(Seq(validPurchaser, validPurchaser)),
           vendor = Some(Seq(validVendor))
         )
@@ -824,8 +824,8 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
         (json \ "vendor").as[JsArray].value    must have size 1
       }
 
-      "must serialize GetReturnRequest with empty sequences" in {
-        val fullReturn = GetReturnRequest(
+      "must serialize FullReturn with empty sequences" in {
+        val fullReturn = FullReturn(
           purchaser = Some(Seq.empty),
           vendor = Some(Seq.empty)
         )
@@ -837,7 +837,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must produce valid JSON structure" in {
-        val fullReturn = GetReturnRequest(
+        val fullReturn = FullReturn(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001")
         )
@@ -851,11 +851,11 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
     ".formats" - {
 
       "must be found implicitly" in {
-        implicitly[Format[GetReturnRequest]]
+        implicitly[Format[FullReturn]]
       }
 
       "must serialize and deserialize with all fields" in {
-        val fullReturn = GetReturnRequest(
+        val fullReturn = FullReturn(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001"),
           sdltOrganisation = Some(validSdltOrganisation),
@@ -865,28 +865,28 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
         )
 
         val json   = Json.toJson(fullReturn)
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result mustEqual fullReturn
       }
 
       "must serialize and deserialize with None values" in {
-        val fullReturn = GetReturnRequest()
+        val fullReturn = FullReturn()
 
         val json   = Json.toJson(fullReturn)
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result mustEqual fullReturn
       }
 
       "must serialize and deserialize with partial fields" in {
-        val fullReturn = GetReturnRequest(
+        val fullReturn = FullReturn(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001")
         )
 
         val json   = Json.toJson(fullReturn)
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result mustEqual fullReturn
         result.stornId mustBe Some("STORN123456")
@@ -895,13 +895,13 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must round-trip with sequences" in {
-        val fullReturn = GetReturnRequest(
+        val fullReturn = FullReturn(
           purchaser = Some(Seq(validPurchaser)),
           vendor = Some(Seq(validVendor))
         )
 
         val json   = Json.toJson(fullReturn)
-        val result = Json.fromJson[GetReturnRequest](json).asEither.value
+        val result = Json.fromJson[FullReturn](json).asEither.value
 
         result mustEqual fullReturn
         result.purchaser.value must have size 1
@@ -912,7 +912,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
     "case class" - {
 
       "must create instance with all fields" in {
-        val fullReturn = GetReturnRequest(
+        val fullReturn = FullReturn(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001"),
           sdltOrganisation = Some(validSdltOrganisation),
@@ -926,7 +926,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must create instance with None values" in {
-        val fullReturn = GetReturnRequest()
+        val fullReturn = FullReturn()
 
         fullReturn.stornId mustBe None
         fullReturn.returnResourceRef mustBe None
@@ -934,18 +934,18 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must support equality" in {
-        val fullReturn1 = GetReturnRequest()
-        val fullReturn2 = GetReturnRequest()
+        val fullReturn1 = FullReturn()
+        val fullReturn2 = FullReturn()
 
         fullReturn1 mustEqual fullReturn2
       }
 
       "must support equality with Some values" in {
-        val fullReturn1 = GetReturnRequest(
+        val fullReturn1 = FullReturn(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001")
         )
-        val fullReturn2 = GetReturnRequest(
+        val fullReturn2 = FullReturn(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001")
         )
@@ -954,7 +954,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must support copy" in {
-        val fullReturn1 = GetReturnRequest()
+        val fullReturn1 = FullReturn()
         val fullReturn2 = fullReturn1.copy(
           stornId = Some("STORN123456"),
           returnResourceRef = Some("RRF-2024-001")
@@ -967,14 +967,14 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must not be equal when fields differ" in {
-        val fullReturn1 = GetReturnRequest(stornId = Some("STORN123456"))
-        val fullReturn2 = GetReturnRequest(stornId = Some("STORN789012"))
+        val fullReturn1 = FullReturn(stornId = Some("STORN123456"))
+        val fullReturn2 = FullReturn(stornId = Some("STORN789012"))
 
         fullReturn1 must not equal fullReturn2
       }
 
       "must support copy with nested objects" in {
-        val fullReturn1 = GetReturnRequest(stornId = Some("STORN123456"))
+        val fullReturn1 = FullReturn(stornId = Some("STORN123456"))
         val fullReturn2 = fullReturn1.copy(sdltOrganisation = Some(validSdltOrganisation))
 
         fullReturn2.sdltOrganisation mustBe defined
@@ -982,7 +982,7 @@ class GetReturnRequestSpec extends AnyFreeSpec with Matchers with EitherValues w
       }
 
       "must support copy with sequences" in {
-        val fullReturn1 = GetReturnRequest(stornId = Some("STORN123456"))
+        val fullReturn1 = FullReturn(stornId = Some("STORN123456"))
         val fullReturn2 = fullReturn1.copy(
           purchaser = Some(Seq(validPurchaser)),
           vendor = Some(Seq(validVendor))

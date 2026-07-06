@@ -18,14 +18,21 @@ package uk.gov.hmrc.stampdutylandtax.controllers.actions
 
 import models.auth.IdentifierRequest
 import play.api.mvc.*
+import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.auth.core.AffinityGroup.Organisation
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeIdentifierAction @Inject()(bodyParsers: PlayBodyParsers) extends IdentifierAction {
 
+  /** Stub credential identifier for tests. Deliberately obvious so it can't be mistaken for
+   *  a production value if it ever leaks into logs or wire dumps. */
+  private val FakeCredentialId: String = "test-credential-id"
+  private val AffinityGroup: AffinityGroup = Organisation
+
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] =
-    block(IdentifierRequest(request))
+    block(IdentifierRequest(request, FakeCredentialId, AffinityGroup))
 
   override def parser: BodyParser[AnyContent] =
     bodyParsers.default

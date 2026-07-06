@@ -427,7 +427,7 @@ object Residency {
   implicit val format: OFormat[Residency] = Json.format[Residency]
 }
 
-case class GetReturnRequest(
+case class FullReturn(
                              stornId: Option[String] = None,
                              returnResourceRef: Option[String] = None,
                              sdltOrganisation: Option[SdltOrganisation] = None,
@@ -446,6 +446,6 @@ case class GetReturnRequest(
                              residency: Option[Residency] = None
                            )
 
-object GetReturnRequest {
-  implicit val format: OFormat[GetReturnRequest] = Json.format[GetReturnRequest]
+object FullReturn {
+  implicit val format: OFormat[FullReturn] = Json.format[FullReturn]
 }

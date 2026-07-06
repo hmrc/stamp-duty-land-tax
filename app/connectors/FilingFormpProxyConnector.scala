@@ -17,12 +17,14 @@
 package connectors
 
 import models.filing.*
+import models.submission.*
 import play.api.Logging
+import play.api.http.Status.*
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import javax.inject.Inject
@@ -48,13 +50,13 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
       }
 
 
-  def getFullReturn(getReturnByRefRequest: GetReturnByRefRequest)(implicit hc: HeaderCarrier): Future[GetReturnRequest] =
+  def getFullReturn(getReturnByRefRequest: GetReturnByRefRequest)(implicit hc: HeaderCarrier): Future[FullReturn] =
     http.post(url"$formpPath/retrieve-return")
       .withBody(Json.toJson(getReturnByRefRequest))
-      .execute[GetReturnRequest]
+      .execute[FullReturn]
       .recover {
         case e: UpstreamErrorResponse =>
-          logger.error(s"[FormpProxyConnector][getFullReturn]: Upstream error - ${e.getMessage}")
+          logger.error(s"[FormpProxyConnector][]: Upstream error - ${e.getMessage}")
           throw e
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][getFullReturn]: ${e.getMessage}")
@@ -389,4 +391,286 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][updateTransaction]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
+
+  def lockReturn(lockReturnRequest: LockReturnRequest)(implicit hc: HeaderCarrier): Future[Either[UpstreamErrorResponse, LockReturnResponse]] =
+    http.post(url"$formpPath/filing/return/lock")
+      .withBody(Json.toJson(lockReturnRequest))
+      .execute[Either[UpstreamErrorResponse, HttpResponse]]
+      .map {
+        case Right(response) if response.status >= 200 && response.status < 300 =>
+          logger.debug(s"[FormpProxyConnector][lockReturn]: OK status=${response.status} storn=${lockReturnRequest.storn} returnRef=${lockReturnRequest.returnResourceRef}")
+          Right(LockReturnResponse(success = true))
+        case Right(response) =>
+          logger.warn(s"[FormpProxyConnector][lockReturn]: Unexpected non-2xx in Right branch - ${response.status}")
+          Left(UpstreamErrorResponse(s"Unexpected status ${response.status}", response.status))
+        case Left(error) =>
+          logger.warn(s"[FormpProxyConnector][lockReturn]: Upstream error (likely version conflict) - ${error.statusCode} ${error.message}")
+          Left(error)
+      }
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.warn(s"[FormpProxyConnector][lockReturn]: Upstream error (likely version conflict) - ${e.statusCode} ${e.message}")
+          Left(e)
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][lockReturn]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+
+  def createSubmission(createSubmissionRequest: CreateSubmissionRequest)(implicit hc: HeaderCarrier): Future[CreateSubmissionReturn] =
+    http.post(url"$formpPath/filing/submission")
+      .withBody(Json.toJson(createSubmissionRequest))
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status >= 200 && response.status < 300) {
+          logger.debug(s"[FormpProxyConnector][createSubmission]: OK status=${response.status} storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef}")
+          CreateSubmissionReturn(success = true)
+        } else {
+          throw UpstreamErrorResponse(s"createSubmission failed: ${response.status} ${response.body}", response.status)
+        }
+      }
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createSubmission]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createSubmission]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+  
+  def updateSubmission(updateSubmissionRequest: UpdateSubmissionRequest)(implicit hc: HeaderCarrier): Future[UpdateSubmissionReturn] =
+    http.post(url"$formpPath/filing/update/submission")
+      .withBody(Json.toJson(updateSubmissionRequest))
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status >= 200 && response.status < 300) {
+          logger.debug(s"[FormpProxyConnector][updateSubmission]: OK status=${response.status} storn=${updateSubmissionRequest.storn} returnRef=${updateSubmissionRequest.returnResourceRef}")
+          UpdateSubmissionReturn(success = true)
+        } else {
+          throw UpstreamErrorResponse(s"updateSubmission failed: ${response.status} ${response.body}", response.status)
+        }
+      }
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][updateSubmission]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][updateSubmission]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+  
+  def createSubmissionErrorDetail(createSubmissionErrorDetailRequest: CreateSubmissionErrorDetailRequest)(implicit hc: HeaderCarrier): Future[CreateSubmissionErrorDetailReturn] =
+    http.post(url"$formpPath/filing/submission-error-detail")
+      .withBody(Json.toJson(createSubmissionErrorDetailRequest))
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status >= 200 && response.status < 300) {
+          logger.debug(s"[FormpProxyConnector][createSubmissionErrorDetail]: OK status=${response.status} storn=${createSubmissionErrorDetailRequest.storn} returnRef=${createSubmissionErrorDetailRequest.returnResourceRef}")
+          CreateSubmissionErrorDetailReturn(success = true)
+        } else {
+          throw UpstreamErrorResponse(s"createSubmissionErrorDetail failed: ${response.status} ${response.body}", response.status)
+        }
+      }
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][createSubmissionErrorDetail]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][createSubmissionErrorDetail]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+  
+  def deleteSubmissionErrorDetail(deleteSubmissionErrorDetailRequest: DeleteSubmissionErrorDetailRequest)(implicit hc: HeaderCarrier): Future[DeleteSubmissionErrorDetailReturn] =
+    http.post(url"$formpPath/filing/delete/submission-error-detail")
+      .withBody(Json.toJson(deleteSubmissionErrorDetailRequest))
+      .execute[HttpResponse]
+      .map { response =>
+        if (response.status >= 200 && response.status < 300) {
+          logger.debug(s"[FormpProxyConnector][deleteSubmissionErrorDetail]: OK status=${response.status} storn=${deleteSubmissionErrorDetailRequest.storn} returnRef=${deleteSubmissionErrorDetailRequest.returnResourceRef}")
+          DeleteSubmissionErrorDetailReturn(success = true)
+        } else {
+          throw UpstreamErrorResponse(s"deleteSubmissionErrorDetail failed: ${response.status} ${response.body}", response.status)
+        }
+      }
+      .recover {
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deleteSubmissionErrorDetail]: Upstream error - ${e.getMessage}")
+          throw e
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deleteSubmissionErrorDetail]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def insertInitialGovTalkStatus(insertInitialGovTalkStatusRequest: InsertInitialGovTalkStatusRequest)(implicit hc: HeaderCarrier): Future[GovTalkStatusReturn] =
+      http.post(url"$formpPath/filing/govtalk-status")
+        .withBody(Json.toJson(insertInitialGovTalkStatusRequest))
+        .execute[HttpResponse]
+        .map { response =>
+          if (response.status >= 200 && response.status < 300) {
+            logger.debug(s"[FormpProxyConnector][insertInitialGovTalkStatus]: OK status=${response.status} formResultId=${insertInitialGovTalkStatusRequest.formResultId}")
+            GovTalkStatusReturn(success = true)
+          } else {
+            throw UpstreamErrorResponse(s"insertInitialGovTalkStatus failed: ${response.status} ${response.body}", response.status)
+          }
+        }
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][insertInitialGovTalkStatus]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][insertInitialGovTalkStatus]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+  
+  def resetGovTalkStatus(resetGovTalkStatusRequest: ResetGovTalkStatusRequest)(implicit hc: HeaderCarrier): Future[GovTalkStatusReturn] =
+      http.post(url"$formpPath/filing/reset/govtalk-status/reset")
+        .withBody(Json.toJson(resetGovTalkStatusRequest))
+        .execute[HttpResponse]
+        .map { response =>
+          if (response.status >= 200 && response.status < 300) {
+            logger.debug(s"[FormpProxyConnector][resetGovTalkStatus]: OK status=${response.status} formResultId=${resetGovTalkStatusRequest.formResultId}")
+            GovTalkStatusReturn(success = true)
+          } else {
+            throw UpstreamErrorResponse(s"resetGovTalkStatus failed: ${response.status} ${response.body}", response.status)
+          }
+        }
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][resetGovTalkStatus]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][resetGovTalkStatus]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+  
+  def updateGovTalkStatus(updateGovTalkStatusRequest: UpdateGovTalkStatusRequest)(implicit hc: HeaderCarrier): Future[GovTalkStatusReturn] =
+      http.post(url"$formpPath/filing/update/govtalk-status")
+        .withBody(Json.toJson(updateGovTalkStatusRequest))
+        .execute[HttpResponse]
+        .map { response =>
+          if (response.status >= 200 && response.status < 300) {
+            logger.debug(s"[FormpProxyConnector][updateGovTalkStatus]: OK status=${response.status} formResultId=${updateGovTalkStatusRequest.formResultId}")
+            GovTalkStatusReturn(success = true)
+          } else {
+            throw UpstreamErrorResponse(s"updateGovTalkStatus failed: ${response.status} ${response.body}", response.status)
+          }
+        }
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatus]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatus]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+  
+  def updateGovTalkStatusCorrelationId(updateGovTalkStatusCorrelationIdRequest: UpdateGovTalkStatusCorrelationIdRequest)(implicit hc: HeaderCarrier): Future[GovTalkStatusReturn] =
+      http.post(url"$formpPath/filing/update/govtalk-status/correlation-Id")
+        .withBody(Json.toJson(updateGovTalkStatusCorrelationIdRequest))
+        .execute[HttpResponse]
+        .map { response =>
+          if (response.status >= 200 && response.status < 300) {
+            logger.debug(s"[FormpProxyConnector][updateGovTalkStatusCorrelationId]: OK status=${response.status} formResultId=${updateGovTalkStatusCorrelationIdRequest.formResultId}")
+            GovTalkStatusReturn(success = true)
+          } else {
+            throw UpstreamErrorResponse(s"updateGovTalkStatusCorrelationId failed: ${response.status} ${response.body}", response.status)
+          }
+        }
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatusCorrelationId]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatusCorrelationId]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+  
+  def updateGovTalkStatusLock(updateGovTalkStatusLockRequest: UpdateGovTalkStatusLockRequest)(implicit hc: HeaderCarrier): Future[GovTalkStatusReturn] =
+      http.post(url"$formpPath/filing/update/govtalk-status/lock")
+        .withBody(Json.toJson(updateGovTalkStatusLockRequest))
+        .execute[HttpResponse]
+        .map { response =>
+          if (response.status >= 200 && response.status < 300) {
+            logger.debug(s"[FormpProxyConnector][updateGovTalkStatusLock]: OK status=${response.status} formResultId=${updateGovTalkStatusLockRequest.formResultId}")
+            GovTalkStatusReturn(success = true)
+          } else {
+            throw UpstreamErrorResponse(s"updateGovTalkStatusLock failed: ${response.status} ${response.body}", response.status)
+          }
+        }
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatusLock]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatusLock]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+  
+  def updateGovTalkStatistics(updateGovTalkStatisticsRequest: UpdateGovTalkStatisticsRequest)(implicit hc: HeaderCarrier): Future[GovTalkStatusReturn] =
+      http.post(url"$formpPath/filing/update/govtalk-status/statistics")
+        .withBody(Json.toJson(updateGovTalkStatisticsRequest))
+        .execute[HttpResponse]
+        .map { response =>
+          if (response.status >= 200 && response.status < 300) {
+            logger.debug(s"[FormpProxyConnector][updateGovTalkStatistics]: OK status=${response.status} formResultId=${updateGovTalkStatisticsRequest.formResultId}")
+            GovTalkStatusReturn(success = true)
+          } else {
+            throw UpstreamErrorResponse(s"updateGovTalkStatistics failed: ${response.status} ${response.body}", response.status)
+          }
+        }
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatistics]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][updateGovTalkStatistics]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+  
+  def deleteGovTalkStatus(deleteGovTalkStatusRequest: DeleteGovTalkStatusRequest)(implicit hc: HeaderCarrier): Future[GovTalkStatusReturn] =
+      http.post(url"$formpPath/filing/delete/govtalk-status")
+        .withBody(Json.toJson(deleteGovTalkStatusRequest))
+        .execute[HttpResponse]
+        .map { response =>
+          if (response.status >= 200 && response.status < 300) {
+            logger.debug(s"[FormpProxyConnector][deleteGovTalkStatus]: OK status=${response.status} resultId=${deleteGovTalkStatusRequest.resultId}")
+            GovTalkStatusReturn(success = true)
+          } else {
+            throw UpstreamErrorResponse(s"deleteGovTalkStatus failed: ${response.status} ${response.body}", response.status)
+          }
+        }
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][deleteGovTalkStatus]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][deleteGovTalkStatus]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+
+  def selectGovTalkStatus(selectGovTalkStatusRequest: SelectGovTalkStatusRequest)(implicit hc: HeaderCarrier): Future[SelectGovTalkStatusResponse] =
+      http.get(url"$formpPath/filing/govtalk-status")
+        .withBody(Json.toJson(selectGovTalkStatusRequest))
+        .execute[SelectGovTalkStatusResponse]
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][selectGovTalkStatus]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][selectGovTalkStatus]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
+
+  def selectGovTalkFormResultId(selectGovTalkFormResultIdRequest: SelectGovTalkFormResultIdRequest)(implicit hc: HeaderCarrier): Future[SelectGovTalkFormResultIdResponse] =
+      http.get(url"$formpPath/filing/govtalk-status/form-result-Id")
+        .withBody(Json.toJson(selectGovTalkFormResultIdRequest))
+        .execute[SelectGovTalkFormResultIdResponse]
+        .recover {
+          case e: UpstreamErrorResponse =>
+            logger.error(s"[FormpProxyConnector][selectGovTalkFormResultId]: Upstream error - ${e.getMessage}")
+            throw e
+          case e: Throwable =>
+            logger.error(s"[FormpProxyConnector][selectGovTalkFormResultId]: ${e.getMessage}")
+            throw new RuntimeException(e.getMessage)
+        }
 }

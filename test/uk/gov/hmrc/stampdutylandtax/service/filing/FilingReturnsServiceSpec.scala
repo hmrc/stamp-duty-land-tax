@@ -62,8 +62,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
   private def mkGetReturnResponse(
                                    stornId: String = "STORN12345",
                                    returnResourceRef: String = "RRF-2024-001"
-                                 ): GetReturnRequest =
-    GetReturnRequest(
+                                 ):FullReturn =
+   FullReturn(
       stornId = Some(stornId),
       returnResourceRef = Some(returnResourceRef),
       sdltOrganisation = None,
@@ -337,13 +337,13 @@ final class FilingReturnsServiceSpec extends SpecBase {
       val connector                             = mock[FilingFormpProxyConnector]
       val service                               = new FilingReturnsService(connector)
       val request: GetReturnByRefRequest        = mkGetReturnRequest()
-      val response: GetReturnRequest            = mkGetReturnResponse()
+      val response:FullReturn            = mkGetReturnResponse()
       implicit val hc: HeaderCarrier            = HeaderCarrier()
 
       when(connector.getFullReturn(eqTo(request))(any[HeaderCarrier]))
         .thenReturn(Future.successful(response))
 
-      val result: GetReturnRequest = service.getFullReturn(request).futureValue
+      val result:FullReturn = service.getFullReturn(request).futureValue
       result mustBe response
 
       verify(connector).getFullReturn(eqTo(request))(any[HeaderCarrier])
@@ -355,8 +355,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
       val service                                = new FilingReturnsService(connector)
       val request1: GetReturnByRefRequest        = mkGetReturnRequest("RRF-001", "STORN11111")
       val request2: GetReturnByRefRequest        = mkGetReturnRequest("RRF-002", "STORN22222")
-      val response1: GetReturnRequest            = mkGetReturnResponse("STORN11111", "RRF-001")
-      val response2: GetReturnRequest            = mkGetReturnResponse("STORN22222", "RRF-002")
+      val response1:FullReturn            = mkGetReturnResponse("STORN11111", "RRF-001")
+      val response2:FullReturn            = mkGetReturnResponse("STORN22222", "RRF-002")
       implicit val hc: HeaderCarrier             = HeaderCarrier()
 
       when(connector.getFullReturn(eqTo(request1))(any[HeaderCarrier]))
@@ -395,7 +395,7 @@ final class FilingReturnsServiceSpec extends SpecBase {
       val request1: GetReturnByRefRequest = mkGetReturnRequest("123456", "STORN12345")
       val request2: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "STORN12345")
       val request3: GetReturnByRefRequest = mkGetReturnRequest("ABC-123-XYZ", "STORN12345")
-      val response: GetReturnRequest      = mkGetReturnResponse()
+      val response:FullReturn      = mkGetReturnResponse()
       implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.getFullReturn(any[GetReturnByRefRequest])(any[HeaderCarrier]))
@@ -417,7 +417,7 @@ final class FilingReturnsServiceSpec extends SpecBase {
       val request1: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "STORN123456")
       val request2: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "STORN-ABC-123")
       val request3: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "12345678")
-      val response: GetReturnRequest      = mkGetReturnResponse()
+      val response:FullReturn      = mkGetReturnResponse()
       implicit val hc: HeaderCarrier      = HeaderCarrier()
 
       when(connector.getFullReturn(any[GetReturnByRefRequest])(any[HeaderCarrier]))
@@ -437,7 +437,7 @@ final class FilingReturnsServiceSpec extends SpecBase {
       val connector                      = mock[FilingFormpProxyConnector]
       val service                        = new FilingReturnsService(connector)
       val request: GetReturnByRefRequest = mkGetReturnRequest()
-      val response: GetReturnRequest     = mkGetReturnResponse()
+      val response:FullReturn     = mkGetReturnResponse()
       implicit val hc: HeaderCarrier     = HeaderCarrier()
 
       when(connector.getFullReturn(eqTo(request))(any[HeaderCarrier]))
@@ -455,9 +455,9 @@ final class FilingReturnsServiceSpec extends SpecBase {
       val request1: GetReturnByRefRequest  = mkGetReturnRequest("RRF-001", "STORN11111")
       val request2: GetReturnByRefRequest  = mkGetReturnRequest("RRF-002", "STORN22222")
       val request3: GetReturnByRefRequest  = mkGetReturnRequest("RRF-003", "STORN33333")
-      val response1: GetReturnRequest      = mkGetReturnResponse("STORN11111", "RRF-001")
-      val response2: GetReturnRequest      = mkGetReturnResponse("STORN22222", "RRF-002")
-      val response3: GetReturnRequest      = mkGetReturnResponse("STORN33333", "RRF-003")
+      val response1:FullReturn      = mkGetReturnResponse("STORN11111", "RRF-001")
+      val response2:FullReturn      = mkGetReturnResponse("STORN22222", "RRF-002")
+      val response3:FullReturn      = mkGetReturnResponse("STORN33333", "RRF-003")
       implicit val hc: HeaderCarrier       = HeaderCarrier()
 
       when(connector.getFullReturn(eqTo(request1))(any[HeaderCarrier]))
