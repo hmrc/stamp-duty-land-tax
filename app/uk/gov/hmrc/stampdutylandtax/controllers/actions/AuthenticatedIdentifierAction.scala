@@ -23,8 +23,8 @@ import play.api.mvc.*
 import play.api.mvc.Results.Forbidden
 import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
+import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
-import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
@@ -38,7 +38,7 @@ class AuthenticatedIdentifierAction @Inject()(
 
   private val orgEnrollment: String = "IR-SDLT-ORG"
   private val agentEnrollment: String = "IR-SDLT-AGENT"
-  private val permittedEnrollmentStates : Set[String] = Set("activated", "notyetactivated")
+  private val permittedEnrollmentStates: Set[String] = Set("activated", "notyetactivated")
 
   override def invokeBlock[A](request: Request[A],
                               block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
@@ -49,15 +49,18 @@ class AuthenticatedIdentifierAction @Inject()(
         Retrievals.internalId and
           Retrievals.allEnrolments and
           Retrievals.affinityGroup and
-          Retrievals.credentialRole
+          Retrievals.credentialRole and
+          Retrievals.credentials
       ) {
-        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) if enrolments.find(_.key == orgEnrollment).exists(s => permittedEnrollmentStates.contains(s.state.toLowerCase)) =>
-          block(IdentifierRequest(request))
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Organisation) ~ Some(User) ~ Some(Credentials(credId, _))
+          if enrolments.find(_.key == orgEnrollment).exists(s => permittedEnrollmentStates.contains(s.state.toLowerCase)) =>
+          block(IdentifierRequest(request, credId, Organisation))
 
-        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) if enrolments.find(_.key == agentEnrollment).exists(e => permittedEnrollmentStates.contains(e.state.toLowerCase())) =>
-          block(IdentifierRequest(request))
+        case Some(_) ~ Enrolments(enrolments) ~ Some(Agent) ~ Some(User) ~ Some(Credentials(credId, _))
+          if enrolments.find(_.key == agentEnrollment).exists(e => permittedEnrollmentStates.contains(e.state.toLowerCase())) =>
+          block(IdentifierRequest(request, credId, Agent))
 
-        case _ ~ _ ~ _ ~ _ =>
+        case _ ~ _ ~ _ ~ _ ~ _ =>
           throw InternalError("Authentication error: expected enrollments and/or affinity group not found")
 
       }.recoverWith {

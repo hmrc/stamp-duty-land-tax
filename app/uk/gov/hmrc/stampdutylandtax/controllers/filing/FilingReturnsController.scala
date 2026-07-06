@@ -53,7 +53,7 @@ class FilingReturnsController @Inject()(
       )
   }
 
-  def getFullReturn(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+  def getFullReturn: Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
       .validate[GetReturnByRefRequest]
       .fold(

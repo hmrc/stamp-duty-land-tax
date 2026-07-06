@@ -426,7 +426,7 @@ class FilingReturnsControllerSpec extends SpecBase {
       storn = "STORN123456"
     )
 
-    val testFullReturn: GetReturnRequest = GetReturnRequest(
+    val testFullReturn: FullReturn = FullReturn(
       stornId = Some("STORN123456"),
       returnResourceRef = Some("RRF-2024-001")
     )

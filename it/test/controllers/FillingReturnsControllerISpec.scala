@@ -42,7 +42,7 @@ class FillingReturnsControllerISpec extends BaseSpec
   def stubGetFullReturnResponse(): Unit = {
     stubPost("/formp-proxy/retrieve-return", Status.OK,
       Json.toJson(
-        GetReturnRequest ()
+        FullReturn()
       ).toString)
   }
 

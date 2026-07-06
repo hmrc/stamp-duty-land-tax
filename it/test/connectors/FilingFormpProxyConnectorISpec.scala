@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,14 @@ package connectors
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import itutil.ApplicationWithWiremock
 import models.filing.*
+import models.submission.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.http.Status.*
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 class FilingFormpProxyConnectorISpec extends AnyWordSpec
   with Matchers
@@ -926,7 +927,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stubFor(
         post(urlPathEqualTo(url))
           .willReturn(aResponse().withStatus(OK)
-          .withBody(Json.stringify(Json.toJson(DeleteReturnAgentReturn(deleted = true))))
+            .withBody(Json.stringify(Json.toJson(DeleteReturnAgentReturn(deleted = true))))
           )
       )
 
@@ -2653,6 +2654,798 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       ex.getMessage must include("400")
     }
   }
+  
+  "lockReturn" should {
+
+    val url = "/formp-proxy/filing/return/lock"
+
+    val payload = LockReturnRequest(
+      storn             = stornId,
+      returnResourceRef = returnResourceRef,
+      version           = 1
+    )
+
+    "return Right(LockReturnResponse(success=true)) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.lockReturn(payload).futureValue mustBe Right(LockReturnResponse(success = true))
+    }
+
+    "return Left(UpstreamErrorResponse) when BE returns CONFLICT (version conflict)" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(CONFLICT).withBody("version conflict"))
+      )
+
+      val result = connector.lockReturn(payload).futureValue
+      result.isLeft mustBe true
+      result.swap.toOption.get.statusCode mustBe CONFLICT
+    }
+
+    "return Left(UpstreamErrorResponse) when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val result = connector.lockReturn(payload).futureValue
+      result.isLeft mustBe true
+      result.swap.toOption.get.statusCode mustBe INTERNAL_SERVER_ERROR
+    }
+
+    "return Left(UpstreamErrorResponse) when BE returns NOT_FOUND" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val result = connector.lockReturn(payload).futureValue
+      result.isLeft mustBe true
+      result.swap.toOption.get.statusCode mustBe NOT_FOUND
+    }
+  }
+
+  "createSubmission" should {
+
+    val url = "/formp-proxy/filing/submission"
+
+    val payload = CreateSubmissionRequest(
+      storn             = stornId,
+      returnResourceRef = returnResourceRef,
+      email             = "filer@example.test"
+    )
+
+    "return CreateSubmissionReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.createSubmission(payload).futureValue mustBe CreateSubmissionReturn(success = true)
+    }
+
+    "return CreateSubmissionReturn(success=true) when BE returns CREATED (any 2xx)" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(CREATED).withBody("{}"))
+      )
+
+      connector.createSubmission(payload).futureValue mustBe CreateSubmissionReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createSubmission(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createSubmission(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "updateSubmission" should {
+
+    val url = "/formp-proxy/filing/update/submission"
+
+    val payload = UpdateSubmissionRequest(
+      storn             = stornId,
+      returnResourceRef = returnResourceRef,
+      submission        = SubmissionUpdate(
+        IRMarkRecieved        = Some("ABC123=="),
+        utrn                  = Some("UTRN-0001"),
+        email                 = Some("filer@example.test"),
+        submissionRequestDate = Some("2026-06-30T10:00:00Z"),
+        acceptedDate          = Some("2026-06-30T10:00:30Z"),
+        submittableStatus     = Some("SUBMITTED"),
+        govTalkErrorCode      = None,
+        govTalkErrorType      = None,
+        govTalkErrorMessage   = None,
+        IRMarkSent            = Some("ABC123==")
+      )
+    )
+
+    "return UpdateSubmissionReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.updateSubmission(payload).futureValue mustBe UpdateSubmissionReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateSubmission(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateSubmission(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "createSubmissionErrorDetail" should {
+
+    val url = "/formp-proxy/filing/submission-error-detail"
+
+    val payload = CreateSubmissionErrorDetailRequest(
+      storn                  = stornId,
+      returnResourceRef      = returnResourceRef,
+      submissionErrorDetails = SubmissionErrorDetail(position = "1001", errorMessage = "Schema validation failed")
+    )
+
+    "return CreateSubmissionErrorDetailReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.createSubmissionErrorDetail(payload).futureValue mustBe
+        CreateSubmissionErrorDetailReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createSubmissionErrorDetail(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.createSubmissionErrorDetail(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "deleteSubmissionErrorDetail" should {
+
+    val url = "/formp-proxy/filing/delete/submission-error-detail"
+
+    val payload = DeleteSubmissionErrorDetailRequest(
+      storn             = stornId,
+      returnResourceRef = returnResourceRef
+    )
+
+    "return DeleteSubmissionErrorDetailReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.deleteSubmissionErrorDetail(payload).futureValue mustBe
+        DeleteSubmissionErrorDetailReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteSubmissionErrorDetail(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteSubmissionErrorDetail(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "insertInitialGovTalkStatus" should {
+
+    val url = "/formp-proxy/filing/govtalk-status"
+
+    val payload = InsertInitialGovTalkStatusRequest(
+      userIdentifier = "USR-0001",
+      formResultId   = "FR-0001",
+      correlationId  = "COR-0001",
+      govTalkStatus  = GovTalkStatusInitial(
+        formLock             = "LOCK-0001",
+        createTimestamp      = "2026-06-30T10:00:00Z",
+        endStateTimestamp    = None,
+        lastMessageTimestamp = "2026-06-30T10:00:00Z",
+        numberOfPolls        = "0",
+        pollInterval         = "30",
+        protocolStatus       = "INITIAL",
+        gatewayUrl           = "https://gateway.test/submit"
+      )
+    )
+
+    "return GovTalkStatusReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.insertInitialGovTalkStatus(payload).futureValue mustBe
+        GovTalkStatusReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns CONFLICT" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(CONFLICT).withBody("Already exists"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.insertInitialGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("409")
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.insertInitialGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+  }
+
+  "resetGovTalkStatus" should {
+
+    val url = "/formp-proxy/filing/reset/govtalk-status/reset"
+
+    val payload = ResetGovTalkStatusRequest(
+      userIdentifier = "USR-0001",
+      formResultId   = "FR-0001",
+      correlationId  = "COR-0001",
+      govTalkStatus  = GovTalkStatusReset(
+        formLock             = "LOCK-0001",
+        createTimestamp      = "2026-06-30T10:00:00Z",
+        endStateTimestamp    = None,
+        lastMessageTimestamp = "2026-06-30T10:00:00Z",
+        numberOfPolls        = "0",
+        pollInterval         = "30",
+        protocolStatusOld    = "FATAL_ERROR",
+        protocolStatusNew    = "INITIAL",
+        gatewayUrl           = "https://gateway.test/submit"
+      )
+    )
+
+    "return GovTalkStatusReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.resetGovTalkStatus(payload).futureValue mustBe GovTalkStatusReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.resetGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.resetGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "updateGovTalkStatus" should {
+
+    val url = "/formp-proxy/filing/update/govtalk-status"
+
+    val payload = UpdateGovTalkStatusRequest(
+      userIdentifier    = "USR-0001",
+      formResultId      = "FR-0001",
+      endStateTimestamp = "2026-06-30T10:05:00Z",
+      protocolStatus    = "ACCEPTED"
+    )
+
+    "return GovTalkStatusReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.updateGovTalkStatus(payload).futureValue mustBe GovTalkStatusReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "updateGovTalkStatusCorrelationId" should {
+
+    val url = "/formp-proxy/filing/update/govtalk-status/correlation-Id"
+
+    val payload = UpdateGovTalkStatusCorrelationIdRequest(
+      userIdentifier    = "USR-0001",
+      formResultId      = "FR-0001",
+      correlationId     = "COR-0002",
+      endStateTimestamp = "2026-06-30T10:05:00Z",
+      protocolStatus    = "ACCEPTED"
+    )
+
+    "return GovTalkStatusReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.updateGovTalkStatusCorrelationId(payload).futureValue mustBe
+        GovTalkStatusReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatusCorrelationId(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns BAD_REQUEST" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(BAD_REQUEST).withBody("Invalid request"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatusCorrelationId(payload).futureValue
+      }
+      ex.getMessage must include("400")
+    }
+  }
+
+  "updateGovTalkStatusLock" should {
+
+    val url = "/formp-proxy/filing/update/govtalk-status/lock"
+
+    val payload = UpdateGovTalkStatusLockRequest(
+      userIdentifier = "USR-0001",
+      formResultId   = "FR-0001",
+      govTalkStatus  = GovTalkStatusLock(
+        formLockOld  = "LOCK-0001",
+        formLockNew  = "LOCK-0002",
+        pollInterval = "30",
+        gatewayUrl   = "https://gateway.test/submit"
+      )
+    )
+
+    "return GovTalkStatusReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.updateGovTalkStatusLock(payload).futureValue mustBe GovTalkStatusReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatusLock(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns CONFLICT" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(CONFLICT).withBody("Lock conflict"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatusLock(payload).futureValue
+      }
+      ex.getMessage must include("409")
+    }
+  }
+
+  "updateGovTalkStatistics" should {
+
+    val url = "/formp-proxy/filing/update/govtalk-status/statistics"
+
+    val payload = UpdateGovTalkStatisticsRequest(
+      userIdentifier = "USR-0001",
+      formResultId   = "FR-0001",
+      govTalkStatus  = GovTalkStatusStatistics(
+        lastMessageTimestamp = "2026-06-30T10:01:00Z",
+        numberOfPolls        = "1",
+        pollInterval         = "30",
+        gatewayUrl           = "https://gateway.test/submit"
+      )
+    )
+
+    "return GovTalkStatusReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.updateGovTalkStatistics(payload).futureValue mustBe GovTalkStatusReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatistics(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.updateGovTalkStatistics(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "deleteGovTalkStatus" should {
+
+    val url = "/formp-proxy/filing/delete/govtalk-status"
+
+    val payload = DeleteGovTalkStatusRequest(resultId = "FR-0001")
+
+    "return GovTalkStatusReturn(success=true) when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("{}"))
+      )
+
+      connector.deleteGovTalkStatus(payload).futureValue mustBe GovTalkStatusReturn(success = true)
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.deleteGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+  }
+
+  "selectGovTalkStatus" should {
+
+    val url = "/formp-proxy/filing/govtalk-status"
+
+    val payload = SelectGovTalkStatusRequest(userIdentifier = "USR-0001", formResultId = "FR-0001")
+
+    val responseBody = SelectGovTalkStatusResponse(
+      userIdentifier       = Some("USR-0001"),
+      formResultId         = Some("FR-0001"),
+      correlationId        = Some("COR-0001"),
+      formLock             = Some("LOCK-0001"),
+      createTimestamp      = Some("2026-06-30T10:00:00Z"),
+      endStateTimestamp    = Some("2026-06-30T10:05:00Z"),
+      lastMessageTimestamp = Some("2026-06-30T10:01:00Z"),
+      numberOfPolls        = Some("1"),
+      pollInterval         = Some("30"),
+      protocolStatus       = Some("ACCEPTED"),
+      gatewayUrl           = Some("https://gateway.test/submit")
+    )
+
+    "return SelectGovTalkStatusResponse when BE returns OK with valid JSON" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(responseBody))))
+      )
+
+      connector.selectGovTalkStatus(payload).futureValue mustBe responseBody
+    }
+
+    "return SelectGovTalkStatusResponse with mostly empty fields when BE returns sparse JSON" in {
+      val sparse = SelectGovTalkStatusResponse(
+        userIdentifier       = Some("USR-0001"),
+        formResultId         = Some("FR-0001"),
+        correlationId        = None,
+        formLock             = None,
+        createTimestamp      = None,
+        endStateTimestamp    = None,
+        lastMessageTimestamp = None,
+        numberOfPolls        = None,
+        pollInterval         = None,
+        protocolStatus       = None,
+        gatewayUrl           = None
+      )
+
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(sparse))))
+      )
+
+      connector.selectGovTalkStatus(payload).futureValue mustBe sparse
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.selectGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.selectGovTalkStatus(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+
+    "fail when BE returns OK with invalid JSON" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""not-json-at-all"""))
+      )
+
+      val ex = intercept[Exception] {
+        connector.selectGovTalkStatus(payload).futureValue
+      }
+      ex mustBe a[RuntimeException]
+    }
+  }
+
+  "selectGovTalkFormResultId" should {
+
+    val url = "/formp-proxy/filing/govtalk-status/form-result-Id"
+
+    val payload = SelectGovTalkFormResultIdRequest(userIdentifier = "USR-0001")
+
+    val responseBody = SelectGovTalkFormResultIdResponse(formResultId = Some("FR-0001"))
+
+    "return SelectGovTalkFormResultIdResponse when BE returns OK with valid JSON" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(responseBody))))
+      )
+
+      connector.selectGovTalkFormResultId(payload).futureValue mustBe responseBody
+    }
+
+    "return SelectGovTalkFormResultIdResponse with None when BE returns null" in {
+      val empty = SelectGovTalkFormResultIdResponse(formResultId = None)
+
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(Json.stringify(Json.toJson(empty))))
+      )
+
+      connector.selectGovTalkFormResultId(payload).futureValue mustBe empty
+    }
+
+    "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.selectGovTalkFormResultId(payload).futureValue
+      }
+      ex.getMessage must include("500")
+    }
+
+    "propagate an upstream error when BE returns NOT_FOUND" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(NOT_FOUND).withBody("Not found"))
+      )
+
+      val ex = intercept[Exception] {
+        connector.selectGovTalkFormResultId(payload).futureValue
+      }
+      ex.getMessage must include("404")
+    }
+
+    "fail when BE returns OK with invalid JSON" in {
+      stubFor(
+        get(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody("""not-json-at-all"""))
+      )
+
+      val ex = intercept[Exception] {
+        connector.selectGovTalkFormResultId(payload).futureValue
+      }
+      ex mustBe a[RuntimeException]
+    }
+  }
 
   "updateTaxCalculationInfo" should {
 
@@ -2685,7 +3478,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .willReturn(
             aResponse()
               .withStatus(OK)
-                .withBody(Json.stringify(Json.toJson(UpdateTaxCalculationReturn(updated = true))))
+              .withBody(Json.stringify(Json.toJson(UpdateTaxCalculationReturn(updated = true))))
           )
       )
 
@@ -2694,13 +3487,12 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       result mustBe UpdateTaxCalculationReturn(updated = true)
     }
 
-    "return UpdateTaxCalculationReturn when minimal request is sent with updated=true when BE returns OK" in {
-      val payloadJson = Json.toJson(
-        UpdateTaxCalculationRequest(
+    "return UpdateTaxCalculationReturn with updated=true for a minimal request when BE returns OK" in {
+      val minimalPayload = UpdateTaxCalculationRequest(
         stornId = "STORN12345",
         returnResourceRef = "100001"
-        )
       )
+      val payloadJson = Json.toJson(minimalPayload)
 
       stubFor(
         post(urlPathEqualTo(url))
@@ -2712,11 +3504,10 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val result = connector.updateTaxCalculationInfo(payload).futureValue
+      val result = connector.updateTaxCalculationInfo(minimalPayload).futureValue
 
       result mustBe UpdateTaxCalculationReturn(updated = true)
     }
-
 
     "return 500 when BE returns INTERNAL_SERVER_ERROR" in {
       val payloadJson = Json.toJson(payload)
@@ -2763,6 +3554,4 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       ex.getMessage must include("400")
     }
   }
-
-
 }
