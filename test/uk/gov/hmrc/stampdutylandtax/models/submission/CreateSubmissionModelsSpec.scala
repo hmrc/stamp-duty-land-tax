@@ -37,7 +37,7 @@ class CreateSubmissionModelsSpec extends AnyWordSpec with Matchers {
       val model = json.as[CreateSubmissionRequest]
       model.storn mustBe "STORN-1"
       model.returnResourceRef mustBe "RRR-1"
-      model.email mustBe "user@example.com"
+      model.email mustBe Some("user@example.com")
 
       Json.toJson(model).as[CreateSubmissionRequest] mustBe model
     }

@@ -50,15 +50,15 @@ class SubmissionController @Inject() (
         Future.successful(BadRequest(Json.obj("error" -> "Expected application/json body")))
 
       case Some(json) =>
-        json.validate[FullReturn] match
+        json.validate[SubmitRequest] match
           case JsError(errs) =>
-            logger.warn(s"[SubmissionController][submit] FullReturn JSON parse failed: $errs")
-            Future.successful(BadRequest(Json.obj("error" -> "Invalid FullReturn payload", "details" -> JsError.toJson(JsError(errs)))))
-          case JsSuccess(fullReturn, _) =>
-            runSubmission(fullReturn, request.credentialId, request.affinityGroup)
+            logger.warn(s"[SubmissionController][submit] SubmitRequest JSON parse failed: $errs")
+            Future.successful(BadRequest(Json.obj("error" -> "Invalid submit payload", "details" -> JsError.toJson(JsError(errs)))))
+          case JsSuccess(SubmitRequest(email, fullReturn), _) =>
+            runSubmission(fullReturn, email, request.credentialId, request.affinityGroup)
   }
 
-  private def runSubmission(fullReturn: FullReturn, credentialId: String, affinityGroup: AffinityGroup)(implicit hc: HeaderCarrier): Future[Result] =
+  private def runSubmission(fullReturn: FullReturn, email: Option[String], credentialId: String, affinityGroup: AffinityGroup)(implicit hc: HeaderCarrier): Future[Result] =
     val returnId  = fullReturn.returnResourceRef.getOrElse("")
     val sender    = resolveSenderType(affinityGroup)
     val periodEnd = resolvePeriodEnd(fullReturn)

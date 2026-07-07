@@ -555,7 +555,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
           .willReturn(
             aResponse()
-              .withStatus(OK)
+              .withStatus(CREATED)
               .withBody(Json.stringify(Json.toJson(UpdateVendorReturn(updated = true))))
           )
       )
@@ -1288,7 +1288,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
           .willReturn(
             aResponse()
-              .withStatus(OK)
+              .withStatus(CREATED)
               .withBody(Json.stringify(Json.toJson(UpdatePurchaserReturn(updated = true))))
           )
       )
@@ -1590,7 +1590,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
           .willReturn(
             aResponse()
-              .withStatus(OK)
+              .withStatus(CREATED)
               .withBody(Json.stringify(Json.toJson(UpdateCompanyDetailsReturn(updated = true))))
           )
       )
@@ -1748,7 +1748,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
           .willReturn(
             aResponse()
-              .withStatus(OK)
+              .withStatus(CREATED)
               .withBody(Json.stringify(Json.toJson(UpdateReturnReturn(updated = true))))
           )
       )
@@ -2093,7 +2093,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           .withRequestBody(equalToJson(Json.stringify(payloadJson), true, true))
           .willReturn(
             aResponse()
-              .withStatus(OK)
+              .withStatus(CREATED)
               .withBody(Json.stringify(Json.toJson(UpdateLandReturn(updated = true))))
           )
       )
@@ -2654,7 +2654,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       ex.getMessage must include("400")
     }
   }
-  
+
   "lockReturn" should {
 
     val url = "/formp-proxy/filing/return/lock"
@@ -2719,7 +2719,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     val payload = CreateSubmissionRequest(
       storn             = stornId,
       returnResourceRef = returnResourceRef,
-      email             = "filer@example.test"
+      email             = Some("filer@example.test")
     )
 
     "return CreateSubmissionReturn(success=true) when BE returns OK" in {

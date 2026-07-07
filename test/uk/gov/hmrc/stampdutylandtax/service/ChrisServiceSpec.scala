@@ -42,7 +42,7 @@ class ChrisServiceSpec extends SpecBase {
                                          storn: String = "STORN12345",
                                          returnResourceRef: String = "100001"
                                        ): CreateSubmissionRequest =
-    CreateSubmissionRequest(storn = storn, returnResourceRef = returnResourceRef, email = "user@example.com")
+    CreateSubmissionRequest(storn = storn, returnResourceRef = returnResourceRef, email = Some("user@example.com"))
 
   private def mkCreateSubmissionReturn(success: Boolean = true): CreateSubmissionReturn =
     CreateSubmissionReturn(success = success)

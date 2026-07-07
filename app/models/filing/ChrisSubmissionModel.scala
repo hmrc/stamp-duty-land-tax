@@ -219,3 +219,14 @@ object UniversalStatus:
   private def isTimeout(message: String): Boolean =
     val m = message.toLowerCase
     m.contains("timeout") || m.contains("timed out")
+
+
+
+case class SubmitRequest(
+                          email: Option[String] = None,
+                          fullReturn: FullReturn
+                        )
+
+object SubmitRequest {
+  implicit val reads: Reads[SubmitRequest] = Json.reads[SubmitRequest]
+}

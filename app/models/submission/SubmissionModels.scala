@@ -21,7 +21,7 @@ import play.api.libs.json.{Json, OFormat}
 case class CreateSubmissionRequest(
                                     storn: String,
                                     returnResourceRef: String,
-                                    email: String
+                                    email: Option[String] = None
                                   )
 
 object CreateSubmissionRequest {
