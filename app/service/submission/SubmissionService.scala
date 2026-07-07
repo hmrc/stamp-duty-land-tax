@@ -57,7 +57,8 @@ class SubmissionService @Inject() (
   def submit(fullReturn: FullReturn,
              sender: SenderType,
              periodEnd: LocalDate,
-             credentialIdentifier: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
+             credentialIdentifier: String,
+             email: Option[String] = None)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
     val correlationId = newCorrelationId()
 
     requireContext(fullReturn, credentialIdentifier) match
@@ -67,20 +68,20 @@ class SubmissionService @Inject() (
 
       case Right(ctx) =>
         for
-          _                <- prepareReturn(ctx, fullReturn, correlationId)
+          _                <- prepareReturn(ctx, fullReturn, correlationId, email)
           submitUrl        <- prepareGovTalkStatus(ctx, correlationId)
           built            <- buildAndValidate(ctx, fullReturn, sender, periodEnd, correlationId)
           (envelope, seed) = built
           sentIrMark       = seed.IRMarkSent.getOrElse("")
           _                <- acquireGovTalkLock(ctx, correlationId)
-          resp             <- sendAndHandle(ctx, fullReturn, envelope, seed, sentIrMark, submitUrl, correlationId)
+          resp             <- sendAndHandle(ctx, fullReturn, envelope, seed, sentIrMark, submitUrl, correlationId, email)
         yield resp
 
-  private def prepareReturn(ctx: SubmissionContext, fullReturn: FullReturn, correlationId: String)
+  private def prepareReturn(ctx: SubmissionContext, fullReturn: FullReturn, correlationId: String, email: Option[String] = None)
                            (implicit hc: HeaderCarrier): Future[Unit] =
     for
       _ <- lockReturn(ctx, correlationId)
-      _ <- handleExistingSubmission(ctx, fullReturn, correlationId)
+      _ <- handleExistingSubmission(ctx, fullReturn, correlationId, email)
     yield ()
 
   private def lockReturn(ctx: SubmissionContext, correlationId: String)(implicit hc: HeaderCarrier): Future[Unit] =
@@ -93,7 +94,7 @@ class SubmissionService @Inject() (
         Future.failed(ReturnLockConflictException(ctx.returnId, error.statusCode, error.message))
     }
 
-  private def handleExistingSubmission(ctx: SubmissionContext, fullReturn: FullReturn, correlationId: String)
+  private def handleExistingSubmission(ctx: SubmissionContext, fullReturn: FullReturn, correlationId: String, email: Option[String] = None)
                                       (implicit hc: HeaderCarrier): Future[Unit] =
     fullReturn.submission match
       case Some(existing) if isResubmittable(existing) =>
@@ -106,7 +107,6 @@ class SubmissionService @Inject() (
 
       case None =>
         logger.debug(s"[SubmissionService] creating new submission returnId=${ctx.returnId} corrId=$correlationId")
-        val email = fullReturn.returnAgent.flatMap(_.headOption).flatMap(_.email).getOrElse("")
         chrisService.createSubmission(CreateSubmissionRequest(ctx.storn, ctx.returnId, email)).map(_ => ())
 
   private def isResubmittable(existing: Submission): Boolean =
@@ -239,12 +239,13 @@ class SubmissionService @Inject() (
                             seed: SubmissionUpdate,
                             sentIrMark: String,
                             submitUrl: Option[String],
-                            correlationId: String)
+                            correlationId: String,
+                            email: Option[String] = None)
                            (implicit hc: HeaderCarrier): Future[ChrisResponse] =
     val work: Future[ChrisResponse] =
       for
         resp <- connector.submit(envelope, submitUrl, correlationId)
-        _    <- handleResponse(ctx, fullReturn, resp, seed, sentIrMark, correlationId)
+        _    <- handleResponse(ctx, fullReturn, resp, seed, sentIrMark, correlationId, email)
       yield resp
 
     work.transformWith { outcome =>
@@ -273,14 +274,15 @@ class SubmissionService @Inject() (
                              resp: ChrisResponse,
                              seed: SubmissionUpdate,
                              sentIrMark: String,
-                             correlationId: String)
+                             correlationId: String,
+                             email: Option[String] = None)
                             (implicit hc: HeaderCarrier): Future[Unit] =
     val universal = UniversalStatus.fromChrisResponse(resp, Some(sentIrMark))
     logger.info(s"[SubmissionService] resolved returnId=${ctx.returnId} corrId=$correlationId universalStatus=$universal")
 
     resp match
       case c: ChrisResponse.Completed =>
-        successBranch(ctx, fullReturn, c, universal, seed, correlationId)
+        successBranch(ctx, fullReturn, c, universal, seed, correlationId, email)
 
       case a: ChrisResponse.Acknowledged =>
         acknowledgementBranch(ctx, a, seed, correlationId)
@@ -297,7 +299,8 @@ class SubmissionService @Inject() (
                             resp: ChrisResponse.Completed,
                             universal: UniversalStatus,
                             seed: SubmissionUpdate,
-                            correlationId: String)
+                            correlationId: String,
+                            email: Option[String] = None)
                            (implicit hc: HeaderCarrier): Future[Unit] =
     for
       acc1 <- persistStatus(ctx, seed, universal, correlationId)
