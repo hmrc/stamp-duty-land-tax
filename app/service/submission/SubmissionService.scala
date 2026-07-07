@@ -19,7 +19,8 @@ package service.submission
 import com.google.inject.Inject
 import play.api.Logging
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import connectors.ChrisConnector
+import connectors.{ChrisConnector, EmailServiceConnector}
+import models.email.EmailServiceRequest
 import models.filing.*
 import models.submission.*
 import service.filing.ChrisService
@@ -50,7 +51,8 @@ class SubmissionService @Inject() (
                                     connector: ChrisConnector,
                                     audit: SubmissionAuditService,
                                     chrisService: ChrisService,
-                                    appConfig: ServicesConfig
+                                    appConfig: ServicesConfig,
+                                    emailServiceConnector: EmailServiceConnector
                                   )(implicit ec: ExecutionContext)
   extends Logging:
 
@@ -301,12 +303,25 @@ class SubmissionService @Inject() (
                            (implicit hc: HeaderCarrier): Future[Unit] =
     for
       acc1 <- persistStatus(ctx, seed, universal, correlationId)
-      _    <- updateGovTalkStatistics(ctx, resp.responseEndPoint, None, correlationId)
-      _    <- setGovTalkProtocol(ctx, "deleteRequest", correlationId)
-      _    <- sendChrisDelete(ctx, resp.responseEndPoint, correlationId)
-      _    <- setGovTalkProtocol(ctx, "endState", correlationId)
-      _    <- audit.auditSubmission(ctx.storn, ctx.returnId, correlationId, fullReturn, resp)
-      _    <- persistUpdate(ctx, acc1.copy(IRMarkRecieved = resp.receivedIrMark, utrn = resp.utrn), correlationId)
+      _ <- updateGovTalkStatistics(ctx, resp.responseEndPoint, None, correlationId)
+      _ <- setGovTalkProtocol(ctx, "deleteRequest", correlationId)
+      _ <- sendChrisDelete(ctx, resp.responseEndPoint, correlationId)
+      _ <- setGovTalkProtocol(ctx, "endState", correlationId)
+      _ <- audit.auditSubmission(ctx.storn, ctx.returnId, correlationId, fullReturn, resp)
+      _ <- persistUpdate(ctx, acc1.copy(IRMarkRecieved = resp.receivedIrMark, utrn = resp.utrn), correlationId)
+      _ <- emailServiceConnector.submitEmailConfirmation(
+        EmailServiceRequest(
+          email = fullReturn.submission.flatMap(_.email).getOrElse(""),
+          templateId = "sdlt_submission_confirmation",
+          linkExpiryDuration = fullReturn.???,
+          continueUrl = fullReturn.???,
+          templateParameters = Map(
+            "purchaserName" -> fullReturn.???,
+            "propertyAddress" -> fullReturn.???,
+            "utrn" -> resp.utrn.toString
+          )
+        )
+      )
     yield ()
 
   private def acknowledgementBranch(ctx: SubmissionContext,
