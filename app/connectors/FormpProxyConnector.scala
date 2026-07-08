@@ -18,6 +18,7 @@ package connectors
 
 import models.agent.*
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.purge.{DeleteReturnRequest, DeleteReturnResponse, GetReturnsForPurgeRequest, ReturnsForPurgeResponse}
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
@@ -110,5 +111,38 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
       }
 
+  def getReturnsForPurge(request: GetReturnsForPurgeRequest)(implicit hc: HeaderCarrier): Future[ReturnsForPurgeResponse] =
+    val url: URL = if (stubFormPBool) url"$stubPath/returns-for-purge" else url"$formpPath/returns-for-purge"
+    http.post(url)
+      .withBody(Json.toJson(request))
+      .execute[ReturnsForPurgeResponse]
+      .recover {
+        case e: UpstreamErrorResponse if e.statusCode == 401 =>
+          logger.error(s"[FormpProxyConnector][getReturnsForPurge]: 401 Unauthorized from formp-proxy, the X-API-Key was rejected, check internal-service-api-key matches in both services")
+          throw new RuntimeException(e.getMessage)
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][getReturnsForPurge]: Upstream error ${e.statusCode} - ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][getReturnsForPurge]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def deleteReturn(request: DeleteReturnRequest)(implicit hc: HeaderCarrier): Future[DeleteReturnResponse] =
+    val url: URL = if (stubFormPBool) url"$stubPath/delete/return" else url"$formpPath/delete/return"
+    http.post(url)
+      .withBody(Json.toJson(request))
+      .execute[DeleteReturnResponse]
+      .recover {
+        case e: UpstreamErrorResponse if e.statusCode == 401 =>
+          logger.error(s"[FormpProxyConnector][deleteReturn]: 401 Unauthorized from formp-proxy, the X-API-Key was rejected, check internal-service-api-key matches in both services")
+          throw new RuntimeException(e.getMessage)
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][deleteReturn]: Upstream error ${e.statusCode} - ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][deleteReturn]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
 
 }

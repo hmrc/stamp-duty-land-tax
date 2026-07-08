@@ -20,6 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.*
 import itutil.ApplicationWithWiremock
 import models.agent.*
 import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.purge.{DeleteReturnRequest, DeleteReturnResponse, GetReturnsForPurgeRequest, ReturnsForPurgeResponse}
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -569,6 +570,68 @@ class FormpProxyConnectorISpec extends AnyWordSpec
         connectorWithStub.updateAgentDetails(req).futureValue
       }
       ex mustBe a[RuntimeException]
+    }
+  }
+
+  "getReturnsForPurge" should {
+
+    val formpUrl = "/formp-proxy/returns-for-purge"
+    val request  = GetReturnsForPurgeRequest(LocalDate.parse("2026-07-06"))
+
+    "send the X-API-Key header from the HeaderCarrier and return the returns due for purge" in {
+      val hcWithApiKey: HeaderCarrier = HeaderCarrier(extraHeaders = Seq("X-API-Key" -> "local-test-api-key"))
+
+      stubFor(
+        post(urlPathEqualTo(formpUrl))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "returnsForPurge": [] }"""))
+      )
+
+      connectorWithFormP.getReturnsForPurge(request)(hcWithApiKey).futureValue mustBe ReturnsForPurgeResponse(Nil)
+
+      verify(postRequestedFor(urlPathEqualTo(formpUrl)).withHeader("X-API-Key", equalTo("local-test-api-key")))
+    }
+
+    "fail with a 401 error when formp-proxy rejects the X-API-Key" in {
+      stubFor(
+        post(urlPathEqualTo(formpUrl))
+          .willReturn(aResponse().withStatus(UNAUTHORIZED))
+      )
+
+      val ex = intercept[Exception] {
+        connectorWithFormP.getReturnsForPurge(request).futureValue
+      }
+      ex.getMessage must include ("401")
+    }
+  }
+
+  "deleteReturn" should {
+
+    val formpUrl = "/formp-proxy/delete/return"
+    val request  = DeleteReturnRequest(storn = "STN001", returnResourceRef = "9000001")
+
+    "send the X-API-Key header from the HeaderCarrier and return the delete response" in {
+      val hcWithApiKey: HeaderCarrier = HeaderCarrier(extraHeaders = Seq("X-API-Key" -> "local-test-api-key"))
+
+      stubFor(
+        post(urlPathEqualTo(formpUrl))
+          .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
+      )
+
+      connectorWithFormP.deleteReturn(request)(hcWithApiKey).futureValue mustBe DeleteReturnResponse(deleted = true)
+
+      verify(postRequestedFor(urlPathEqualTo(formpUrl)).withHeader("X-API-Key", equalTo("local-test-api-key")))
+    }
+
+    "fail with a 401 error when formp-proxy rejects the X-API-Key" in {
+      stubFor(
+        post(urlPathEqualTo(formpUrl))
+          .willReturn(aResponse().withStatus(UNAUTHORIZED))
+      )
+
+      val ex = intercept[Exception] {
+        connectorWithFormP.deleteReturn(request).futureValue
+      }
+      ex.getMessage must include ("401")
     }
   }
 }
