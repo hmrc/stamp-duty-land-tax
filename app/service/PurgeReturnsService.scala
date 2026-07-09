@@ -82,12 +82,18 @@ class PurgeReturnsService @Inject() (
     logger.info(s"[$jobName] starting purge, executionDate=$executionDate")
     for {
       selected <- connector.getReturnsForPurge(GetReturnsForPurgeRequest(executionDate)).map(_.returnsForPurge)
+      _         = logger.info(s"[$jobName] selected for purge: ${refList(selected)}")
       results  <- purgeSequentially(selected)
     } yield {
+      val purged = results.collect { case (returnForPurge, true) => returnForPurge }
+      logger.info(s"[$jobName] purged: ${refList(purged)}")
       logReport(executionDate, selected, results)
-      results.collect { case (returnForPurge, true) => returnForPurge.returnResourceRef }
+      purged.map(_.returnResourceRef)
     }
   }
+
+  private def refList(returns: List[ReturnForPurge]): String =
+    if (returns.isEmpty) "none" else returns.map(r => s"${r.storn}/${r.returnResourceRef}").mkString(", ")
 
   private def purgeSequentially(selected: List[ReturnForPurge]): Future[List[(ReturnForPurge, Boolean)]] =
     selected.foldLeft(Future.successful(List.empty[(ReturnForPurge, Boolean)])) { (acc, returnForPurge) =>
