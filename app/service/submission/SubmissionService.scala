@@ -135,7 +135,7 @@ class SubmissionService @Inject() (
       .recover { case _ => None }
 
   private def buildInitialInsertRequest(ctx: SubmissionContext, correlationId: String): InsertInitialGovTalkStatusRequest =
-    val now = nowIso
+    val now = nowSqlTimestamp
     InsertInitialGovTalkStatusRequest(
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
@@ -153,7 +153,7 @@ class SubmissionService @Inject() (
     )
 
   private def buildResetRequest(ctx: SubmissionContext, correlationId: String): ResetGovTalkStatusRequest =
-    val now = nowIso
+    val now = nowSqlTimestamp
     ResetGovTalkStatusRequest(
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
@@ -415,7 +415,7 @@ class SubmissionService @Inject() (
     val req = UpdateGovTalkStatusRequest(
       userIdentifier    = ctx.storn,
       formResultId      = ctx.returnId,
-      endStateTimestamp = nowIso,
+      endStateTimestamp = nowSqlTimestamp,
       protocolStatus    = protocolStatus
     )
     chrisService.updateGovTalkStatus(req).map { _ =>
@@ -433,7 +433,7 @@ class SubmissionService @Inject() (
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
       govTalkStatus  = GovTalkStatusStatistics(
-        lastMessageTimestamp = nowIso,
+        lastMessageTimestamp = nowSqlTimestamp,
         numberOfPolls        = "0",
         pollInterval         = pollIntervalSeconds.map(_.toString).getOrElse("0"),
         gatewayUrl           = gatewayUrl
@@ -478,6 +478,12 @@ class SubmissionService @Inject() (
           s"version=${fullReturn.returnInfo.flatMap(_.version)}")
 
   private def newCorrelationId(): String = UUID.randomUUID().toString.replace("-", "")
-
+  
   private def nowIso: String =
     ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+  
+  private val SqlTimestampFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+
+  private def nowSqlTimestamp: String =
+    ZonedDateTime.now(ZoneOffset.UTC).format(SqlTimestampFormatter)
