@@ -131,7 +131,7 @@ class SubmissionService @Inject() (
 
   private def selectGovTalkStatus(ctx: SubmissionContext)(implicit hc: HeaderCarrier): Future[Option[SelectGovTalkStatusResponse]] =
     chrisService.selectGovTalkStatus(SelectGovTalkStatusRequest(ctx.storn, ctx.returnId))
-      .map(Some(_))
+      .map(resp => Option.when(resp.formResultId.exists(_.trim.nonEmpty))(resp))
       .recover { case _ => None }
 
   private def buildInitialInsertRequest(ctx: SubmissionContext, correlationId: String): InsertInitialGovTalkStatusRequest =

@@ -126,7 +126,6 @@ final class SubmissionServiceSpec extends SpecBase {
     when(audit.auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier]))
       .thenReturn(Future.unit)
 
-    // ChRIS DELETE default stub — success path
     when(connector.delete(any[Option[String]], any[String])(any[HeaderCarrier]))
       .thenReturn(Future.successful(ChrisDeleteResponse.Deleted(Some("corr"), "<delete-response/>")))
 
@@ -246,6 +245,20 @@ final class SubmissionServiceSpec extends SpecBase {
 
     "must reset the row when one already exists" in {
       val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(SelectGovTalkStatusResponse(
+          userIdentifier = Some(storn),
+          formResultId = Some(returnId),
+          correlationId = Some("corr"),
+          formLock = Some("false"),
+          createTimestamp = Some("2026-01-31 09:15:30"),
+          endStateTimestamp = None,
+          lastMessageTimestamp = Some("2026-01-31 09:15:30"),
+          numberOfPolls = Some("0"),
+          pollInterval = Some("0"),
+          protocolStatus = Some("initial"),
+          gatewayUrl = Some("http://chris")
+        )))
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       verify(f.chrisService).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
