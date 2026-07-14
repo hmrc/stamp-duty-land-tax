@@ -44,7 +44,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       val json = Json.parse(
         s"""
            |{
-           |"formLock":"LOCK-1",
+           |"formLock":"N",
            |"createTimestamp":"2026-01-02T09:00:00Z",
            |"endStateTimestamp":"2026-01-02T09:05:00Z",
            |"lastMessageTimestamp":"2026-01-02T09:04:00Z",
@@ -56,7 +56,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |""".stripMargin)
 
       val model = json.as[GovTalkStatusInitial]
-      model.formLock mustBe "LOCK-1"
+      model.formLock mustBe "N"
       model.createTimestamp mustBe "2026-01-02T09:00:00Z"
       model.endStateTimestamp mustBe Some("2026-01-02T09:05:00Z")
       model.lastMessageTimestamp mustBe "2026-01-02T09:04:00Z"
@@ -72,7 +72,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       val json = Json.parse(
         s"""
            |{
-           |"formLock":"LOCK-1",
+           |"formLock":"N",
            |"createTimestamp":"2026-01-02T09:00:00Z",
            |"lastMessageTimestamp":"2026-01-02T09:04:00Z",
            |"numberOfPolls":"3",
@@ -83,7 +83,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |""".stripMargin)
 
       val model = json.as[GovTalkStatusInitial]
-      model.formLock mustBe "LOCK-1"
+      model.formLock mustBe "N"
       model.createTimestamp mustBe "2026-01-02T09:00:00Z"
       model.endStateTimestamp mustBe None
       model.lastMessageTimestamp mustBe "2026-01-02T09:04:00Z"
@@ -101,7 +101,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       val json = Json.parse(
         s"""
            |{
-           |"formLock":"LOCK-1",
+           |"formLock":"N",
            |"createTimestamp":"2026-01-02T09:00:00Z",
            |"endStateTimestamp":"2026-01-02T09:05:00Z",
            |"lastMessageTimestamp":"2026-01-02T09:04:00Z",
@@ -114,7 +114,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |""".stripMargin)
 
       val model = json.as[GovTalkStatusReset]
-      model.formLock mustBe "LOCK-1"
+      model.formLock mustBe "N"
       model.createTimestamp mustBe "2026-01-02T09:00:00Z"
       model.endStateTimestamp mustBe Some("2026-01-02T09:05:00Z")
       model.lastMessageTimestamp mustBe "2026-01-02T09:04:00Z"
@@ -131,7 +131,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       val json = Json.parse(
         s"""
            |{
-           |"formLock":"LOCK-1",
+           |"formLock":"N",
            |"createTimestamp":"2026-01-02T09:00:00Z",
            |"lastMessageTimestamp":"2026-01-02T09:04:00Z",
            |"numberOfPolls":"3",
@@ -143,7 +143,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |""".stripMargin)
 
       val model = json.as[GovTalkStatusReset]
-      model.formLock mustBe "LOCK-1"
+      model.formLock mustBe "N"
       model.createTimestamp mustBe "2026-01-02T09:00:00Z"
       model.endStateTimestamp mustBe None
       model.lastMessageTimestamp mustBe "2026-01-02T09:04:00Z"
@@ -162,16 +162,16 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       val json = Json.parse(
         s"""
            |{
-           |"formLockOld":"LOCK-1",
-           |"formLockNew":"LOCK-2",
+           |"formLockOld":"N",
+           |"formLockNew":"Y",
            |"pollInterval":"10",
            |"gatewayUrl":"https://gateway.example/submit"
            |}
            |""".stripMargin)
 
       val model = json.as[GovTalkStatusLock]
-      model.formLockOld mustBe "LOCK-1"
-      model.formLockNew mustBe "LOCK-2"
+      model.formLockOld mustBe "N"
+      model.formLockNew mustBe "Y"
       model.pollInterval mustBe "10"
       model.gatewayUrl mustBe "https://gateway.example/submit"
 
@@ -210,7 +210,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |"formResultId":"FR-1",
            |"correlationId":"CORR-1",
            |"govTalkStatus":{
-           |  "formLock":"LOCK-1",
+           |  "formLock":"N",
            |  "createTimestamp":"2026-01-02T09:00:00Z",
            |  "endStateTimestamp":"2026-01-02T09:05:00Z",
            |  "lastMessageTimestamp":"2026-01-02T09:04:00Z",
@@ -226,7 +226,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       model.userIdentifier mustBe "USER-1"
       model.formResultId mustBe "FR-1"
       model.correlationId mustBe "CORR-1"
-      model.govTalkStatus.formLock mustBe "LOCK-1"
+      model.govTalkStatus.formLock mustBe "N"
       model.govTalkStatus.createTimestamp mustBe "2026-01-02T09:00:00Z"
       model.govTalkStatus.endStateTimestamp mustBe Some("2026-01-02T09:05:00Z")
       model.govTalkStatus.lastMessageTimestamp mustBe "2026-01-02T09:04:00Z"
@@ -246,7 +246,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |"formResultId":"FR-1",
            |"correlationId":"CORR-1",
            |"govTalkStatus":{
-           |  "formLock":"LOCK-1",
+           |  "formLock":"N",
            |  "createTimestamp":"2026-01-02T09:00:00Z",
            |  "lastMessageTimestamp":"2026-01-02T09:04:00Z",
            |  "numberOfPolls":"3",
@@ -276,7 +276,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |"formResultId":"FR-1",
            |"correlationId":"CORR-1",
            |"govTalkStatus":{
-           |  "formLock":"LOCK-1",
+           |  "formLock":"N",
            |  "createTimestamp":"2026-01-02T09:00:00Z",
            |  "endStateTimestamp":"2026-01-02T09:05:00Z",
            |  "lastMessageTimestamp":"2026-01-02T09:04:00Z",
@@ -293,7 +293,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       model.userIdentifier mustBe "USER-1"
       model.formResultId mustBe "FR-1"
       model.correlationId mustBe "CORR-1"
-      model.govTalkStatus.formLock mustBe "LOCK-1"
+      model.govTalkStatus.formLock mustBe "N"
       model.govTalkStatus.createTimestamp mustBe "2026-01-02T09:00:00Z"
       model.govTalkStatus.endStateTimestamp mustBe Some("2026-01-02T09:05:00Z")
       model.govTalkStatus.lastMessageTimestamp mustBe "2026-01-02T09:04:00Z"
@@ -314,7 +314,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |"formResultId":"FR-1",
            |"correlationId":"CORR-1",
            |"govTalkStatus":{
-           |  "formLock":"LOCK-1",
+           |  "formLock":"N",
            |  "createTimestamp":"2026-01-02T09:00:00Z",
            |  "lastMessageTimestamp":"2026-01-02T09:04:00Z",
            |  "numberOfPolls":"3",
@@ -390,8 +390,8 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |"userIdentifier":"USER-1",
            |"formResultId":"FR-1",
            |"govTalkStatus":{
-           |  "formLockOld":"LOCK-1",
-           |  "formLockNew":"LOCK-2",
+           |  "formLockOld":"N",
+           |  "formLockNew":"Y",
            |  "pollInterval":"10",
            |  "gatewayUrl":"https://gateway.example/submit"
            |}
@@ -401,8 +401,8 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       val model = json.as[UpdateGovTalkStatusLockRequest]
       model.userIdentifier mustBe "USER-1"
       model.formResultId mustBe "FR-1"
-      model.govTalkStatus.formLockOld mustBe "LOCK-1"
-      model.govTalkStatus.formLockNew mustBe "LOCK-2"
+      model.govTalkStatus.formLockOld mustBe "N"
+      model.govTalkStatus.formLockNew mustBe "Y"
       model.govTalkStatus.pollInterval mustBe "10"
       model.govTalkStatus.gatewayUrl mustBe "https://gateway.example/submit"
 
@@ -496,7 +496,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
            |"userIdentifier":"USER-1",
            |"formResultId":"FR-1",
            |"correlationId":"CORR-1",
-           |"formLock":"LOCK-1",
+           |"formLock":"N",
            |"createTimestamp":"2026-01-02T09:00:00Z",
            |"endStateTimestamp":"2026-01-02T09:05:00Z",
            |"lastMessageTimestamp":"2026-01-02T09:04:00Z",
@@ -511,7 +511,7 @@ class GovTalkStatusModelsSpec extends AnyWordSpec with Matchers {
       model.userIdentifier mustBe Some("USER-1")
       model.formResultId mustBe Some("FR-1")
       model.correlationId mustBe Some("CORR-1")
-      model.formLock mustBe Some("LOCK-1")
+      model.formLock mustBe Some("N")
       model.createTimestamp mustBe Some("2026-01-02T09:00:00Z")
       model.endStateTimestamp mustBe Some("2026-01-02T09:05:00Z")
       model.lastMessageTimestamp mustBe Some("2026-01-02T09:04:00Z")

@@ -2931,7 +2931,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       formResultId   = "FR-0001",
       correlationId  = "COR-0001",
       govTalkStatus  = GovTalkStatusInitial(
-        formLock             = "LOCK-0001",
+        formLock             = "N",
         createTimestamp      = "2026-06-30T10:00:00Z",
         endStateTimestamp    = None,
         lastMessageTimestamp = "2026-06-30T10:00:00Z",
@@ -2989,7 +2989,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       formResultId   = "FR-0001",
       correlationId  = "COR-0001",
       govTalkStatus  = GovTalkStatusReset(
-        formLock             = "LOCK-0001",
+        formLock             = "N",
         createTimestamp      = "2026-06-30T10:00:00Z",
         endStateTimestamp    = None,
         lastMessageTimestamp = "2026-06-30T10:00:00Z",
@@ -3144,8 +3144,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       userIdentifier = "USR-0001",
       formResultId   = "FR-0001",
       govTalkStatus  = GovTalkStatusLock(
-        formLockOld  = "LOCK-0001",
-        formLockNew  = "LOCK-0002",
+        formLockOld  = "N",
+        formLockNew  = "Y",
         pollInterval = "30",
         gatewayUrl   = "https://gateway.test/submit"
       )
@@ -3293,7 +3293,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       userIdentifier       = Some("USR-0001"),
       formResultId         = Some("FR-0001"),
       correlationId        = Some("COR-0001"),
-      formLock             = Some("LOCK-0001"),
+      formLock             = Some("N"),
       createTimestamp      = Some("2026-06-30T10:00:00Z"),
       endStateTimestamp    = Some("2026-06-30T10:05:00Z"),
       lastMessageTimestamp = Some("2026-06-30T10:01:00Z"),

@@ -250,7 +250,7 @@ final class SubmissionServiceSpec extends SpecBase {
           userIdentifier = Some(storn),
           formResultId = Some(returnId),
           correlationId = Some("corr"),
-          formLock = Some("false"),
+          formLock = Some("N"),
           createTimestamp = Some("2026-01-31 09:15:30"),
           endStateTimestamp = None,
           lastMessageTimestamp = Some("2026-01-31 09:15:30"),
@@ -589,14 +589,14 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
-      f.lockFlags must contain("false")
+      f.lockFlags must contain("N")
     }
 
     "must release the GovTalk lock after an error response" in {
       val f = new Fixtures
       f.onResponse(errored(fatalError))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
-      f.lockFlags must contain("false")
+      f.lockFlags must contain("N")
     }
 
     "must release the GovTalk lock even when the ChRIS submit fails" in {
@@ -604,7 +604,7 @@ final class SubmissionServiceSpec extends SpecBase {
       when(f.connector.submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("chris down")))
       f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
-      f.lockFlags must contain("false")
+      f.lockFlags must contain("N")
     }
   }
 
@@ -625,7 +625,7 @@ final class SubmissionServiceSpec extends SpecBase {
       when(f.audit.auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("audit down")))
       f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
-      f.lockFlags must contain("false")
+      f.lockFlags must contain("N")
     }
   }
 }
