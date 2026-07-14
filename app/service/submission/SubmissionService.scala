@@ -141,7 +141,7 @@ class SubmissionService @Inject() (
       formResultId   = ctx.returnId,
       correlationId  = correlationId,
       govTalkStatus  = GovTalkStatusInitial(
-        formLock             = "false",
+        formLock             = "N",
         createTimestamp      = now,
         endStateTimestamp    = None,
         lastMessageTimestamp = now,
@@ -159,7 +159,7 @@ class SubmissionService @Inject() (
       formResultId   = ctx.returnId,
       correlationId  = "empty",
       govTalkStatus  = GovTalkStatusReset(
-        formLock             = "false",
+        formLock             = "N",
         createTimestamp      = now,
         endStateTimestamp    = None,
         lastMessageTimestamp = now,
@@ -209,7 +209,7 @@ class SubmissionService @Inject() (
     val req = UpdateGovTalkStatusLockRequest(
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
-      govTalkStatus  = GovTalkStatusLock(formLockOld = "false", formLockNew = "true", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
+      govTalkStatus  = GovTalkStatusLock(formLockOld = "N", formLockNew = "Y", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
     )
     chrisService.updateGovTalkStatusLock(req).map { _ =>
       logger.debug(s"[SubmissionService] GovTalk lock acquired formResultId=${ctx.returnId} corrId=$correlationId")
@@ -223,7 +223,7 @@ class SubmissionService @Inject() (
     val req = UpdateGovTalkStatusLockRequest(
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
-      govTalkStatus  = GovTalkStatusLock(formLockOld = "true", formLockNew = "false", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
+      govTalkStatus  = GovTalkStatusLock(formLockOld = "Y", formLockNew = "N", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
     )
     chrisService.updateGovTalkStatusLock(req).map { _ =>
       logger.debug(s"[SubmissionService] GovTalk lock released formResultId=${ctx.returnId} corrId=$correlationId")

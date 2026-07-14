@@ -97,7 +97,7 @@ class ChrisServiceSpec extends SpecBase {
 
   private def mkGovTalkStatusInitial(): GovTalkStatusInitial =
     GovTalkStatusInitial(
-      formLock = "LOCK-1",
+      formLock = "N",
       createTimestamp = "2026-01-02T09:00:00Z",
       endStateTimestamp = Some("2026-01-02T09:05:00Z"),
       lastMessageTimestamp = "2026-01-02T09:04:00Z",
@@ -120,7 +120,7 @@ class ChrisServiceSpec extends SpecBase {
 
   private def mkGovTalkStatusReset(): GovTalkStatusReset =
     GovTalkStatusReset(
-      formLock = "LOCK-1",
+      formLock = "N",
       createTimestamp = "2026-01-02T09:00:00Z",
       endStateTimestamp = Some("2026-01-02T09:05:00Z"),
       lastMessageTimestamp = "2026-01-02T09:04:00Z",
@@ -173,8 +173,8 @@ class ChrisServiceSpec extends SpecBase {
       userIdentifier = userIdentifier,
       formResultId = formResultId,
       govTalkStatus = GovTalkStatusLock(
-        formLockOld = "LOCK-1",
-        formLockNew = "LOCK-2",
+        formLockOld = "N",
+        formLockNew = "Y",
         pollInterval = "10",
         gatewayUrl = "https://gateway.example/submit"
       )
@@ -209,7 +209,7 @@ class ChrisServiceSpec extends SpecBase {
       userIdentifier = Some("USER-1"),
       formResultId = Some("FR-1"),
       correlationId = Some("CORR-1"),
-      formLock = Some("LOCK-1"),
+      formLock = Some("N"),
       createTimestamp = Some("2026-01-02T09:00:00Z"),
       endStateTimestamp = Some("2026-01-02T09:05:00Z"),
       lastMessageTimestamp = Some("2026-01-02T09:04:00Z"),
