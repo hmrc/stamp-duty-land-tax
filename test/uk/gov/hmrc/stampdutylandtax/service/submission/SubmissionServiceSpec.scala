@@ -783,11 +783,88 @@ final class SubmissionServiceSpec extends SpecBase {
       f.submissions.forall(_.utrn.isEmpty) mustBe true
     }
 
+    "must not stamp a submission-request datetime when the ChRIS submit fails" in {
+      val f = new Fixtures
+      when(f.connector.submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier]))
+        .thenReturn(Future.failed(new RuntimeException("chris down")))
+      f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
+      f.submissions.forall(_.submissionRequestDate.isEmpty) mustBe true
+    }
+
     "must propagate the failure and still release the lock when auditing fails" in {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       when(f.audit.auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("audit down")))
+      f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
+      f.lockFlags must contain("N")
+    }
+  }
+  
+  "SubmissionService.submit status is never clobbered by the datetime footer" - {
+
+    "must stamp the datetime footer onto an ACCEPTED status, not revert it to PENDING" in {
+      val f = new Fixtures
+      f.onResponse(acknowledged)
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      val footerWrite = f.submissions.find(_.submissionRequestDate.isDefined).value
+      footerWrite.submittableStatus mustBe Some("ACCEPTED")
+    }
+
+    "must leave ACCEPTED as the final persisted status on an Acknowledged response" in {
+      val f = new Fixtures
+      f.onResponse(acknowledged)
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.statuses.lastOption mustBe Some("ACCEPTED")
+    }
+
+    "must stamp the datetime footer onto a SUBMITTED status carrying the UTRN, not revert it to PENDING" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      val footerWrite = f.submissions.find(_.submissionRequestDate.isDefined).value
+      footerWrite.submittableStatus mustBe Some("SUBMITTED")
+      footerWrite.utrn              mustBe Some(utrn)
+    }
+
+    "must leave SUBMITTED as the final persisted status on a Completed response" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.statuses.lastOption mustBe Some("SUBMITTED")
+    }
+
+    "must stamp the datetime footer onto a FATAL_ERROR status, not revert it to PENDING" in {
+      val f = new Fixtures
+      f.onResponse(errored(fatalError))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      val footerWrite = f.submissions.find(_.submissionRequestDate.isDefined).value
+      footerWrite.submittableStatus mustBe Some("FATAL_ERROR")
+    }
+
+    "must not revert an already-ACCEPTED status to PENDING when the post-accept GovTalk update fails" in {
+      val f = new Fixtures
+      f.onResponse(acknowledged)
+      when(f.chrisService.updateGovTalkStatus(any[UpdateGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.failed(UpstreamErrorResponse("updateGovTalkStatus failed: 500", 500)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
+      f.statuses.lastOption mustBe Some("ACCEPTED")
+    }
+
+    "must skip the datetime footer entirely when the submission fails after the status was persisted" in {
+      val f = new Fixtures
+      f.onResponse(acknowledged)
+      when(f.chrisService.updateGovTalkStatus(any[UpdateGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.failed(UpstreamErrorResponse("updateGovTalkStatus failed: 500", 500)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
+      f.submissions.forall(_.submissionRequestDate.isEmpty) mustBe true
+    }
+
+    "must still release the GovTalk lock when the post-accept GovTalk update fails" in {
+      val f = new Fixtures
+      f.onResponse(acknowledged)
+      when(f.chrisService.updateGovTalkStatus(any[UpdateGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.failed(UpstreamErrorResponse("updateGovTalkStatus failed: 500", 500)))
       f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
       f.lockFlags must contain("N")
     }

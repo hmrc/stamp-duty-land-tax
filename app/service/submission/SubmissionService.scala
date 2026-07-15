@@ -296,25 +296,31 @@ class SubmissionService @Inject() (
                             email: Option[String] = None)
                            (implicit hc: HeaderCarrier): Future[ChrisResponse] =
     logger.info(s"[SubmissionService] SUBMITTING to ChRIS returnId=${ctx.returnId} corrId=$correlationId submitUrl=${submitUrl.getOrElse("<default (connector fallback)>")}")
-    val work: Future[ChrisResponse] =
+
+    val work: Future[(ChrisResponse, SubmissionUpdate)] =
       for
-        resp <- connector.submit(envelope, submitUrl, correlationId)
-        _    =  logger.info(s"[SubmissionService] ChRIS response received returnId=${ctx.returnId} corrId=$correlationId response=${resp.getClass.getSimpleName}")
-        _    <- handleResponse(ctx, fullReturn, resp, seed, sentIrMark, correlationId, email)
-      yield resp
+        resp     <- connector.submit(envelope, submitUrl, correlationId)
+        _        =  logger.info(s"[SubmissionService] ChRIS response received returnId=${ctx.returnId} corrId=$correlationId response=${resp.getClass.getSimpleName}")
+        finalAcc <- handleResponse(ctx, fullReturn, resp, seed, sentIrMark, correlationId, email)
+      yield (resp, finalAcc)
 
     work.transformWith { outcome =>
       val skipDatetime = outcome match
-        case Success(resp) => isRecoverableResp(resp)
-        case Failure(_)    => false
+        case Success((resp, _)) => isRecoverableResp(resp)
+        case Failure(_)         => true
 
-      logger.info(s"[SubmissionService] post-submit cleanup returnId=${ctx.returnId} corrId=$correlationId skipDatetimeFooter=$skipDatetime outcome=${outcome.fold(_.getClass.getSimpleName, _.getClass.getSimpleName)}")
+      logger.info(s"[SubmissionService] post-submit cleanup returnId=${ctx.returnId} corrId=$correlationId skipDatetimeFooter=$skipDatetime outcome=${outcome.fold(_.getClass.getSimpleName, _._1.getClass.getSimpleName)}")
+
+      val stampDatetime: Future[Unit] = outcome match
+        case Success((_, finalAcc)) if !skipDatetime =>
+          ensureSubmissionRequestDatetime(ctx, finalAcc, correlationId)
+        case _ =>
+          Future.unit
 
       (for
         _ <- releaseGovTalkLock(ctx, correlationId)
-        _ <- if skipDatetime then Future.unit
-        else ensureSubmissionRequestDatetime(ctx, seed, correlationId)
-      yield ()).transformWith(_ => Future.fromTry(outcome))
+        _ <- stampDatetime
+      yield ()).transformWith(_ => Future.fromTry(outcome.map(_._1)))
     }
 
   private val RecoverableNumbers: Set[String] = Set("1000", "2005", "3000")
@@ -333,7 +339,7 @@ class SubmissionService @Inject() (
                              sentIrMark: String,
                              correlationId: String,
                              email: Option[String] = None)
-                            (implicit hc: HeaderCarrier): Future[Unit] =
+                            (implicit hc: HeaderCarrier): Future[SubmissionUpdate] =
     val universal = UniversalStatus.fromChrisResponse(resp, Some(sentIrMark))
     logger.info(s"[SubmissionService] resolved returnId=${ctx.returnId} corrId=$correlationId universalStatus=$universal responseType=${resp.getClass.getSimpleName}")
 
@@ -361,7 +367,7 @@ class SubmissionService @Inject() (
                             seed: SubmissionUpdate,
                             correlationId: String,
                             email: Option[String] = None)
-                           (implicit hc: HeaderCarrier): Future[Unit] =
+                           (implicit hc: HeaderCarrier): Future[SubmissionUpdate] =
     logger.info(s"[SubmissionService] SUCCESS branch returnId=${ctx.returnId} corrId=$correlationId universalStatus=$universal responseEndPoint=${resp.responseEndPoint.getOrElse("-")}")
     for
       acc1 <- persistStatus(ctx, seed, universal, correlationId)
@@ -370,15 +376,15 @@ class SubmissionService @Inject() (
       _    <- sendChrisDelete(ctx, resp.responseEndPoint, correlationId)
       _    <- setGovTalkProtocol(ctx, "endState", correlationId)
       _    <- audit.auditSubmission(ctx.storn, ctx.returnId, correlationId, fullReturn, resp)
-      _    <- persistUpdate(ctx, acc1.copy(IRMarkRecieved = resp.receivedIrMark, utrn = resp.utrn), correlationId)
+      acc2 <- persistUpdate(ctx, acc1.copy(IRMarkRecieved = resp.receivedIrMark, utrn = resp.utrn), correlationId)
       _    =  logger.info(s"[SubmissionService] SUCCESS branch complete returnId=${ctx.returnId} corrId=$correlationId utrn=${resp.utrn.getOrElse("-")}")
-    yield ()
+    yield acc2
 
   private def acknowledgementBranch(ctx: SubmissionContext,
                                     resp: ChrisResponse.Acknowledged,
                                     seed: SubmissionUpdate,
                                     correlationId: String)
-                                   (implicit hc: HeaderCarrier): Future[Unit] =
+                                   (implicit hc: HeaderCarrier): Future[SubmissionUpdate] =
     logger.info(s"[SubmissionService] ACK branch returnId=${ctx.returnId} corrId=$correlationId pollInterval=${resp.pollIntervalSeconds.getOrElse(0)} responseEndPoint=${resp.responseEndPoint.getOrElse("-")}")
     for
       acc1 <- persistStatus(ctx, seed, UniversalStatus.ACCEPTED, correlationId)
@@ -386,7 +392,7 @@ class SubmissionService @Inject() (
       acc2 <- persistUpdate(ctx, acc1.copy(acceptedDate = Some(nowIso)), correlationId)
       _    <- updateGovTalkStatistics(ctx, resp.responseEndPoint, resp.pollIntervalSeconds, correlationId)
       _    =  logger.info(s"[SubmissionService] ACK branch complete returnId=${ctx.returnId} corrId=$correlationId")
-    yield ()
+    yield acc2
 
   private def errorBranch(ctx: SubmissionContext,
                           fullReturn: FullReturn,
@@ -395,7 +401,7 @@ class SubmissionService @Inject() (
                           universal: UniversalStatus,
                           seed: SubmissionUpdate,
                           correlationId: String)
-                         (implicit hc: HeaderCarrier): Future[Unit] =
+                         (implicit hc: HeaderCarrier): Future[SubmissionUpdate] =
     val deptError = universal == UniversalStatus.DEPARTMENTAL_ERROR
     val first     = errors.headOption
 
@@ -421,23 +427,23 @@ class SubmissionService @Inject() (
         govTalkErrorMessage = first.flatMap(_.text)
       ), correlationId)
       _    <- createSubmissionErrorDetails(ctx, errors, correlationId)
-      _    <- recoverableTail(ctx, acc2, errors, correlationId)
+      acc3 <- recoverableTail(ctx, acc2, errors, correlationId)
       _    <- audit.auditSubmission(ctx.storn, ctx.returnId, correlationId, fullReturn,
         ChrisResponse.Errored(errors, Some(correlationId), responseEndPoint, "<error/>")) // CIP failure
       _    =  logger.info(s"[SubmissionService] ERROR branch complete returnId=${ctx.returnId} corrId=$correlationId recoverable=${isRecoverable(errors)}")
-    yield ()
+    yield acc3
 
   private def recoverableTail(ctx: SubmissionContext, acc: SubmissionUpdate, errors: Seq[GovTalkError], correlationId: String)
-                             (implicit hc: HeaderCarrier): Future[Unit] =
+                             (implicit hc: HeaderCarrier): Future[SubmissionUpdate] =
     if isRecoverable(errors) then
       logger.info(s"[SubmissionService] error IS recoverable — overwriting status to STARTED and clearing request datetime returnId=${ctx.returnId} corrId=$correlationId")
       persistUpdate(ctx, acc.copy(
         submittableStatus     = Some(UniversalStatus.STARTED.toString),
         submissionRequestDate = None
-      ), correlationId).map(_ => ())
+      ), correlationId)
     else
       logger.info(s"[SubmissionService] error NOT recoverable returnId=${ctx.returnId} corrId=$correlationId")
-      Future.unit
+      Future.successful(acc)
 
   private def persistStatus(ctx: SubmissionContext, acc: SubmissionUpdate, status: UniversalStatus, correlationId: String)
                            (implicit hc: HeaderCarrier): Future[SubmissionUpdate] =
@@ -450,9 +456,9 @@ class SubmissionService @Inject() (
       acc
     }
 
-  private def ensureSubmissionRequestDatetime(ctx: SubmissionContext, seed: SubmissionUpdate, correlationId: String)
+  private def ensureSubmissionRequestDatetime(ctx: SubmissionContext, base: SubmissionUpdate, correlationId: String)
                                              (implicit hc: HeaderCarrier): Future[Unit] =
-    val update = seed.copy(submissionRequestDate = Some(nowIso))
+    val update = base.copy(submissionRequestDate = Some(nowIso))
     chrisService.updateSubmission(UpdateSubmissionRequest(ctx.storn, ctx.returnId, update)).map { _ =>
       logger.info(s"[SubmissionService] submission-request datetime ensured returnId=${ctx.returnId} corrId=$correlationId")
       ()
