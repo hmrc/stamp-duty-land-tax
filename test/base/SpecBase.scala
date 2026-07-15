@@ -18,7 +18,7 @@ package base
 
 import models.agent.*
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
@@ -30,6 +30,7 @@ import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import play.api.test.Helpers.stubControllerComponents
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.FakeIdentifierAction
+import scala.concurrent.duration.*
 
 import scala.concurrent.ExecutionContext
 
@@ -40,9 +41,14 @@ trait   SpecBase
     with ScalaFutures
     with FakeApplicationFactory
     with BaseOneAppPerSuite
+    with IntegrationPatience
     with MockitoSugar
     with OptionValues
     with BeforeAndAfterEach {
+
+
+  implicit override val patienceConfig: PatienceConfig =
+    PatienceConfig(timeout = 2.seconds, interval = 25.millis)
 
   // TODO: NOT IN USE :: shall we drop this function??
   override def fakeApplication(): Application =
