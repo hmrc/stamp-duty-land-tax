@@ -207,7 +207,7 @@ class SubmissionService @Inject() (
       govTalkStatus  = GovTalkStatusReset(
         formLock             = "N",
         createTimestamp      = now,
-        endStateTimestamp    = None,
+        endStateTimestamp    = Some(now),
         lastMessageTimestamp = now,
         numberOfPolls        = "0",
         pollInterval         = "0",
