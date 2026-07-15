@@ -120,15 +120,35 @@ class SubmissionService @Inject() (
                                   (implicit hc: HeaderCarrier): Future[Option[String]] =
     selectGovTalkStatus(ctx).flatMap {
       case Some(existing) =>
-        val storedUrl = existing.gatewayUrl.map(_.trim).filter(_.nonEmpty)
-        logger.debug(s"[SubmissionService] resetting GovTalk Status formResultId=${ctx.returnId} corrId=$correlationId storedGatewayUrl=${storedUrl.getOrElse("-")}")
-        chrisService.resetGovTalkStatus(buildResetRequest(ctx, correlationId)).map(_ => storedUrl)
+        existing.protocolStatus match
+          case Some(status) if status.nonEmpty =>
+            val storedUrl = existing.gatewayUrl.map(_.trim).filter(_.nonEmpty)
+            logger.debug(s"[SubmissionService] resetting GovTalk Status formResultId=${ctx.returnId} corrId=$correlationId oldProtocol=$status storedGatewayUrl=${storedUrl.getOrElse("-")}")
+            chrisService
+              .resetGovTalkStatus(buildResetRequest(ctx, correlationId, status))
+              .map(_ => storedUrl)
 
+          case _ =>
+            logger.warn(s"[SubmissionService] GovTalk Status row present but protocolStatus empty formResultId=${ctx.returnId} corrId=$correlationId")
+            deleteThenInsert(ctx, correlationId).map(_ => None)
       case None =>
         logger.debug(s"[SubmissionService] inserting initial GovTalk Status formResultId=${ctx.returnId} corrId=$correlationId")
         chrisService.insertInitialGovTalkStatus(buildInitialInsertRequest(ctx, correlationId)).map(_ => None)
     }
 
+  private def deleteThenInsert(ctx: SubmissionContext, correlationId: String)
+                              (implicit hc: HeaderCarrier): Future[Unit] =
+    chrisService.deleteGovTalkStatus(DeleteGovTalkStatusRequest(resultId = ctx.returnId))
+      .flatMap { _ =>
+        chrisService.insertInitialGovTalkStatus(buildInitialInsertRequest(ctx, correlationId))
+          .map(_ => ())
+          .recoverWith { case e =>
+            logger.error(
+              s"[SubmissionService] delete succeeded but insert FAILED — GovTalk Status row for " +
+                s"formResultId=${ctx.returnId} corrId=$correlationId is now MISSING, must re-seed on retry", e)
+            Future.failed(e)
+          }
+      }
   private def selectGovTalkStatus(ctx: SubmissionContext)(implicit hc: HeaderCarrier): Future[Option[SelectGovTalkStatusResponse]] =
     chrisService.selectGovTalkStatus(SelectGovTalkStatusRequest(ctx.storn, ctx.returnId))
       .map(resp => Option.when(resp.formResultId.exists(_.trim.nonEmpty))(resp))
@@ -152,7 +172,7 @@ class SubmissionService @Inject() (
       )
     )
 
-  private def buildResetRequest(ctx: SubmissionContext, correlationId: String): ResetGovTalkStatusRequest =
+  private def buildResetRequest(ctx: SubmissionContext, correlationId: String, oldProtocol: String): ResetGovTalkStatusRequest =
     val now = nowSqlTimestamp
     ResetGovTalkStatusRequest(
       userIdentifier = ctx.storn,
@@ -165,7 +185,7 @@ class SubmissionService @Inject() (
         lastMessageTimestamp = now,
         numberOfPolls        = "0",
         pollInterval         = "0",
-        protocolStatusOld    = "",
+        protocolStatusOld    = oldProtocol,
         protocolStatusNew    = "initial",
         gatewayUrl           = appConfig.baseUrl("chris")
       )

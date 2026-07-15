@@ -74,6 +74,25 @@ final class SubmissionServiceSpec extends SpecBase {
   private def transportError(message: String): ChrisResponse.TransportError =
     ChrisResponse.TransportError(message, "<transport-error/>")
 
+  private def selectRow(
+                         protocol: Option[String],
+                         gatewayUrl: Option[String] = Some("http://chris"),
+                         formResultId: Option[String] = Some(returnId)
+                       ): SelectGovTalkStatusResponse =
+    SelectGovTalkStatusResponse(
+      userIdentifier       = Some(storn),
+      formResultId         = formResultId,
+      correlationId        = Some("corr"),
+      formLock             = Some("N"),
+      createTimestamp      = Some("2026-01-31 09:15:30"),
+      endStateTimestamp    = None,
+      lastMessageTimestamp = Some("2026-01-31 09:15:30"),
+      numberOfPolls        = Some("0"),
+      pollInterval         = Some("0"),
+      protocolStatus       = protocol,
+      gatewayUrl           = gatewayUrl
+    )
+
   private val departmentalError: GovTalkError =
     GovTalkError(raisedBy = "Department", number = Some("3001"), errorType = "business", text = Some("Invalid STORN"), location = Some("/SDLT/x"))
 
@@ -85,6 +104,12 @@ final class SubmissionServiceSpec extends SpecBase {
 
   private val recoverableError: GovTalkError =
     GovTalkError(raisedBy = "Gateway", number = Some("2005"), errorType = "fatal", text = Some("Transient"), location = None)
+
+  private val recoverable1000: GovTalkError =
+    GovTalkError(raisedBy = "Gateway", number = Some("1000"), errorType = "fatal", text = Some("Transient 1000"), location = None)
+
+  private val recoverable3000: GovTalkError =
+    GovTalkError(raisedBy = "Gateway", number = Some("3000"), errorType = "fatal", text = Some("Transient 3000"), location = None)
 
   private final class Fixtures:
     val envelopeBuilder: GovTalkEnvelopeBuilder = mock[GovTalkEnvelopeBuilder]
@@ -112,6 +137,8 @@ final class SubmissionServiceSpec extends SpecBase {
     when(chrisService.resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(GovTalkStatusReturn(true)))
     when(chrisService.insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier]))
+      .thenReturn(Future.successful(GovTalkStatusReturn(true)))
+    when(chrisService.deleteGovTalkStatus(any[DeleteGovTalkStatusRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(GovTalkStatusReturn(true)))
     when(chrisService.updateSubmission(any[UpdateSubmissionRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(UpdateSubmissionReturn(true)))
@@ -149,6 +176,16 @@ final class SubmissionServiceSpec extends SpecBase {
       verify(chrisService, atLeastOnce()).updateGovTalkStatusLock(captor.capture())(any[HeaderCarrier])
       captor.getAllValues.asScala.toSeq.map(_.govTalkStatus.formLockNew)
 
+    def submitUrls: Seq[Option[String]] =
+      val captor = ArgumentCaptor.forClass(classOf[Option[String]])
+      verify(connector, atLeastOnce()).submit(any[Elem], captor.capture(), any[String])(any[HeaderCarrier])
+      captor.getAllValues.asScala.toSeq
+
+    def statisticsPollIntervals: Seq[String] =
+      val captor = ArgumentCaptor.forClass(classOf[UpdateGovTalkStatisticsRequest])
+      verify(chrisService, atLeastOnce()).updateGovTalkStatistics(captor.capture())(any[HeaderCarrier])
+      captor.getAllValues.asScala.toSeq.map(_.govTalkStatus.pollInterval)
+
     def neverSubmitted(): Unit =
       verify(connector, never()).submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier])
 
@@ -173,6 +210,12 @@ final class SubmissionServiceSpec extends SpecBase {
     "must fail with MissingSubmissionContextException when the return version is missing" in {
       val f = new Fixtures
       f.service.submit(aReturn(version = None), sender, periodEnd, cred).failed.futureValue mustBe a[MissingSubmissionContextException]
+    }
+
+    "must treat a blank credential as missing even when the return context is otherwise complete" in {
+      val f = new Fixtures
+      f.service.submit(aReturn(), sender, periodEnd, "").failed.futureValue mustBe a[MissingSubmissionContextException]
+      f.neverSubmitted()
     }
   }
 
@@ -205,6 +248,16 @@ final class SubmissionServiceSpec extends SpecBase {
       req.returnResourceRef mustBe returnId
       req.version mustBe 1
     }
+
+    "must parse a non-default return version into the lock request" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(version = Some("2")), sender, periodEnd, cred)
+
+      val captor = ArgumentCaptor.forClass(classOf[LockReturnRequest])
+      verify(f.chrisService, Mockito.timeout(2000)).lockReturn(captor.capture())(any[HeaderCarrier])
+      captor.getValue.version mustBe 2
+    }
   }
 
   "SubmissionService.submit existing submission" - {
@@ -221,6 +274,20 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(withStatus("FAILED"), sender, periodEnd, cred).futureValue
+      verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
+    }
+
+    "must clear prior error details for a lower-case error status (case-insensitive)" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(withStatus("error"), sender, periodEnd, cred).futureValue
+      verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
+    }
+
+    "must clear prior error details for a whitespace-padded failed status (trimmed)" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(withStatus("  FAILED  "), sender, periodEnd, cred).futureValue
       verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
     }
 
@@ -246,23 +313,20 @@ final class SubmissionServiceSpec extends SpecBase {
     "must reset the row when one already exists" in {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
-        .thenReturn(Future.successful(SelectGovTalkStatusResponse(
-          userIdentifier = Some(storn),
-          formResultId = Some(returnId),
-          correlationId = Some("corr"),
-          formLock = Some("N"),
-          createTimestamp = Some("2026-01-31 09:15:30"),
-          endStateTimestamp = None,
-          lastMessageTimestamp = Some("2026-01-31 09:15:30"),
-          numberOfPolls = Some("0"),
-          pollInterval = Some("0"),
-          protocolStatus = Some("initial"),
-          gatewayUrl = Some("http://chris")
-        )))
+        .thenReturn(Future.successful(selectRow(protocol = Some("initial"))))
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       verify(f.chrisService).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
       verify(f.chrisService, never()).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
+    }
+
+    "must reuse the stored gateway URL as the ChRIS submit URL when resetting" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = Some("initial"), gatewayUrl = Some("http://stored-gateway"))))
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.submitUrls must contain(Some("http://stored-gateway"))
     }
 
     "must insert an initial row when the lookup fails" in {
@@ -273,6 +337,38 @@ final class SubmissionServiceSpec extends SpecBase {
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       verify(f.chrisService).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
       verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
+    }
+
+    "must insert an initial row when the existing lookup has a blank formResultId" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = Some("initial"), formResultId = Some("   "))))
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      verify(f.chrisService).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
+      verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
+    }
+
+    "must delete then re-insert when the row exists but the protocolStatus is empty" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = None)))
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      verify(f.chrisService).deleteGovTalkStatus(any[DeleteGovTalkStatusRequest])(any[HeaderCarrier])
+      verify(f.chrisService).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
+      verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
+    }
+
+    "must fail the whole submit when the delete succeeds but the re-insert fails" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = None)))
+      when(f.chrisService.insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.failed(new RuntimeException("insert failed")))
+      f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue mustBe a[RuntimeException]
+      verify(f.chrisService).deleteGovTalkStatus(any[DeleteGovTalkStatusRequest])(any[HeaderCarrier])
+      f.neverSubmitted()
     }
   }
 
@@ -369,6 +465,16 @@ final class SubmissionServiceSpec extends SpecBase {
       f.protocols must contain allOf ("deleteRequest", "endState")
     }
 
+    "must update the GovTalk statistics" in {
+      val f = new Fixtures; run(f).futureValue
+      verify(f.chrisService).updateGovTalkStatistics(any[UpdateGovTalkStatisticsRequest])(any[HeaderCarrier])
+    }
+
+    "must send the ChRIS delete for the response resource" in {
+      val f = new Fixtures; run(f).futureValue
+      verify(f.connector).delete(any[Option[String]], any[String])(any[HeaderCarrier])
+    }
+
     "must audit the submission" in {
       val f = new Fixtures; run(f).futureValue
       verify(f.audit).auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier])
@@ -382,6 +488,19 @@ final class SubmissionServiceSpec extends SpecBase {
     "must run the datetime footer" in {
       val f = new Fixtures; run(f).futureValue
       f.submissions.exists(_.submissionRequestDate.isDefined) mustBe true
+    }
+  }
+
+  "SubmissionService.submit on Completed ChRIS delete resilience" - {
+
+    "must still resolve SUBMITTED and audit when the ChRIS delete fails" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      when(f.connector.delete(any[Option[String]], any[String])(any[HeaderCarrier]))
+        .thenReturn(Future.failed(new RuntimeException("delete down")))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.statuses must contain("SUBMITTED")
+      verify(f.audit).auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier])
     }
   }
 
@@ -431,6 +550,11 @@ final class SubmissionServiceSpec extends SpecBase {
     "must update the GovTalk statistics" in {
       val f = new Fixtures; run(f).futureValue
       verify(f.chrisService).updateGovTalkStatistics(any[UpdateGovTalkStatisticsRequest])(any[HeaderCarrier])
+    }
+
+    "must propagate the poll interval into the GovTalk statistics" in {
+      val f = new Fixtures; run(f).futureValue
+      f.statisticsPollIntervals must contain("10")
     }
 
     "must not audit" in {
@@ -528,9 +652,28 @@ final class SubmissionServiceSpec extends SpecBase {
       verify(f.chrisService, never()).updateGovTalkStatus(any[UpdateGovTalkStatusRequest])(any[HeaderCarrier])
     }
 
+    "must still create an error detail even though the error is recoverable" in {
+      val f = new Fixtures; run(f).futureValue
+      verify(f.chrisService).createSubmissionErrorDetail(any[CreateSubmissionErrorDetailRequest])(any[HeaderCarrier])
+    }
+
     "must audit the submission" in {
       val f = new Fixtures; run(f).futureValue
       verify(f.audit).auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier])
+    }
+
+    "must overwrite the status to STARTED for recoverable error 1000" in {
+      val f = new Fixtures
+      f.onResponse(errored(recoverable1000))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.statuses must contain("STARTED")
+    }
+
+    "must overwrite the status to STARTED for recoverable error 3000" in {
+      val f = new Fixtures
+      f.onResponse(errored(recoverable3000))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.statuses must contain("STARTED")
     }
   }
 
@@ -564,6 +707,20 @@ final class SubmissionServiceSpec extends SpecBase {
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       f.statuses must contain("STARTED")
     }
+
+    "must not drive any GovTalk protocol transition on a transport error" in {
+      val f = new Fixtures
+      f.onResponse(transportError("connection reset"))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      verify(f.chrisService, never()).updateGovTalkStatus(any[UpdateGovTalkStatusRequest])(any[HeaderCarrier])
+    }
+
+    "must still audit a timeout transport error" in {
+      val f = new Fixtures
+      f.onResponse(transportError("Read timed out"))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      verify(f.audit).auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier])
+    }
   }
 
   "SubmissionService.submit on multiple GovTalk errors" - {
@@ -590,6 +747,13 @@ final class SubmissionServiceSpec extends SpecBase {
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       f.lockFlags must contain("N")
+    }
+
+    "must acquire the GovTalk lock before releasing it" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.lockFlags must contain allOf ("Y", "N")
     }
 
     "must release the GovTalk lock after an error response" in {
