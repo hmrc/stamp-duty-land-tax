@@ -171,6 +171,11 @@ final class SubmissionServiceSpec extends SpecBase {
       verify(chrisService, atLeastOnce()).updateGovTalkStatus(captor.capture())(any[HeaderCarrier])
       captor.getAllValues.asScala.toSeq.map(_.protocolStatus)
 
+    def resetRequests: Seq[ResetGovTalkStatusRequest] =
+      val captor = ArgumentCaptor.forClass(classOf[ResetGovTalkStatusRequest])
+      verify(chrisService, atLeastOnce()).resetGovTalkStatus(captor.capture())(any[HeaderCarrier])
+      captor.getAllValues.asScala.toSeq
+
     def lockFlags: Seq[String] =
       val captor = ArgumentCaptor.forClass(classOf[UpdateGovTalkStatusLockRequest])
       verify(chrisService, atLeastOnce()).updateGovTalkStatusLock(captor.capture())(any[HeaderCarrier])
@@ -262,32 +267,39 @@ final class SubmissionServiceSpec extends SpecBase {
 
   "SubmissionService.submit existing submission" - {
 
-    "must clear prior error details when the existing submission is in ERROR" in {
+    "must clear prior error details when the existing submission is in DEPARTMENTAL_ERROR" in {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
-      f.service.submit(withStatus("ERROR"), sender, periodEnd, cred).futureValue
+      f.service.submit(withStatus("DEPARTMENTAL_ERROR"), sender, periodEnd, cred).futureValue
       verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
       verify(f.chrisService, never()).createSubmission(any[CreateSubmissionRequest])(any[HeaderCarrier])
     }
 
-    "must clear prior error details when the existing submission is in FAILED" in {
+    "must clear prior error details when the existing submission is in FATAL_ERROR" in {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
-      f.service.submit(withStatus("FAILED"), sender, periodEnd, cred).futureValue
+      f.service.submit(withStatus("FATAL_ERROR"), sender, periodEnd, cred).futureValue
       verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
     }
 
-    "must clear prior error details for a lower-case error status (case-insensitive)" in {
+    "must clear prior error details when the existing submission is in STARTED" in {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
-      f.service.submit(withStatus("error"), sender, periodEnd, cred).futureValue
+      f.service.submit(withStatus("STARTED"), sender, periodEnd, cred).futureValue
       verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
     }
 
-    "must clear prior error details for a whitespace-padded failed status (trimmed)" in {
+    "must clear prior error details for a lower-case status (case-insensitive)" in {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
-      f.service.submit(withStatus("  FAILED  "), sender, periodEnd, cred).futureValue
+      f.service.submit(withStatus("fatal_error"), sender, periodEnd, cred).futureValue
+      verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
+    }
+
+    "must clear prior error details for a whitespace-padded status (trimmed)" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(withStatus("  FATAL_ERROR  "), sender, periodEnd, cred).futureValue
       verify(f.chrisService).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
     }
 
@@ -295,6 +307,14 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(withStatus("PENDING"), sender, periodEnd, cred).futureValue
+      verify(f.chrisService, never()).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
+      verify(f.chrisService, never()).createSubmission(any[CreateSubmissionRequest])(any[HeaderCarrier])
+    }
+
+    "must neither clear nor create when the existing submission is ACCEPTED" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(withStatus("ACCEPTED"), sender, periodEnd, cred).futureValue
       verify(f.chrisService, never()).deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier])
       verify(f.chrisService, never()).createSubmission(any[CreateSubmissionRequest])(any[HeaderCarrier])
     }
@@ -314,17 +334,26 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(selectRow(protocol = Some("initial"))))
-      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.onResponse(acknowledged) // ack does not trigger the success-path finalise reset, so only the setup reset happens
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       verify(f.chrisService).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
       verify(f.chrisService, never()).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
+    }
+
+    "must send a null end-state timestamp on reset (spec F53 step 7)" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = Some("initial"))))
+      f.onResponse(acknowledged)
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.resetRequests.head.govTalkStatus.endStateTimestamp mustBe None
     }
 
     "must reuse the stored gateway URL as the ChRIS submit URL when resetting" in {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(selectRow(protocol = Some("initial"), gatewayUrl = Some("http://stored-gateway"))))
-      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.onResponse(acknowledged)
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       f.submitUrls must contain(Some("http://stored-gateway"))
     }
@@ -333,7 +362,7 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("not found")))
-      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.onResponse(acknowledged)
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       verify(f.chrisService).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
       verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
@@ -343,7 +372,7 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(selectRow(protocol = Some("initial"), formResultId = Some("   "))))
-      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.onResponse(acknowledged)
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       verify(f.chrisService).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
       verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
@@ -353,7 +382,7 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(selectRow(protocol = None)))
-      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.onResponse(acknowledged)
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       verify(f.chrisService).deleteGovTalkStatus(any[DeleteGovTalkStatusRequest])(any[HeaderCarrier])
       verify(f.chrisService).insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier])
@@ -436,11 +465,12 @@ final class SubmissionServiceSpec extends SpecBase {
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(aReturn(), sender, periodEnd, cred)
 
-    "must return the Completed response" in {
+    "must resolve to a SUBMITTED outcome carrying the UTRN" in {
       val f = new Fixtures
-      val resp = completed(Some(utrn), Some(sentMark))
-      f.onResponse(resp)
-      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue mustBe resp
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      val outcome = f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      outcome.status mustBe UniversalStatus.SUBMITTED
+      outcome.utrn   mustBe Some(utrn)
     }
 
     "must resolve the status to SUBMITTED" in {
@@ -460,9 +490,29 @@ final class SubmissionServiceSpec extends SpecBase {
       w.IRMarkRecieved mustBe Some(sentMark)
     }
 
+    "must set the acceptedDate on a successful submission" in {
+      val f = new Fixtures; run(f).futureValue
+      f.submissions.exists(_.acceptedDate.isDefined) mustBe true
+    }
+
     "must drive the GovTalk deleteRequest and endState protocol transitions" in {
       val f = new Fixtures; run(f).futureValue
       f.protocols must contain allOf ("deleteRequest", "endState")
+    }
+
+    "must reset the GovTalk status after endState on a successful delete" in {
+      val f = new Fixtures; run(f).futureValue
+      verify(f.chrisService).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
+    }
+
+    "must neither set endState nor reset when the ChRIS delete is unsuccessful" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      when(f.connector.delete(any[Option[String]], any[String])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(ChrisDeleteResponse.TransportError("delete boom", "<x/>")))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
+      f.protocols mustNot contain("endState")
     }
 
     "must update the GovTalk statistics" in {
@@ -528,8 +578,11 @@ final class SubmissionServiceSpec extends SpecBase {
       f.onResponse(acknowledged)
       f.service.submit(aReturn(), sender, periodEnd, cred)
 
-    "must return the Acknowledged response" in {
-      val f = new Fixtures; run(f).futureValue mustBe acknowledged
+    "must resolve to an ACCEPTED outcome with no UTRN" in {
+      val f = new Fixtures
+      val outcome = run(f).futureValue
+      outcome.status mustBe UniversalStatus.ACCEPTED
+      outcome.utrn   mustBe None
     }
 
     "must resolve the status to ACCEPTED" in {
@@ -800,7 +853,7 @@ final class SubmissionServiceSpec extends SpecBase {
       f.lockFlags must contain("N")
     }
   }
-  
+
   "SubmissionService.submit status is never clobbered by the datetime footer" - {
 
     "must stamp the datetime footer onto an ACCEPTED status, not revert it to PENDING" in {

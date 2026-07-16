@@ -58,7 +58,7 @@ class SubmissionService @Inject() (
              sender: SenderType,
              periodEnd: LocalDate,
              credentialIdentifier: String,
-             email: Option[String] = None)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
+             email: Option[String] = None)(implicit hc: HeaderCarrier): Future[SubmissionOutcome] =
     val correlationId = newCorrelationId()
 
     requireContext(fullReturn, credentialIdentifier) match
@@ -68,7 +68,7 @@ class SubmissionService @Inject() (
 
       case Right(ctx) =>
         logger.info(s"[SubmissionService] submit START returnId=${ctx.returnId} storn=${ctx.storn} version=${ctx.version} sender=$sender periodEnd=$periodEnd hasExistingSubmission=${fullReturn.submission.isDefined} corrId=$correlationId")
-        val started = for
+        val started: Future[SubmissionOutcome] = for
           _                <- prepareReturn(ctx, fullReturn, correlationId, email)
           submitUrl        <- prepareGovTalkStatus(ctx, correlationId)
           built            <- buildAndValidate(ctx, fullReturn, sender, periodEnd, correlationId)
@@ -76,11 +76,11 @@ class SubmissionService @Inject() (
           sentIrMark       = seed.IRMarkSent.getOrElse("")
           _                <- acquireGovTalkLock(ctx, correlationId)
           resp             <- sendAndHandle(ctx, fullReturn, envelope, seed, sentIrMark, submitUrl, correlationId, email)
-        yield resp
+        yield SubmissionOutcome.fromChrisResponse(ctx.returnId, resp, Some(sentIrMark))
 
         started.andThen {
-          case Success(resp) =>
-            logger.info(s"[SubmissionService] submit END returnId=${ctx.returnId} corrId=$correlationId response=${resp.getClass.getSimpleName}")
+          case Success(outcome) =>
+            logger.info(s"[SubmissionService] submit END returnId=${ctx.returnId} corrId=$correlationId status=${outcome.status} utrn=${outcome.utrn.getOrElse("-")}")
           case Failure(e) =>
             logger.error(s"[SubmissionService] submit FAILED returnId=${ctx.returnId} corrId=$correlationId error=${e.getClass.getSimpleName}: ${e.getMessage}")
         }
@@ -121,7 +121,7 @@ class SubmissionService @Inject() (
   private def isResubmittable(existing: Submission): Boolean =
     existing.submissionStatus.exists { s =>
       val v = s.trim.toUpperCase
-      v == "ERROR" || v == "FAILED"
+      v == "DEPARTMENTAL_ERROR" || v == "FATAL_ERROR" || v == "STARTED"
     }
 
 
@@ -207,7 +207,7 @@ class SubmissionService @Inject() (
       govTalkStatus  = GovTalkStatusReset(
         formLock             = "N",
         createTimestamp      = now,
-        endStateTimestamp    = Some(now),
+        endStateTimestamp    = None,          // spec F53 step 7: null for the end state date on reset
         lastMessageTimestamp = now,
         numberOfPolls        = "0",
         pollInterval         = "0",
@@ -370,15 +370,37 @@ class SubmissionService @Inject() (
                            (implicit hc: HeaderCarrier): Future[SubmissionUpdate] =
     logger.info(s"[SubmissionService] SUCCESS branch returnId=${ctx.returnId} corrId=$correlationId universalStatus=$universal responseEndPoint=${resp.responseEndPoint.getOrElse("-")}")
     for
-      acc1 <- persistStatus(ctx, seed, universal, correlationId)
-      _    <- updateGovTalkStatistics(ctx, resp.responseEndPoint, None, correlationId)
-      _    <- setGovTalkProtocol(ctx, "deleteRequest", correlationId)
-      _    <- sendChrisDelete(ctx, resp.responseEndPoint, correlationId)
-      _    <- setGovTalkProtocol(ctx, "endState", correlationId)
-      _    <- audit.auditSubmission(ctx.storn, ctx.returnId, correlationId, fullReturn, resp)
-      acc2 <- persistUpdate(ctx, acc1.copy(IRMarkRecieved = resp.receivedIrMark, utrn = resp.utrn), correlationId)
-      _    =  logger.info(s"[SubmissionService] SUCCESS branch complete returnId=${ctx.returnId} corrId=$correlationId utrn=${resp.utrn.getOrElse("-")}")
+      acc1    <- persistStatus(ctx, seed, universal, correlationId)
+      _       <- updateGovTalkStatistics(ctx, resp.responseEndPoint, None, correlationId)
+      _       <- setGovTalkProtocol(ctx, "deleteRequest", correlationId)
+      deleted <- sendChrisDelete(ctx, resp.responseEndPoint, correlationId)
+      _       <- if deleted then finaliseGovTalkStatus(ctx, correlationId)
+      else {
+        logger.warn(s"[SubmissionService] ChRIS delete unsuccessful; leaving GovTalk at deleteRequest (no endState/reset) returnId=${ctx.returnId} corrId=$correlationId")
+        Future.unit
+      }
+      _       <- audit.auditSubmission(ctx.storn, ctx.returnId, correlationId, fullReturn, resp)
+      acc2    <- persistUpdate(ctx, acc1.copy(
+        IRMarkRecieved = resp.receivedIrMark,
+        utrn           = resp.utrn,
+        acceptedDate   = Some(nowIso)     // spec F52 step 14.3: set accepted date on success (no datetime in response -> now)
+      ), correlationId)
+      _       =  logger.info(s"[SubmissionService] SUCCESS branch complete returnId=${ctx.returnId} corrId=$correlationId utrn=${resp.utrn.getOrElse("-")}")
     yield acc2
+
+  // spec F52 step 14.1.3: after a successful delete, mark endState and then RESET the GovTalk status row.
+  // Error-suppressed: this is post-success housekeeping and must never turn an accepted filing into a failure.
+  private def finaliseGovTalkStatus(ctx: SubmissionContext, correlationId: String)(implicit hc: HeaderCarrier): Future[Unit] =
+    (for
+      _ <- setGovTalkProtocol(ctx, "endState", correlationId)
+      _ <- chrisService.resetGovTalkStatus(buildResetRequest(ctx, correlationId, "endState")).map(_ => ())
+    yield {
+      logger.info(s"[SubmissionService] GovTalk Status finalised (endState + reset) returnId=${ctx.returnId} corrId=$correlationId")
+      ()
+    }).recover { case e =>
+      logger.warn(s"[SubmissionService] GovTalk finalise (endState/reset) FAILED (suppressed) returnId=${ctx.returnId} corrId=$correlationId: ${e.getMessage}")
+      ()
+    }
 
   private def acknowledgementBranch(ctx: SubmissionContext,
                                     resp: ChrisResponse.Acknowledged,
@@ -525,25 +547,26 @@ class SubmissionService @Inject() (
       ()
     }
 
+  // Returns true when the ChRIS resource was deleted (or was already gone), false on any error.
   private def sendChrisDelete(ctx: SubmissionContext, endpoint: Option[String], correlationId: String)
-                             (implicit hc: HeaderCarrier): Future[Unit] =
+                             (implicit hc: HeaderCarrier): Future[Boolean] =
     logger.info(s"[SubmissionService] sending ChRIS DELETE returnId=${ctx.returnId} corrId=$correlationId endpoint=${endpoint.getOrElse("<default>")}")
     connector.delete(endpoint, correlationId).map {
       case ChrisDeleteResponse.Deleted(_, _) =>
         logger.info(s"[SubmissionService] ChRIS resource DELETED returnId=${ctx.returnId} corrId=$correlationId")
-        ()
+        true
       case ChrisDeleteResponse.NotFound(_, _) =>
         logger.info(s"[SubmissionService] ChRIS resource already gone (2000) returnId=${ctx.returnId} corrId=$correlationId")
-        ()
+        true
       case ChrisDeleteResponse.Errored(errors, _, _) =>
         logger.warn(s"[SubmissionService] ChRIS DELETE returned errors (suppressed) returnId=${ctx.returnId} corrId=$correlationId: ${errors.mkString("; ")}")
-        ()
+        false
       case ChrisDeleteResponse.TransportError(msg, _) =>
         logger.warn(s"[SubmissionService] ChRIS DELETE transport error (suppressed) returnId=${ctx.returnId} corrId=$correlationId: $msg")
-        ()
+        false
     }.recover { case e =>
       logger.warn(s"[SubmissionService] ChRIS DELETE failed (suppressed) returnId=${ctx.returnId} corrId=$correlationId: ${e.getMessage}")
-      ()
+      false
     }
 
   private case class SubmissionContext(storn: String, returnId: String, version: Int, credentialIdentifier: String)

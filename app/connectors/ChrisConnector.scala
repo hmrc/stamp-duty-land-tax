@@ -45,6 +45,8 @@ class ChrisConnector @Inject() (
   private val requestTimeout: Duration = 120.seconds
   private val UtrnPattern: Regex = "^[0-9]{9}M[A-HJ-NP-TV-Z]$".r
   private val XmlDecl: String = """<?xml version="1.0" encoding="UTF-8"?>"""
+  
+  private val RetryableHttpStatuses: Set[Int] = Set(408, 429, 500, 502, 503, 504)
 
   def submit(envelope: scala.xml.Elem, endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
     val target    = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
@@ -62,8 +64,11 @@ class ChrisConnector @Inject() (
       .execute[HttpResponse]
       .map { resp =>
         if is2xx(resp.status) then parse(resp.body)
+        else if RetryableHttpStatuses.contains(resp.status) then
+          logger.warn(s"[ChrisConnector] transient NON-2xx (retryable -> STARTED) corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          ChrisResponse.Errored(Seq(retryableHttp(resp.status)), Some(correlationId), None, resp.body)
         else
-          logger.error(s"[ChrisConnector] NON-2xx corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          logger.error(s"[ChrisConnector] NON-2xx (fatal) corrId=$correlationId status=${resp.status} body:\n${resp.body}")
           ChrisResponse.TransportError(s"NON-2xx status=${resp.status}")
       }
       .recover {
@@ -161,6 +166,15 @@ class ChrisConnector @Inject() (
       number = Some("2005"),
       errorType = "fatal",
       text = Some("The Service has not received an acknowledgement of your submission within the permitted timescale (client timeout)."),
+      location = None
+    )
+  
+  private def retryableHttp(status: Int): GovTalkError =
+    GovTalkError(
+      raisedBy = "Gateway",
+      number = Some("2005"),
+      errorType = "fatal",
+      text = Some(s"ChRIS returned a transient HTTP $status; the submission was not acknowledged and can be retried."),
       location = None
     )
 

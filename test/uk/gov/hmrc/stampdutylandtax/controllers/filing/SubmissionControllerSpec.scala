@@ -20,12 +20,11 @@ import base.SpecBase
 import models.filing.*
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{verify, when}
-import play.api.http.Status.{BAD_REQUEST, CONFLICT, INTERNAL_SERVER_ERROR, OK}
+import play.api.http.Status.{ACCEPTED, BAD_GATEWAY, BAD_REQUEST, CONFLICT, INTERNAL_SERVER_ERROR, OK, SERVICE_UNAVAILABLE}
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsEmpty, AnyContentAsJson, Result}
 import play.api.test.Helpers.{contentAsJson, status}
 import service.submission.*
-import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.stampdutylandtax.service.submission.SdltReturnFixtures.*
 
@@ -37,48 +36,75 @@ class SubmissionControllerSpec extends SpecBase {
 
     "POST /submit (submit)" - {
 
-      "return OK with an Accepted response when ChRIS completes with a UTRN" in new BaseSetup {
-        when(mockSubmissionService.submit(any, any, any, any, any)(any[HeaderCarrier]))
-          .thenReturn(Future.successful(ChrisResponse.Completed(Some(utrn), None, Some(corrId), None, "<x/>")))
+      "return 200 SUBMITTED (receipt) when the outcome is SUBMITTED with a UTRN" in new BaseSetup {
+        onOutcome(UniversalStatus.SUBMITTED, Some(utrn))
 
         val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
 
         status(result) mustBe OK
-        (contentAsJson(result) \ "utrn").as[String] mustBe utrn
+        (contentAsJson(result) \ "utrn").as[String]     mustBe utrn
+        (contentAsJson(result) \ "receipt").as[Boolean] mustBe true
+        (contentAsJson(result) \ "_type").as[String]    mustBe "submitted"
         verify(mockSubmissionService).submit(any, any, any, any, any)(any[HeaderCarrier])
       }
 
-      "return BAD_REQUEST with a Rejected response when ChRIS returns errors" in new BaseSetup {
-        val govTalkError: GovTalkError =
-          GovTalkError(raisedBy = "HMRC", number = Some("1001"), errorType = "business", text = Some("Invalid STORN"), location = None)
+      "return 200 SUBMITTED (no receipt) when the outcome is SUBMITTED_NO_RECEIPT with a UTRN" in new BaseSetup {
+        onOutcome(UniversalStatus.SUBMITTED_NO_RECEIPT, Some(utrn))
 
-        when(mockSubmissionService.submit(any, any, any, any, any)(any[HeaderCarrier]))
-          .thenReturn(Future.successful(ChrisResponse.Errored(Seq(govTalkError), Some(corrId), None, "<x/>")))
+        val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
+
+        status(result) mustBe OK
+        (contentAsJson(result) \ "utrn").as[String]     mustBe utrn
+        (contentAsJson(result) \ "receipt").as[Boolean] mustBe false
+        (contentAsJson(result) \ "_type").as[String]    mustBe "submitted"
+      }
+
+      "return 202 ACKNOWLEDGED when the outcome is ACCEPTED" in new BaseSetup {
+        onOutcome(UniversalStatus.ACCEPTED)
+
+        val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
+
+        status(result) mustBe ACCEPTED
+        (contentAsJson(result) \ "_type").as[String] mustBe "acknowledged"
+      }
+
+      "return 503 RETRYABLE when the outcome is STARTED (recoverable)" in new BaseSetup {
+        onOutcome(UniversalStatus.STARTED)
+
+        val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
+
+        status(result) mustBe SERVICE_UNAVAILABLE
+        (contentAsJson(result) \ "_type").as[String] mustBe "retryable"
+      }
+
+      "return 400 REJECTED when the outcome is a DEPARTMENTAL_ERROR (business validation)" in new BaseSetup {
+        onOutcome(UniversalStatus.DEPARTMENTAL_ERROR, errs = Seq(govTalkError))
 
         val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
 
         status(result) mustBe BAD_REQUEST
         (contentAsJson(result) \ "errors").isDefined mustBe true
+        (contentAsJson(result) \ "_type").as[String] mustBe "rejected"
       }
 
-      "return 500 when ChRIS completes without an extractable UTRN" in new BaseSetup {
-        when(mockSubmissionService.submit(any, any, any, any, any)(any[HeaderCarrier]))
-          .thenReturn(Future.successful(ChrisResponse.Completed(None, None, Some(corrId), None, "<x/>")))
+      "return 502 FAILED when the outcome is a FATAL_ERROR" in new BaseSetup {
+        onOutcome(UniversalStatus.FATAL_ERROR, errs = Seq(govTalkError))
 
         val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
 
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "error").as[String] mustBe "Submission failed"
+        status(result) mustBe BAD_GATEWAY
+        (contentAsJson(result) \ "errors").isDefined mustBe true
+        (contentAsJson(result) \ "_type").as[String] mustBe "failed"
       }
 
-      "return 500 when ChRIS returns a transport error" in new BaseSetup {
-        when(mockSubmissionService.submit(any, any, any, any, any)(any[HeaderCarrier]))
-          .thenReturn(Future.successful(ChrisResponse.TransportError("connection reset", "<x/>")))
+      "return 502 FAILED when the outcome is SUBMITTED but carries no UTRN (AF11)" in new BaseSetup {
+        onOutcome(UniversalStatus.SUBMITTED, utrnOpt = None)
 
         val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
 
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        (contentAsJson(result) \ "error").as[String] mustBe "Submission failed"
+        status(result) mustBe BAD_GATEWAY
+        (contentAsJson(result) \ "errors").isDefined mustBe true
+        (contentAsJson(result) \ "_type").as[String] mustBe "failed"
       }
 
       "return BAD_REQUEST when the JSON body is not a valid SubmitRequest" in new BaseSetup {
@@ -96,12 +122,10 @@ class SubmissionControllerSpec extends SpecBase {
         (contentAsJson(result) \ "error").as[String] mustBe "Expected application/json body"
       }
 
-      "return OK when the body has a fullReturn but no email" in new BaseSetup {
-        when(mockSubmissionService.submit(any, any, any, any, any)(any[HeaderCarrier]))
-          .thenReturn(Future.successful(ChrisResponse.Completed(Some(utrn), None, Some(corrId), None, "<x/>")))
+      "return 200 SUBMITTED when the body has a fullReturn but no email" in new BaseSetup {
+        onOutcome(UniversalStatus.SUBMITTED, Some(utrn))
 
         val bodyWithoutEmail: JsValue = Json.obj("fullReturn" -> Json.toJson(fullReturn))
-
         val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(bodyWithoutEmail)))
 
         status(result) mustBe OK
@@ -167,8 +191,16 @@ class SubmissionControllerSpec extends SpecBase {
     implicit val hc: HeaderCarrier = HeaderCarrier()
     val controller = new SubmissionController(mockSubmissionService, fakeIdentifierAction, cc)
 
-    val utrn   = "123456789MA"
-    val corrId = "CORR-1"
+    val utrn     = "123456789MA"
+    val corrId   = "CORR-1"
+    val returnId = "100001"
+
+    val govTalkError: GovTalkError =
+      GovTalkError(raisedBy = "HMRC", number = Some("1001"), errorType = "business", text = Some("Invalid STORN"), location = None)
+
+    def onOutcome(status: UniversalStatus, utrnOpt: Option[String] = None, errs: Seq[GovTalkError] = Nil): Unit =
+      when(mockSubmissionService.submit(any, any, any, any, any)(any[HeaderCarrier]))
+        .thenReturn(Future.successful(SubmissionOutcome(returnId, status, utrnOpt, errs)))
 
     val fullReturn: FullReturn = freeholdReturn(1, 1, 1)
     val validBody: JsValue = Json.obj(
