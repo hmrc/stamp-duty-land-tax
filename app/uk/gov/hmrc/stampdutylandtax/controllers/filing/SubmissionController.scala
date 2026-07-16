@@ -69,15 +69,28 @@ class SubmissionController @Inject() (
 
     logger.info(s"[SubmissionController] runSubmission START returnId=$returnId sender=$sender periodEnd=$periodEnd affinityGroup=$affinityGroup hasCredential=${credentialId.nonEmpty}")
 
-    submissionService.submit(fullReturn, sender, periodEnd, credentialId).map { chrisResponse =>
-      logger.info(s"[SubmissionController] service returned returnId=$returnId response=${chrisResponse.getClass.getSimpleName}")
-      toSubmissionResponse(returnId, chrisResponse) match
-        case accepted: SubmissionResponse.Accepted =>
-          logger.info(s"[SubmissionController] returnId=$returnId -> 200 OK ACCEPTED utrn=${accepted.utrn}")
-          Ok(Json.toJson(accepted: SubmissionResponse))
-        case rejected: SubmissionResponse.Rejected =>
-          logger.warn(s"[SubmissionController] returnId=$returnId -> 400 REJECTED errorCount=${rejected.errors.size} codes=${rejected.errors.flatMap(_.code).mkString(",")}")
-          BadRequest(Json.toJson(rejected: SubmissionResponse))
+    submissionService.submit(fullReturn, sender, periodEnd, credentialId).map { outcome =>
+      logger.info(s"[SubmissionController] service returned returnId=$returnId status=${outcome.status} utrn=${outcome.utrn.getOrElse("-")} errorCount=${outcome.errors.size}")
+      SubmissionResponse.from(outcome) match
+        case s: SubmissionResponse.Submitted =>
+          logger.info(s"[SubmissionController] returnId=$returnId -> 200 SUBMITTED utrn=${s.utrn} receipt=${s.receipt}")
+          Ok(Json.toJson(s: SubmissionResponse))
+
+        case a: SubmissionResponse.Acknowledged =>
+          logger.info(s"[SubmissionController] returnId=$returnId -> 202 ACKNOWLEDGED (UTRN pending, poll for completion)")
+          Accepted(Json.toJson(a: SubmissionResponse))
+
+        case r: SubmissionResponse.Retryable =>
+          logger.warn(s"[SubmissionController] returnId=$returnId -> 503 RETRYABLE (reset to STARTED; safe to resubmit)")
+          ServiceUnavailable(Json.toJson(r: SubmissionResponse))
+
+        case rej: SubmissionResponse.Rejected =>
+          logger.warn(s"[SubmissionController] returnId=$returnId -> 400 REJECTED (business validation) errorCount=${rej.errors.size} codes=${rej.errors.flatMap(_.code).mkString(",")}")
+          BadRequest(Json.toJson(rej: SubmissionResponse))
+
+        case f: SubmissionResponse.Failed =>
+          logger.error(s"[SubmissionController] returnId=$returnId -> 502 FAILED errorCount=${f.errors.size} codes=${f.errors.flatMap(_.code).mkString(",")}")
+          BadGateway(Json.toJson(f: SubmissionResponse))
     }.recover {
       case e: SchemaValidationException =>
         val rejected: SubmissionResponse = SubmissionResponse.Rejected(
@@ -103,27 +116,6 @@ class SubmissionController @Inject() (
         logger.error(s"[SubmissionController] returnId=$returnId -> 500 unexpected error (${e.getClass.getSimpleName}): ${e.getMessage}", e)
         InternalServerError(Json.obj("error" -> "Submission failed", "message" -> Option(e.getMessage).getOrElse("")))
     }
-
-  private def toSubmissionResponse(returnId: String, resp: ChrisResponse): SubmissionResponse =
-    resp match
-      case ChrisResponse.Completed(Some(utrn), _, _, _, _) =>
-        logger.info(s"[SubmissionController] returnId=$returnId mapping Completed(utrn=$utrn) -> Accepted")
-        SubmissionResponse.Accepted(returnId, utrn)
-
-      case ChrisResponse.Completed(None, _, _, _, _) =>
-        logger.error(s"[SubmissionController] returnId=$returnId Completed with NO UTRN; treating as transport error (will surface as 500)")
-        throw new RuntimeException("ChRIS returned success without an extractable UTRN")
-
-      case ChrisResponse.Errored(govtalkErrors, _, _, _) =>
-        logger.warn(s"[SubmissionController] returnId=$returnId mapping Errored(count=${govtalkErrors.size}, numbers=${govtalkErrors.flatMap(_.number).mkString(",")}) -> Rejected")
-        SubmissionResponse.Rejected(
-          returnId = returnId,
-          errors   = govtalkErrors.map(e => SubmissionError(code = e.number, message = e.text.getOrElse("Unspecified error"), location = e.location))
-        )
-
-      case ChrisResponse.TransportError(msg, _) =>
-        logger.error(s"[SubmissionController] returnId=$returnId ChRIS transport error (will surface as 500): $msg")
-        throw new RuntimeException(s"ChRIS transport error: $msg")
 
   private def resolveSenderType(affinityGroup: AffinityGroup): SenderType =
     affinityGroup match

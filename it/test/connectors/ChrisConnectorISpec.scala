@@ -41,7 +41,7 @@ class ChrisConnectorISpec
 
   private val wireMockPort   = 11111
   private val wireMockServer = new WireMockServer(wireMockConfig().port(wireMockPort))
-  
+
 
   override def beforeAll(): Unit =
     super.beforeAll()
@@ -239,50 +239,50 @@ class ChrisConnectorISpec
        |</GovTalkMessage>""".stripMargin
 
   private def deleteResponseBody(): String =
-      s"""<?xml version="1.0"?>
-         |<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
-         |  <EnvelopeVersion>2.0</EnvelopeVersion>
-         |  <Header><MessageDetails>
-         |    <Qualifier>response</Qualifier>
-         |    <Function>delete</Function>
-         |    <CorrelationID>$corrId</CorrelationID>
-         |  </MessageDetails></Header>
-         |  <Body/>
-         |</GovTalkMessage>""".stripMargin
+    s"""<?xml version="1.0"?>
+       |<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+       |  <EnvelopeVersion>2.0</EnvelopeVersion>
+       |  <Header><MessageDetails>
+       |    <Qualifier>response</Qualifier>
+       |    <Function>delete</Function>
+       |    <CorrelationID>$corrId</CorrelationID>
+       |  </MessageDetails></Header>
+       |  <Body/>
+       |</GovTalkMessage>""".stripMargin
 
   private def deleteErrorBody(number: String): String =
-      s"""<?xml version="1.0"?>
-         |<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
-         |  <EnvelopeVersion>2.0</EnvelopeVersion>
-         |  <Header><MessageDetails>
-         |    <Qualifier>error</Qualifier>
-         |    <Function>delete</Function>
-         |    <CorrelationID>$corrId</CorrelationID>
-         |  </MessageDetails></Header>
-         |  <GovTalkDetails>
-         |    <GovTalkErrors>
-         |      <Error>
-         |        <RaisedBy>Gateway</RaisedBy>
-         |        <Number>$number</Number>
-         |        <Type>fatal</Type>
-         |        <Text>delete error $number</Text>
-         |      </Error>
-         |    </GovTalkErrors>
-         |  </GovTalkDetails>
-         |  <Body/>
-         |</GovTalkMessage>""".stripMargin
+    s"""<?xml version="1.0"?>
+       |<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+       |  <EnvelopeVersion>2.0</EnvelopeVersion>
+       |  <Header><MessageDetails>
+       |    <Qualifier>error</Qualifier>
+       |    <Function>delete</Function>
+       |    <CorrelationID>$corrId</CorrelationID>
+       |  </MessageDetails></Header>
+       |  <GovTalkDetails>
+       |    <GovTalkErrors>
+       |      <Error>
+       |        <RaisedBy>Gateway</RaisedBy>
+       |        <Number>$number</Number>
+       |        <Type>fatal</Type>
+       |        <Text>delete error $number</Text>
+       |      </Error>
+       |    </GovTalkErrors>
+       |  </GovTalkDetails>
+       |  <Body/>
+       |</GovTalkMessage>""".stripMargin
 
   private def deleteUnexpectedQualifierBody(): String =
-      s"""<?xml version="1.0"?>
-         |<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
-         |  <EnvelopeVersion>2.0</EnvelopeVersion>
-         |  <Header><MessageDetails>
-         |    <Qualifier>acknowledgement</Qualifier>
-         |    <Function>delete</Function>
-         |    <CorrelationID>$corrId</CorrelationID>
-         |  </MessageDetails></Header>
-         |  <Body/>
-         |</GovTalkMessage>""".stripMargin
+    s"""<?xml version="1.0"?>
+       |<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+       |  <EnvelopeVersion>2.0</EnvelopeVersion>
+       |  <Header><MessageDetails>
+       |    <Qualifier>acknowledgement</Qualifier>
+       |    <Function>delete</Function>
+       |    <CorrelationID>$corrId</CorrelationID>
+       |  </MessageDetails></Header>
+       |  <Body/>
+       |</GovTalkMessage>""".stripMargin
 
 
   "ChrisConnector.submit" should {
@@ -329,12 +329,29 @@ class ChrisConnectorISpec
         case other => fail(s"expected Errored, got $other")
     }
 
-    "return TransportError for a non-2xx response" in {
-      stubChris(500, "boom")
+    "return TransportError for a permanent non-2xx response (404)" in {
+      stubChris(404, "not found")
 
       connector.submit(envelope, None, corrId).futureValue match
-        case ChrisResponse.TransportError(msg, _) => msg should include ("500")
+        case ChrisResponse.TransportError(msg, _) => msg should include ("404")
         case other => fail(s"expected TransportError, got $other")
+    }
+
+    "return a retryable Errored (code 2005) for a transient 503 response" in {
+      stubChris(503, "service unavailable")
+
+      connector.submit(envelope, None, corrId).futureValue match
+        case e: ChrisResponse.Errored => e.errors.map(_.number) should contain (Some("2005"))
+        case other => fail(s"expected a retryable Errored, got $other")
+    }
+
+    "treat transient statuses 408, 429, 500, 502, 503 and 504 as retryable Errored (2005)" in {
+      Seq(408, 429, 500, 502, 503, 504).foreach { s =>
+        stubChris(s, s"transient $s")
+        connector.submit(envelope, None, corrId).futureValue match
+          case e: ChrisResponse.Errored => e.errors.map(_.number) should contain (Some("2005"))
+          case other => fail(s"expected a retryable Errored for status $s, got $other")
+      }
     }
 
     "return TransportError for an unparseable body" in {
@@ -522,4 +539,3 @@ class ChrisConnectorISpec
       wireMockServer.verify(postRequestedFor(urlEqualTo(overridePath)))
     }
   }
-
