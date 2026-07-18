@@ -44,7 +44,7 @@ class ManageReturnsServiceSpec extends Matchers with ScalaFutures with SpecBase 
             ReturnSummary(
               returnReference = "RET123",
               utrn = Some("UTRN001"),
-              status = "SUBMITTED",
+              status = Some("SUBMITTED"),
               dateSubmitted = Some(LocalDate.parse("2025-11-10")),
               purchaserName = "John Smith",
               address = "10 Downing Street, London",

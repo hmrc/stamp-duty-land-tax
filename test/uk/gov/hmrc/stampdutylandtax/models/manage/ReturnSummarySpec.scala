@@ -43,7 +43,7 @@ class ReturnSummarySpec extends AnyWordSpec with Matchers {
       val model = json.as[ReturnSummary]
       model.returnReference mustBe "123456"
       model.utrn mustBe Some("UTRN123")
-      model.status mustBe "IN-PROGRESS"
+      model.status mustBe Some("IN-PROGRESS")
       model.dateSubmitted mustBe Some(LocalDate.parse("2026-01-02"))
       model.purchaserName mustBe "John Doe"
       model.address mustBe "SW1XLE"
@@ -64,7 +64,7 @@ class ReturnSummarySpec extends AnyWordSpec with Matchers {
       val model = json.as[ReturnSummary]
       model.returnReference mustBe "123456"
       model.utrn mustBe None
-      model.status mustBe "IN-PROGRESS"
+      model.status mustBe Some("IN-PROGRESS")
       model.dateSubmitted mustBe None
       model.purchaserName mustBe "John Doe"
       model.address mustBe "SW1XLE"
