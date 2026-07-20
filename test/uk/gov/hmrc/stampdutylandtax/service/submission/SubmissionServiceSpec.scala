@@ -18,6 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service.submission
 
 import base.SpecBase
 import connectors.ChrisConnector
+import models.email.EmailServiceRequest
 import models.filing.*
 import models.submission.*
 import org.mockito.{ArgumentCaptor, Mockito}
@@ -118,8 +119,9 @@ final class SubmissionServiceSpec extends SpecBase {
     val audit: SubmissionAuditService           = mock[SubmissionAuditService]
     val chrisService: ChrisService              = mock[ChrisService]
     val appConfig: ServicesConfig               = mock[ServicesConfig]
+    val emailService: EmailService              = mock[EmailService]
 
-    val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, appConfig)
+    val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, appConfig, emailService)
 
     when(appConfig.baseUrl("chris")).thenReturn("http://chris")
     when(validator.validateSdlt(any[Elem])).thenReturn(Right(()))
@@ -152,7 +154,8 @@ final class SubmissionServiceSpec extends SpecBase {
       .thenReturn(Future.successful(CreateSubmissionErrorDetailReturn(true)))
     when(audit.auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier]))
       .thenReturn(Future.unit)
-
+    when(emailService.submitEmailConfirmation(any[FullReturn], any[String], any[Option[String]])(any[HeaderCarrier]))
+      .thenReturn(Future.successful(()))
     when(connector.delete(any[Option[String]], any[String])(any[HeaderCarrier]))
       .thenReturn(Future.successful(ChrisDeleteResponse.Deleted(Some("corr"), "<delete-response/>")))
 
