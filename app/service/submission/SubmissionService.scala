@@ -19,7 +19,8 @@ package service.submission
 import com.google.inject.Inject
 import play.api.Logging
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import connectors.ChrisConnector
+import connectors.{ChrisConnector, EmailServiceConnector}
+import models.email.EmailServiceRequest
 import models.filing.*
 import models.submission.*
 import service.filing.ChrisService
@@ -50,7 +51,8 @@ class SubmissionService @Inject() (
                                     connector: ChrisConnector,
                                     audit: SubmissionAuditService,
                                     chrisService: ChrisService,
-                                    appConfig: ServicesConfig
+                                    appConfig: ServicesConfig,
+                                    emailService: EmailService
                                   )(implicit ec: ExecutionContext)
   extends Logging:
 
@@ -385,6 +387,7 @@ class SubmissionService @Inject() (
         utrn           = resp.utrn,
         acceptedDate   = Some(nowIso)     // spec F52 step 14.3: set accepted date on success (no datetime in response -> now)
       ), correlationId)
+      _ <- emailService.submitEmailConfirmation(fullReturn, resp.utrn.toString, email)
       _       =  logger.info(s"[SubmissionService] SUCCESS branch complete returnId=${ctx.returnId} corrId=$correlationId utrn=${resp.utrn.getOrElse("-")}")
     yield acc2
 
