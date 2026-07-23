@@ -124,6 +124,7 @@ final class SubmissionServiceSpec extends SpecBase {
     val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, appConfig, emailService)
 
     when(appConfig.baseUrl("chris")).thenReturn("http://chris")
+    when(connector.defaultPath).thenReturn("http://chris/ChRIS/SDLT/Filing/sync/SDLT")
     when(validator.validateSdlt(any[Elem])).thenReturn(Right(()))
     when(envelopeBuilder.submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String]))
       .thenReturn(IrMarkResult(<Envelope/>, sentMark, "SENT-MARK-B32"))
@@ -788,11 +789,42 @@ final class SubmissionServiceSpec extends SpecBase {
       verify(f.chrisService, times(2)).createSubmissionErrorDetail(any[CreateSubmissionErrorDetailRequest])(any[HeaderCarrier])
     }
 
+    "must preserve the poll interval and gateway url stored by the acknowledgement when releasing the lock" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = Some("dataPoll"), gatewayUrl = Some("http://chris.example/poll/abc"))
+          .copy(pollInterval = Some("120"))))
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      val captor: ArgumentCaptor[UpdateGovTalkStatusLockRequest] =
+        ArgumentCaptor.forClass(classOf[UpdateGovTalkStatusLockRequest])
+      verify(f.chrisService, atLeastOnce()).updateGovTalkStatusLock(captor.capture())(any[HeaderCarrier])
+      val release = captor.getAllValues.asScala.toList.map(_.govTalkStatus).filter(_.formLockNew == "N")
+
+      release.map(_.pollInterval) must contain("120")
+      release.map(_.gatewayUrl) must contain("http://chris.example/poll/abc")
+    }
+
     "must record the fields of the first error only" in {
       val f = new Fixtures
       f.onResponse(errored(fatalError, fatalError2))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       f.submissions.find(_.govTalkErrorCode.isDefined).value.govTalkErrorCode mustBe Some("9999")
+    }
+
+    "must number each error detail from zero and prefix the message with the error code" in {
+      val f = new Fixtures
+      f.onResponse(errored(fatalError, fatalError2))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      val captor: ArgumentCaptor[CreateSubmissionErrorDetailRequest] =
+        ArgumentCaptor.forClass(classOf[CreateSubmissionErrorDetailRequest])
+      verify(f.chrisService, times(2)).createSubmissionErrorDetail(captor.capture())(any[HeaderCarrier])
+      val details = captor.getAllValues.asScala.toList.map(_.submissionErrorDetails)
+
+      details.map(_.position) mustBe List("0", "1")
+      details.map(_.errorMessage) mustBe List("9999: Boom", "8888: Boom two")
     }
   }
 
