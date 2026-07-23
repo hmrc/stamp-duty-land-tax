@@ -124,6 +124,7 @@ final class SubmissionServiceSpec extends SpecBase {
     val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, appConfig, emailService)
 
     when(appConfig.baseUrl("chris")).thenReturn("http://chris")
+    when(connector.defaultPath).thenReturn("http://chris/ChRIS/SDLT/Filing/sync/SDLT")
     when(validator.validateSdlt(any[Elem])).thenReturn(Right(()))
     when(envelopeBuilder.submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String]))
       .thenReturn(IrMarkResult(<Envelope/>, sentMark, "SENT-MARK-B32"))
