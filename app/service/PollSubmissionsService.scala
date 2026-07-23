@@ -24,7 +24,7 @@ import play.api.Logging
 import scheduler.ScheduleStatus.{FailedToPollSubmissions, MongoUnlockException}
 import scheduler.{MongoLockKeys, ScheduleStatus, ScheduledService}
 import service.filing.ChrisService
-import service.submission.{EmailService, SubmissionAuditService}
+import service.submission.{GovTalkContext, GovTalkOutcomeHandler}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -40,8 +40,7 @@ class PollSubmissionsService @Inject() (
   chrisConnector: ChrisConnector,
   chrisService: ChrisService,
   filingConnector: FilingFormpProxyConnector,
-  audit: SubmissionAuditService,
-  emailService: EmailService,
+  govTalk: GovTalkOutcomeHandler,
   servicesConfig: ServicesConfig,
   lockRepositoryProvider: MongoLockRepository,
   clock: Clock
@@ -120,7 +119,7 @@ class PollSubmissionsService @Inject() (
           logger.info(s"[$jobName] poll not allowed yet storn=${sub.storn} ref=${sub.returnResourceRef} protocolStatus=${row.protocolStatus.getOrElse("-")} lastMessage=${row.lastMessageTimestamp.getOrElse("-")} pollInterval=${row.pollInterval.getOrElse("-")}")
           Future.successful(notPolled)
         case Some(correlationId) =>
-          withGovTalkLock(sub, row) {
+          withGovTalkLock(sub, row, correlationId) {
             pollLocked(sub, row, correlationId)
           }.map(_.getOrElse(notPolled))
       }
@@ -147,7 +146,10 @@ class PollSubmissionsService @Inject() (
   private def parseTimestamp(value: String): Option[LocalDateTime] =
     TimestampFormats.view.flatMap(f => Try(LocalDateTime.parse(value, DateTimeFormatter.ofPattern(f))).toOption).headOption
 
-  private def withGovTalkLock(sub: SubmissionForPolling, row: SelectGovTalkStatusResponse)(body: => Future[PollOutcome]): Future[Option[PollOutcome]] =
+  private def ctxOf(sub: SubmissionForPolling, correlationId: String): GovTalkContext =
+    GovTalkContext(sub.storn, sub.returnResourceRef, correlationId)
+
+  private def withGovTalkLock(sub: SubmissionForPolling, row: SelectGovTalkStatusResponse, correlationId: String)(body: => Future[PollOutcome]): Future[Option[PollOutcome]] =
     chrisService.updateGovTalkStatusLock(lockRequest(sub, row, formLockOld = "N", formLockNew = "Y"))
       .map(_ => true)
       .recover { case e =>
@@ -158,27 +160,8 @@ class PollSubmissionsService @Inject() (
         case false => Future.successful(None)
         case true  =>
           body.transformWith { result =>
-            releaseGovTalkLock(sub).transformWith(_ => Future.fromTry(result)).map(Some(_))
+            govTalk.releaseLock(ctxOf(sub, correlationId)).transformWith(_ => Future.fromTry(result)).map(Some(_))
           }
-      }
-
-  private def releaseGovTalkLock(sub: SubmissionForPolling): Future[Unit] =
-    chrisService
-      .selectGovTalkStatus(SelectGovTalkStatusRequest(sub.storn, sub.returnResourceRef))
-      .flatMap { fresh =>
-        if (fresh.formLock.map(_.trim).contains("Y"))
-          chrisService.updateGovTalkStatusLock(lockRequest(sub, fresh, formLockOld = "Y", formLockNew = "N")).map { _ =>
-            logger.info(s"[$jobName] GovTalk lock released storn=${sub.storn} ref=${sub.returnResourceRef}")
-            ()
-          }
-        else {
-          logger.info(s"[$jobName] GovTalk lock already released storn=${sub.storn} ref=${sub.returnResourceRef}")
-          Future.unit
-        }
-      }
-      .recover { case e =>
-        logger.error(s"[$jobName] GovTalk lock release failed storn=${sub.storn} ref=${sub.returnResourceRef}: ${e.getMessage}")
-        ()
       }
 
   private def lockRequest(sub: SubmissionForPolling, row: SelectGovTalkStatusResponse, formLockOld: String, formLockNew: String): UpdateGovTalkStatusLockRequest =
@@ -201,11 +184,14 @@ class PollSubmissionsService @Inject() (
     val polls      = row.numberOfPolls.flatMap(s => Try(s.trim.toInt).toOption).getOrElse(0) + 1
     for {
       fullReturn <- filingConnector.getFullReturn(GetReturnByRefRequest(sub.returnResourceRef, sub.storn))
-      _          <- updateStatistics(sub, polls, row.pollInterval.getOrElse("0"), gatewayUrl)
+      _          <- govTalk.updateStatistics(ctxOf(sub, correlationId), gatewayUrl, rowInterval(row), polls.toString)
       resp       <- chrisConnector.poll(gatewayUrl, correlationId)(HeaderCarrier())
       outcome    <- handlePollResponse(sub, row, resp, fullReturn, correlationId, polls, gatewayUrl)
     } yield outcome
   }
+
+  private def rowInterval(row: SelectGovTalkStatusResponse): Option[Int] =
+    row.pollInterval.flatMap(s => Try(s.trim.toInt).toOption)
 
   private def handlePollResponse(sub: SubmissionForPolling,
                                  row: SelectGovTalkStatusResponse,
@@ -213,7 +199,8 @@ class PollSubmissionsService @Inject() (
                                  fullReturn: FullReturn,
                                  correlationId: String,
                                  polls: Int,
-                                 gatewayUrl: Option[String]): Future[PollOutcome] =
+                                 gatewayUrl: Option[String]): Future[PollOutcome] = {
+    val ctx = ctxOf(sub, correlationId)
     resp match {
       case t: ChrisResponse.TransportError =>
         logger.warn(s"[$jobName] no response from ChRIS (${t.message}); will poll again next cycle storn=${sub.storn} ref=${sub.returnResourceRef}")
@@ -221,91 +208,25 @@ class PollSubmissionsService @Inject() (
 
       case a: ChrisResponse.Acknowledged =>
         for {
-          _ <- setProtocol(sub, "dataPoll")
-          _ <- updateStatistics(sub, polls, a.pollIntervalSeconds.map(_.toString).getOrElse(row.pollInterval.getOrElse("0")), a.responseEndPoint.orElse(gatewayUrl))
+          _ <- govTalk.setProtocol(ctx, "dataPoll")
+          _ <- govTalk.updateStatistics(ctx, a.responseEndPoint.orElse(gatewayUrl), a.pollIntervalSeconds.orElse(rowInterval(row)), polls.toString)
         } yield PollOutcome(sub, polled = true, pollResult = UniversalStatus.ACCEPTED.toString, newReturnStatus = UniversalStatus.ACCEPTED.toString, correlationId = correlationId)
 
       case c: ChrisResponse.Completed =>
         val universal = UniversalStatus.fromChrisResponse(c, fullReturn.submission.flatMap(_.irmarkSent))
-        successOutcome(sub, c, universal, fullReturn, correlationId, polls, gatewayUrl)
+        logger.info(s"[$jobName] poll SUCCESS storn=${sub.storn} ref=${sub.returnResourceRef} universalStatus=$universal utrn=${c.utrn.getOrElse("-")}")
+        govTalk
+          .handleCompleted(ctx, fullReturn, c, universal, baseUpdate(fullReturn), polls.toString, None, HeaderCarrier())
+          .map(_ => PollOutcome(sub, polled = true, pollResult = universal.toString, newReturnStatus = universal.toString, correlationId = correlationId))
 
       case e: ChrisResponse.Errored =>
         val universal = UniversalStatus.fromChrisResponse(e, fullReturn.submission.flatMap(_.irmarkSent))
-        errorOutcome(sub, e, universal, fullReturn, correlationId, polls, gatewayUrl)
+        logger.warn(s"[$jobName] poll ERROR storn=${sub.storn} ref=${sub.returnResourceRef} universalStatus=$universal numbers=${e.errors.flatMap(_.number).mkString(",")}")
+        govTalk
+          .handleErrored(ctx, fullReturn, e.errors, e.responseEndPoint.orElse(gatewayUrl), universal, baseUpdate(fullReturn), polls.toString, HeaderCarrier())
+          .map(acc => PollOutcome(sub, polled = true, pollResult = universal.toString, newReturnStatus = acc.submittableStatus.getOrElse(universal.toString), correlationId = correlationId))
     }
-
-  private def successOutcome(sub: SubmissionForPolling,
-                             resp: ChrisResponse.Completed,
-                             universal: UniversalStatus,
-                             fullReturn: FullReturn,
-                             correlationId: String,
-                             polls: Int,
-                             gatewayUrl: Option[String]): Future[PollOutcome] = {
-    logger.info(s"[$jobName] poll SUCCESS storn=${sub.storn} ref=${sub.returnResourceRef} universalStatus=$universal utrn=${resp.utrn.getOrElse("-")}")
-    for {
-      acc1    <- persistUpdate(sub, baseUpdate(fullReturn).copy(submittableStatus = Some(universal.toString)))
-      _       <- updateStatistics(sub, polls, "0", resp.responseEndPoint.orElse(gatewayUrl))
-      _       <- setProtocol(sub, "deleteRequest")
-      deleted <- sendChrisDelete(sub, resp.responseEndPoint.orElse(gatewayUrl), correlationId)
-      _       <- if (deleted) finaliseGovTalkStatus(sub, correlationId)
-                 else {
-                   logger.warn(s"[$jobName] ChRIS delete unsuccessful; leaving GovTalk at deleteRequest storn=${sub.storn} ref=${sub.returnResourceRef}")
-                   Future.unit
-                 }
-      _       <- audit.auditSubmission(sub.storn, sub.returnResourceRef, correlationId, fullReturn, resp)(HeaderCarrier())
-      _       <- persistUpdate(sub, acc1.copy(
-                   IRMarkRecieved = resp.receivedIrMark,
-                   utrn           = resp.utrn,
-                   acceptedDate   = Some(nowIso)
-                 ))
-      _       <- emailService.submitEmailConfirmation(fullReturn, resp.utrn.getOrElse(""), None)(HeaderCarrier())
-    } yield PollOutcome(sub, polled = true, pollResult = universal.toString, newReturnStatus = universal.toString, correlationId = correlationId)
   }
-
-  private def errorOutcome(sub: SubmissionForPolling,
-                           resp: ChrisResponse.Errored,
-                           universal: UniversalStatus,
-                           fullReturn: FullReturn,
-                           correlationId: String,
-                           polls: Int,
-                           gatewayUrl: Option[String]): Future[PollOutcome] = {
-    val deptError = universal == UniversalStatus.DEPARTMENTAL_ERROR
-    val first     = resp.errors.headOption
-
-    logger.warn(s"[$jobName] poll ERROR storn=${sub.storn} ref=${sub.returnResourceRef} universalStatus=$universal departmental=$deptError numbers=${resp.errors.flatMap(_.number).mkString(",")}")
-
-    val govTalkForDept: Future[Unit] =
-      if (deptError)
-        for {
-          _ <- updateStatistics(sub, polls, "0", resp.responseEndPoint.orElse(gatewayUrl))
-          _ <- setProtocol(sub, "deleteRequest")
-          _ <- sendChrisDelete(sub, resp.responseEndPoint.orElse(gatewayUrl), correlationId)
-          _ <- setProtocol(sub, "endState")
-        } yield ()
-      else Future.unit
-
-    for {
-      acc1  <- persistUpdate(sub, baseUpdate(fullReturn).copy(submittableStatus = Some(universal.toString)))
-      _     <- govTalkForDept
-      acc2  <- persistUpdate(sub, acc1.copy(
-                 govTalkErrorCode    = first.flatMap(_.number),
-                 govTalkErrorType    = first.map(_.errorType),
-                 govTalkErrorMessage = first.flatMap(_.text)
-               ))
-      finalStatus <- recoverableTail(sub, acc2, universal)
-      _     <- createSubmissionErrorDetails(sub, resp.errors)
-      _     <- audit.auditSubmission(sub.storn, sub.returnResourceRef, correlationId, fullReturn, resp)(HeaderCarrier())
-    } yield PollOutcome(sub, polled = true, pollResult = universal.toString, newReturnStatus = finalStatus, correlationId = correlationId)
-  }
-
-  private def recoverableTail(sub: SubmissionForPolling, acc: SubmissionUpdate, universal: UniversalStatus): Future[String] =
-    if (universal == UniversalStatus.STARTED) {
-      logger.info(s"[$jobName] error is recoverable, resetting submission to STARTED storn=${sub.storn} ref=${sub.returnResourceRef}")
-      persistUpdate(sub, acc.copy(
-        submittableStatus     = Some(UniversalStatus.STARTED.toString),
-        submissionRequestDate = None
-      )).map(_ => UniversalStatus.STARTED.toString)
-    } else Future.successful(universal.toString)
 
   private def baseUpdate(fullReturn: FullReturn): SubmissionUpdate = {
     val existing = fullReturn.submission
@@ -322,94 +243,6 @@ class PollSubmissionsService @Inject() (
       IRMarkSent            = existing.flatMap(_.irmarkSent)
     )
   }
-
-  private def persistUpdate(sub: SubmissionForPolling, acc: SubmissionUpdate): Future[SubmissionUpdate] =
-    chrisService.updateSubmission(UpdateSubmissionRequest(sub.storn, sub.returnResourceRef, acc)).map { _ =>
-      logger.info(s"[$jobName] submission updated status=${acc.submittableStatus.getOrElse("-")} storn=${sub.storn} ref=${sub.returnResourceRef}")
-      acc
-    }
-
-  private def createSubmissionErrorDetails(sub: SubmissionForPolling, errors: Seq[GovTalkError]): Future[Unit] =
-    errors.foldLeft(Future.unit) { (acc, err) =>
-      acc.flatMap { _ =>
-        val req = CreateSubmissionErrorDetailRequest(
-          storn                  = sub.storn,
-          returnResourceRef      = sub.returnResourceRef,
-          submissionErrorDetails = SubmissionErrorDetail(
-            position     = err.location.getOrElse(""),
-            errorMessage = err.text.getOrElse("")
-          )
-        )
-        chrisService.createSubmissionErrorDetail(req).map(_ => ())
-      }
-    }
-
-  private def setProtocol(sub: SubmissionForPolling, protocolStatus: String): Future[Unit] =
-    chrisService.updateGovTalkStatus(UpdateGovTalkStatusRequest(
-      userIdentifier    = sub.storn,
-      formResultId      = sub.returnResourceRef,
-      endStateTimestamp = nowSqlTimestamp,
-      protocolStatus    = protocolStatus
-    )).map(_ => ())
-
-  private def updateStatistics(sub: SubmissionForPolling, polls: Int, pollInterval: String, gatewayUrl: Option[String]): Future[Unit] =
-    chrisService.updateGovTalkStatistics(UpdateGovTalkStatisticsRequest(
-      userIdentifier = sub.storn,
-      formResultId   = sub.returnResourceRef,
-      govTalkStatus  = GovTalkStatusStatistics(
-        lastMessageTimestamp = nowSqlTimestamp,
-        numberOfPolls        = polls.toString,
-        pollInterval         = pollInterval,
-        gatewayUrl           = gatewayUrl.getOrElse(servicesConfig.baseUrl("chris"))
-      )
-    )).map(_ => ())
-
-  private def finaliseGovTalkStatus(sub: SubmissionForPolling, correlationId: String): Future[Unit] =
-    (for {
-      _ <- setProtocol(sub, "endState")
-      _ <- chrisService.resetGovTalkStatus(buildResetRequest(sub)).map(_ => ())
-    } yield {
-      logger.info(s"[$jobName] GovTalk status finalised (endState + reset) storn=${sub.storn} ref=${sub.returnResourceRef}")
-      ()
-    }).recover { case e =>
-      logger.warn(s"[$jobName] GovTalk finalise (endState/reset) failed storn=${sub.storn} ref=${sub.returnResourceRef}: ${e.getMessage}")
-      ()
-    }
-
-  private def buildResetRequest(sub: SubmissionForPolling): ResetGovTalkStatusRequest = {
-    val now = nowSqlTimestamp
-    ResetGovTalkStatusRequest(
-      userIdentifier = sub.storn,
-      formResultId   = sub.returnResourceRef,
-      correlationId  = "empty",
-      govTalkStatus  = GovTalkStatusReset(
-        formLock             = "N",
-        createTimestamp      = now,
-        endStateTimestamp    = None,
-        lastMessageTimestamp = now,
-        numberOfPolls        = "0",
-        pollInterval         = "0",
-        protocolStatusOld    = "endState",
-        protocolStatusNew    = "initial",
-        gatewayUrl           = servicesConfig.baseUrl("chris")
-      )
-    )
-  }
-
-  private def sendChrisDelete(sub: SubmissionForPolling, endpoint: Option[String], correlationId: String): Future[Boolean] =
-    chrisConnector.delete(endpoint, correlationId)(HeaderCarrier()).map {
-      case ChrisDeleteResponse.Deleted(_, _)  => true
-      case ChrisDeleteResponse.NotFound(_, _) => true
-      case ChrisDeleteResponse.Errored(errors, _, _) =>
-        logger.warn(s"[$jobName] ChRIS delete returned errors storn=${sub.storn} ref=${sub.returnResourceRef}: ${errors.mkString("; ")}")
-        false
-      case ChrisDeleteResponse.TransportError(msg, _) =>
-        logger.warn(s"[$jobName] ChRIS delete transport error storn=${sub.storn} ref=${sub.returnResourceRef}: $msg")
-        false
-    }.recover { case e =>
-      logger.warn(s"[$jobName] ChRIS delete failed storn=${sub.storn} ref=${sub.returnResourceRef}: ${e.getMessage}")
-      false
-    }
 
   private case class PollOutcome(submission: SubmissionForPolling, polled: Boolean, pollResult: String, newReturnStatus: String, correlationId: String)
 
@@ -449,13 +282,4 @@ class PollSubmissionsService @Inject() (
   private def pad(value: String, width: Int): String =
     if (value.length > width) value.take(width - 3) + "..."
     else value.padTo(width, ' ')
-
-  private def nowIso: String =
-    ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-
-  private val SqlTimestampFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
-
-  private def nowSqlTimestamp: String =
-    ZonedDateTime.now(ZoneOffset.UTC).format(SqlTimestampFormatter)
 }

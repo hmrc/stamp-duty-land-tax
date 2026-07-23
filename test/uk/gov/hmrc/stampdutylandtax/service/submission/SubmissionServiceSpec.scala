@@ -84,7 +84,7 @@ final class SubmissionServiceSpec extends SpecBase {
       userIdentifier       = Some(storn),
       formResultId         = formResultId,
       correlationId        = Some("corr"),
-      formLock             = Some("N"),
+      formLock             = Some("Y"),
       createTimestamp      = Some("2026-01-31 09:15:30"),
       endStateTimestamp    = None,
       lastMessageTimestamp = Some("2026-01-31 09:15:30"),
@@ -121,7 +121,8 @@ final class SubmissionServiceSpec extends SpecBase {
     val appConfig: ServicesConfig               = mock[ServicesConfig]
     val emailService: EmailService              = mock[EmailService]
 
-    val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, appConfig, emailService)
+    val govTalk = new GovTalkOutcomeHandler(chrisService, connector, audit, emailService, appConfig)
+    val service = new SubmissionService(envelopeBuilder, validator, connector, govTalk, chrisService, appConfig)
 
     when(appConfig.baseUrl("chris")).thenReturn("http://chris")
     when(validator.validateSdlt(any[Elem])).thenReturn(Right(()))
@@ -135,7 +136,7 @@ final class SubmissionServiceSpec extends SpecBase {
     when(chrisService.createSubmission(any[CreateSubmissionRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(CreateSubmissionReturn(true)))
     when(chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
-      .thenReturn(Future.successful(SelectGovTalkStatusResponse(None, None, None, None, None, None, None, None, None, None, None)))
+      .thenReturn(Future.successful(SelectGovTalkStatusResponse(None, None, None, Some("Y"), None, None, None, None, None, None, None)))
     when(chrisService.resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(GovTalkStatusReturn(true)))
     when(chrisService.insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier]))

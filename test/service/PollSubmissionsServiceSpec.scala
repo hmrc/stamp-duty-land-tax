@@ -29,7 +29,7 @@ import org.scalatest.matchers.must.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 import scheduler.ScheduleStatus.{FailedToPollSubmissions, MongoUnlockException}
 import service.filing.ChrisService
-import service.submission.{EmailService, SubmissionAuditService}
+import service.submission.{EmailService, GovTalkOutcomeHandler, SubmissionAuditService}
 import uk.gov.hmrc.mongo.lock.{Lock, MongoLockRepository}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -117,13 +117,15 @@ class PollSubmissionsServiceSpec extends AnyFreeSpec with Matchers with ScalaFut
     when(mockAudit.auditSubmission(any(), any(), any(), any(), any())(any())).thenReturn(Future.unit)
     when(mockEmailService.submitEmailConfirmation(any(), any(), any())(any())).thenReturn(Future.unit)
 
+    val govTalk: GovTalkOutcomeHandler =
+      new GovTalkOutcomeHandler(mockChrisService, mockChrisConnector, mockAudit, mockEmailService, mockServicesConfig)
+
     val service: PollSubmissionsService = new PollSubmissionsService(
       mockFormpConnector,
       mockChrisConnector,
       mockChrisService,
       mockFilingConnector,
-      mockAudit,
-      mockEmailService,
+      govTalk,
       mockServicesConfig,
       mockLockRepository,
       fixedClock
