@@ -40,8 +40,8 @@ class ChrisConnector @Inject() (
 
   private val chrisUrl: String   = appConfig.baseUrl("chris")
   private val submitPath: String = chrisUrl + appConfig.getConfString("chris.submit-url", "/ChRIS/SDLT/Filing/sync/SDLT")
-  private val defaultPath: String = submitPath
-  private val deleteClass: String ="IR-SDLT-LTR"
+  val defaultPath: String = submitPath
+  private val messageClass: String ="IR-SDLT-LTR"
   private val requestTimeout: Duration = 120.seconds
   private val UtrnPattern: Regex = "^[0-9]{9}M[A-HJ-NP-TV-Z]$".r
   private val XmlDecl: String = """<?xml version="1.0" encoding="UTF-8"?>"""
@@ -83,6 +83,60 @@ class ChrisConnector @Inject() (
           ChrisResponse.TransportError(Option(e.getMessage).getOrElse(e.toString))
       }
 
+  def poll(endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
+    val target    = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
+    val xmlString = XmlDecl + "\n" + pollEnvelope(correlationId).toString()
+    logger.debug(s"[ChrisConnector] POLL target=$target corrId=$correlationId")
+    httpClient
+      .post(url"$target")
+      .setHeader(
+        "Content-Type" -> "application/xml",
+        "Accept" -> "application/xml",
+        "CorrelationId" -> correlationId
+      )
+      .withBody(xmlString)
+      .transform(_.withRequestTimeout(requestTimeout))
+      .execute[HttpResponse]
+      .map { resp =>
+        if is2xx(resp.status) then parse(resp.body)
+        else if RetryableHttpStatuses.contains(resp.status) then
+          logger.warn(s"[ChrisConnector] POLL transient NON-2xx (will poll again next cycle) corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          ChrisResponse.TransportError(s"transient HTTP ${resp.status}")
+        else
+          logger.error(s"[ChrisConnector] POLL NON-2xx corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          ChrisResponse.TransportError(s"NON-2xx status=${resp.status}")
+      }
+      .recover {
+        case e: java.util.concurrent.TimeoutException =>
+          logger.warn(s"[ChrisConnector] POLL timeout after ${requestTimeout} (will poll again next cycle) corrId=$correlationId", e)
+          ChrisResponse.TransportError("client timeout", "<timeout/>")
+        case NonFatal(e) if isTimeout(e) =>
+          logger.warn(s"[ChrisConnector] POLL timeout (will poll again next cycle) corrId=$correlationId", e)
+          ChrisResponse.TransportError("client timeout", "<timeout/>")
+        case NonFatal(e) =>
+          logger.error(s"[ChrisConnector] POLL transport exception corrId=$correlationId", e)
+          ChrisResponse.TransportError(Option(e.getMessage).getOrElse(e.toString))
+      }
+
+  private def pollEnvelope(correlationId: String): Elem =
+    <GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+      <EnvelopeVersion>2.0</EnvelopeVersion>
+      <Header>
+        <MessageDetails>
+          <Class>{messageClass}</Class>
+          <Qualifier>poll</Qualifier>
+          <Function>submit</Function>
+          <CorrelationID>{correlationId}</CorrelationID>
+          <Transformation>XML</Transformation>
+        </MessageDetails>
+        <SenderDetails/>
+      </Header>
+      <GovTalkDetails>
+        <Keys/>
+      </GovTalkDetails>
+      <Body/>
+    </GovTalkMessage>
+
   def delete(endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisDeleteResponse] =
     val target    = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
     val xmlString = XmlDecl + "\n" + deleteEnvelope(correlationId).toString()
@@ -120,7 +174,7 @@ class ChrisConnector @Inject() (
       <EnvelopeVersion>2.0</EnvelopeVersion>
       <Header>
         <MessageDetails>
-          <Class>{deleteClass}</Class>
+          <Class>{messageClass}</Class>
           <Qualifier>request</Qualifier>
           <Function>delete</Function>
           <CorrelationID>{correlationId}</CorrelationID>
