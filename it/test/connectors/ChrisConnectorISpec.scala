@@ -346,6 +346,13 @@ class ChrisConnectorISpec
         case other => fail(s"expected a retryable Errored, got $other")
     }
 
+    "leave a transient 503 recoverable so the return resets to STARTED" in {
+      stubChris(503, "service unavailable")
+
+      val resp = connector.submit(envelope, None, corrId).futureValue
+      UniversalStatus.fromChrisResponse(resp, Some("IRMARK")) shouldBe UniversalStatus.STARTED
+    }
+
     "treat transient statuses 408, 429, 500, 502, 503 and 504 as retryable Errored (2005)" in {
       Seq(408, 429, 500, 502, 503, 504).foreach { s =>
         stubChris(s, s"transient $s")

@@ -27,7 +27,6 @@ import org.mockito.Mockito.*
 import service.filing.ChrisService
 import service.submission.*
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
@@ -108,7 +107,7 @@ final class SubmissionServiceSpec extends SpecBase {
     GovTalkError(raisedBy = "Gateway", number = Some("8888"), errorType = "fatal", text = Some("Boom two"), location = None)
 
   private val recoverableError: GovTalkError =
-    GovTalkError(raisedBy = "Gateway", number = Some("2005"), errorType = "fatal", text = Some("Transient"), location = None)
+    GovTalkError(raisedBy = "Gateway", number = Some("2005"), errorType = "timeOut", text = Some("Transient"), location = None)
 
   private val recoverable1000: GovTalkError =
     GovTalkError(raisedBy = "Gateway", number = Some("1000"), errorType = "fatal", text = Some("Transient 1000"), location = None)
@@ -122,12 +121,11 @@ final class SubmissionServiceSpec extends SpecBase {
     val connector: ChrisConnector               = mock[ChrisConnector]
     val audit: SubmissionAuditService           = mock[SubmissionAuditService]
     val chrisService: ChrisService              = mock[ChrisService]
-    val appConfig: ServicesConfig               = mock[ServicesConfig]
     val emailService: EmailService              = mock[EmailService]
 
-    val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, appConfig, emailService)
+    val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, emailService)
 
-    when(appConfig.baseUrl("chris")).thenReturn("http://chris")
+    when(connector.defaultPath).thenReturn("http://chris/ChRIS/SDLT/Filing/sync/SDLT")
     when(validator.validateSdlt(any[Elem])).thenReturn(Right(()))
     when(envelopeBuilder.submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String]))
       .thenReturn(IrMarkResult(<Envelope/>, sentMark, "SENT-MARK-B32"))
@@ -141,6 +139,8 @@ final class SubmissionServiceSpec extends SpecBase {
     when(chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(SelectGovTalkStatusResponse(None, None, None, None, None, None, None, None, None, None, None)))
     when(chrisService.resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier]))
+      .thenReturn(Future.successful(GovTalkStatusReturn(true)))
+    when(chrisService.updateGovTalkStatusCorrelationId(any[UpdateGovTalkStatusCorrelationIdRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(GovTalkStatusReturn(true)))
     when(chrisService.insertInitialGovTalkStatus(any[InsertInitialGovTalkStatusRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(GovTalkStatusReturn(true)))
@@ -356,13 +356,14 @@ final class SubmissionServiceSpec extends SpecBase {
       f.resetRequests.head.govTalkStatus.endStateTimestamp mustBe None
     }
 
-    "must reuse the stored gateway URL as the ChRIS submit URL when resetting" in {
+    "must discard the stored gateway URL on reset and submit to the configured ChRIS URL" in {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(selectRow(protocol = Some("initial"), gatewayUrl = Some("http://stored-gateway"))))
       f.onResponse(acknowledged)
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
-      f.submitUrls must contain(Some("http://stored-gateway"))
+      f.submitUrls must contain(None)
+      f.submitUrls must not contain Some("http://stored-gateway")
     }
 
     "must insert an initial row when the lookup fails" in {
@@ -735,6 +736,14 @@ final class SubmissionServiceSpec extends SpecBase {
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       f.statuses must contain("STARTED")
     }
+
+    "must leave a departmental rejection at DEPARTMENTAL_ERROR even when a recoverable code is also present" in {
+      val f = new Fixtures
+      f.onResponse(errored(departmentalError, recoverable1000))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.statuses must contain("DEPARTMENTAL_ERROR")
+      f.statuses must not contain "STARTED"
+    }
   }
 
   "SubmissionService.submit on a TransportError" - {
@@ -792,11 +801,56 @@ final class SubmissionServiceSpec extends SpecBase {
       verify(f.chrisService, times(2)).createSubmissionErrorDetail(any[CreateSubmissionErrorDetailRequest])(any[HeaderCarrier])
     }
 
+    "must preserve the poll interval and gateway url stored by the acknowledgement when releasing the lock" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = Some("dataPoll"), gatewayUrl = Some("http://chris.example/poll/abc"))
+          .copy(pollInterval = Some("120"))))
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      val captor: ArgumentCaptor[UpdateGovTalkStatusLockRequest] =
+        ArgumentCaptor.forClass(classOf[UpdateGovTalkStatusLockRequest])
+      verify(f.chrisService, atLeastOnce()).updateGovTalkStatusLock(captor.capture())(any[HeaderCarrier])
+      val release = captor.getAllValues.asScala.toList.map(_.govTalkStatus).filter(_.formLockNew == "N")
+
+      release.map(_.pollInterval) must contain("120")
+      release.map(_.gatewayUrl) must contain("http://chris.example/poll/abc")
+    }
+
+    "must store the new correlation id after resetting an existing GovTalk row so the poller can find it" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(selectRow(protocol = Some("endState"))))
+      f.onResponse(acknowledged)
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      val captor: ArgumentCaptor[UpdateGovTalkStatusCorrelationIdRequest] =
+        ArgumentCaptor.forClass(classOf[UpdateGovTalkStatusCorrelationIdRequest])
+      verify(f.chrisService).updateGovTalkStatusCorrelationId(captor.capture())(any[HeaderCarrier])
+      captor.getValue.correlationId must not be "empty"
+      captor.getValue.correlationId.length mustBe 32
+    }
+
     "must record the fields of the first error only" in {
       val f = new Fixtures
       f.onResponse(errored(fatalError, fatalError2))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
       f.submissions.find(_.govTalkErrorCode.isDefined).value.govTalkErrorCode mustBe Some("9999")
+    }
+
+    "must number each error detail from zero and prefix the message with the error code" in {
+      val f = new Fixtures
+      f.onResponse(errored(fatalError, fatalError2))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      val captor: ArgumentCaptor[CreateSubmissionErrorDetailRequest] =
+        ArgumentCaptor.forClass(classOf[CreateSubmissionErrorDetailRequest])
+      verify(f.chrisService, times(2)).createSubmissionErrorDetail(captor.capture())(any[HeaderCarrier])
+      val details = captor.getAllValues.asScala.toList.map(_.submissionErrorDetails)
+
+      details.map(_.position) mustBe List("0", "1")
+      details.map(_.errorMessage) mustBe List("9999: Boom", "8888: Boom two")
     }
   }
 

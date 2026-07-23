@@ -275,8 +275,8 @@ object UniversalStatus:
         e.errorType.equalsIgnoreCase("business")
     }
 
-  private def resetsToStarted(errors: Seq[GovTalkError]): Boolean =
-    errors.exists(e => e.number.exists(ResetToStartedNumbers.contains))
+  def resetsToStarted(errors: Seq[GovTalkError]): Boolean =
+    errors.exists(_.number.exists(ResetToStartedNumbers.contains))
 
   private def isTimeout(message: String): Boolean =
     val m = message.toLowerCase
