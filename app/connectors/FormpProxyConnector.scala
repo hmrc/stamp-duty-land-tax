@@ -18,6 +18,7 @@ package connectors
 
 import models.agent.*
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
+import models.polling.SubmissionsForPollingResponse
 import models.purge.{DeleteReturnRequest, DeleteReturnResponse, GetReturnsForPurgeRequest, ReturnsForPurgeResponse}
 import play.api.Logging
 import play.api.libs.json.Json
@@ -125,6 +126,22 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           throw new RuntimeException(e.getMessage)
         case e: Throwable =>
           logger.error(s"[FormpProxyConnector][getReturnsForPurge]: ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+      }
+
+  def getSubmissionsForPolling()(implicit hc: HeaderCarrier): Future[SubmissionsForPollingResponse] =
+    val url: URL = if (stubFormPBool) url"$stubPath/submissions-polling" else url"$formpPath/submissions-polling"
+    http.get(url)
+      .execute[SubmissionsForPollingResponse]
+      .recover {
+        case e: UpstreamErrorResponse if e.statusCode == 401 =>
+          logger.error(s"[FormpProxyConnector][getSubmissionsForPolling]: 401 Unauthorized from formp-proxy, the X-API-Key was rejected, check internal-service-api-key matches in both services")
+          throw new RuntimeException(e.getMessage)
+        case e: UpstreamErrorResponse =>
+          logger.error(s"[FormpProxyConnector][getSubmissionsForPolling]: Upstream error ${e.statusCode} - ${e.getMessage}")
+          throw new RuntimeException(e.getMessage)
+        case e: Throwable =>
+          logger.error(s"[FormpProxyConnector][getSubmissionsForPolling]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
 
