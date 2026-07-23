@@ -391,8 +391,13 @@ class ChrisResponseModelsSpec extends AnyWordSpec with Matchers {
       }
     }
 
+    "map a ChRIS-raised 2005 to STARTED — DSP 4.4 says resubmit, and DSP 3.5 makes the wire type fatal" in {
+      val fromChris = ChrisResponse.Errored(Seq(govTalkError(number = Some("2005"), errorType = "fatal", raisedBy = "Gateway")), None, Some("url"), "<x/>")
+      UniversalStatus.fromChrisResponse(fromChris, None) mustBe UniversalStatus.STARTED
+    }
+
     "prefer DEPARTMENTAL_ERROR over STARTED when both a 3001 business and a resettable code are present" in {
-      val reset = govTalkError(number = Some("2005"), errorType = "fatal", raisedBy = "Gateway")
+      val reset = govTalkError(number = Some("2005"), errorType = "timeOut", raisedBy = "Gateway")
       val resp  = ChrisResponse.Errored(Seq(reset, departmentalBusiness), None, Some("url"), "<x/>")
       UniversalStatus.fromChrisResponse(resp, None) mustBe UniversalStatus.DEPARTMENTAL_ERROR
     }

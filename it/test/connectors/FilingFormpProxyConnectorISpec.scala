@@ -3120,11 +3120,11 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
     val url = "/formp-proxy/filing/update/govtalk-status/correlation-Id"
 
     val payload = UpdateGovTalkStatusCorrelationIdRequest(
-      userIdentifier    = "USR-0001",
-      formResultId      = "FR-0001",
-      correlationId     = "COR-0002",
-      endStateTimestamp = "2026-06-30T10:05:00Z",
-      protocolStatus    = "ACCEPTED"
+      userIdentifier = "USR-0001",
+      formResultId   = "FR-0001",
+      correlationId  = "COR-0002",
+      pollInterval   = 0,
+      gatewayUrl     = "http://localhost:6995/chris"
     )
 
     "return GovTalkStatusReturn(success=true) when BE returns OK" in {
