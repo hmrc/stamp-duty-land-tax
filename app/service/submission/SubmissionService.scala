@@ -196,7 +196,7 @@ class SubmissionService @Inject() (
         numberOfPolls        = "0",
         pollInterval         = "0",
         protocolStatus       = "initial",
-        gatewayUrl           = appConfig.baseUrl("chris")
+        gatewayUrl           = connector.defaultPath
       )
     )
 
@@ -215,7 +215,7 @@ class SubmissionService @Inject() (
         pollInterval         = "0",
         protocolStatusOld    = oldProtocol,
         protocolStatusNew    = "initial",
-        gatewayUrl           = appConfig.baseUrl("chris")
+        gatewayUrl           = connector.defaultPath
       )
     )
 
@@ -263,7 +263,7 @@ class SubmissionService @Inject() (
     val req = UpdateGovTalkStatusLockRequest(
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
-      govTalkStatus  = GovTalkStatusLock(formLockOld = "N", formLockNew = "Y", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
+      govTalkStatus  = GovTalkStatusLock(formLockOld = "N", formLockNew = "Y", pollInterval = "0", gatewayUrl = connector.defaultPath)
     )
     chrisService.updateGovTalkStatusLock(req).map { _ =>
       logger.info(s"[SubmissionService] GovTalk lock ACQUIRED formResultId=${ctx.returnId} corrId=$correlationId")
@@ -278,7 +278,7 @@ class SubmissionService @Inject() (
     val req = UpdateGovTalkStatusLockRequest(
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
-      govTalkStatus  = GovTalkStatusLock(formLockOld = "Y", formLockNew = "N", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
+      govTalkStatus  = GovTalkStatusLock(formLockOld = "Y", formLockNew = "N", pollInterval = "0", gatewayUrl = connector.defaultPath)
     )
     chrisService.updateGovTalkStatusLock(req).map { _ =>
       logger.info(s"[SubmissionService] GovTalk lock RELEASED formResultId=${ctx.returnId} corrId=$correlationId")
@@ -534,7 +534,7 @@ class SubmissionService @Inject() (
                                       pollIntervalSeconds: Option[Int],
                                       correlationId: String)
                                      (implicit hc: HeaderCarrier): Future[Unit] =
-    val gatewayUrl = responseEndPoint.filter(_.nonEmpty).getOrElse(appConfig.baseUrl("chris"))
+    val gatewayUrl = responseEndPoint.filter(_.nonEmpty).getOrElse(connector.defaultPath)
     val req = UpdateGovTalkStatisticsRequest(
       userIdentifier = ctx.storn,
       formResultId   = ctx.returnId,
