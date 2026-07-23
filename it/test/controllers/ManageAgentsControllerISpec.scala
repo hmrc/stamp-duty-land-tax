@@ -35,16 +35,16 @@ class ManageAgentsControllerISpec extends BaseSpec
   lazy val updateAgentUrl = s"$servicePrefix/manage-agents/update/predefined-agent"
 
   def stubGetOrgResponse(): Unit = {
-    stubPost("/stamp-duty-land-tax-stub/organisation", Status.OK, getOrgJsonBodyResponse)
+    stubPost("/formp-proxy/organisation", Status.OK, getOrgJsonBodyResponse)
   }
 
   def stubDeleteAgentResponse(): Unit = {
-    stubPost("/stamp-duty-land-tax-stub/delete/predefined-agent", Status.OK,
+    stubPost("/formp-proxy/delete/predefined-agent", Status.OK,
       Json.toJson(DeletePredefinedAgentResponse(deleted = true)).toString)
   }
 
   def stubSubmitAgentDetailsResponse(): Unit = {
-    stubPost("/stamp-duty-land-tax-stub/create/predefined-agent", Status.OK,
+    stubPost("/formp-proxy/create/predefined-agent", Status.OK,
       Json.toJson(
         CreatePredefinedAgentResponse(
           agentResourceRef = "agentRef", agentId = "agentId"
@@ -53,7 +53,7 @@ class ManageAgentsControllerISpec extends BaseSpec
   }
 
   def stubUpdateAgentDetailsResponse(): Unit = {
-    stubPost("/stamp-duty-land-tax-stub/update/predefined-agent", Status.OK,
+    stubPost("/formp-proxy/update/predefined-agent", Status.OK,
       Json.toJson(
         UpdatePredefinedAgentResponse(
           updated = true
