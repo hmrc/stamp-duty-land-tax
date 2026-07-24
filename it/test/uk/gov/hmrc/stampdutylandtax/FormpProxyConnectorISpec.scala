@@ -35,7 +35,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
   with ScalaFutures
   with IntegrationPatience
   with ApplicationWithWiremock {
-  
+
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   private val connectorWithStub: FormpProxyConnector = appWithSubOn.injector.instanceOf[FormpProxyConnector]
@@ -44,10 +44,12 @@ class FormpProxyConnectorISpec extends AnyWordSpec
   private val storn = "STN001"
   private val arn   = "ARN001"
 
+  // Match either downstream base path so the stub matches whichever URL the connector resolves to.
+  private def eitherBase(suffix: String): String = s"/(?:stamp-duty-land-tax-stub|formp-proxy)$suffix"
+
   "submitAgentDetails" should {
 
-    val stubUrl = "/stamp-duty-land-tax-stub/create/predefined-agent"
-    val formpUrl = "/formp-proxy/create/predefined-agent"
+    val anyUrl = eitherBase("/create/predefined-agent")
 
     val payload = CreatePredefinedAgentRequest(
       storn       = "STN001",
@@ -63,7 +65,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "select stubUrl when stubFormPBool = true and return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""))
       )
@@ -73,7 +75,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     }
     "select formpUrl when stubFormPBool = false and return CreatePredefinedAgentResponse when BE returns OK with valid JSON" in {
       stubFor(
-        post(urlPathEqualTo(formpUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "agentResourceRef": "ARN4324234", "agentId" : "1234" }"""))
       )
@@ -84,7 +86,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "fail when BE returns OK with invalid JSON" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
       )
@@ -97,7 +99,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
@@ -111,14 +113,13 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "deletePredefinedAgent" should {
 
-    val stubUrl = "/stamp-duty-land-tax-stub/delete/predefined-agent"
-    val formpUrl = "/formp-proxy/delete/predefined-agent"
+    val anyUrl = eitherBase("/delete/predefined-agent")
 
     val req = DeletePredefinedAgentRequest(storn, arn)
 
     "select formPUrl when stubFormPBool = true and return OK with valid JSON object" in {
       stubFor(
-        post(urlPathEqualTo(formpUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
       )
@@ -129,7 +130,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "select stubURL when stubFormPBool = false and return OK with valid JSON object" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
       )
@@ -140,7 +141,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
@@ -152,7 +153,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     }
     "propagate Exception  when BE throws unexpected JSResult " in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn","agentReferenceNumber":"$arn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}"""))
       )
@@ -166,8 +167,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "getReturns" should {
 
-    val stubUrl = "/stamp-duty-land-tax-stub/returns"
-    val formpUrl = "/formp-proxy/returns"
+    val anyUrl = eitherBase("/returns")
 
     val request = SdltReturnRecordRequest(storn = storn, None, false, None)
 
@@ -193,7 +193,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          """.stripMargin
 
       stubFor(
-        post(urlPathEqualTo(formpUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody(responseBody))
       )
@@ -236,7 +236,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          """.stripMargin
 
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody(responseBody))
       )
@@ -279,7 +279,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          """.stripMargin
 
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody(responseBody))
       )
@@ -304,7 +304,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     "fail when BE returns OK with invalid JSON" in {
 
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
       )
@@ -318,7 +318,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
 
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(request)), true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
@@ -332,8 +332,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
   "getSdltOrganisation" should {
 
-    val stubUrl = "/stamp-duty-land-tax-stub/organisation"
-    val formpUrl = "/formp-proxy/organisation"
+    val anyUrl = eitherBase("/organisation")
 
     "select formUrl when stubFormPBool = false and return SdltOrganisation when BE returns OK with valid JSON" in {
       val responseJson =
@@ -363,7 +362,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          """.stripMargin
 
       stubFor(
-        post(urlPathEqualTo(formpUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody(responseJson))
       )
@@ -433,7 +432,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
          """.stripMargin
 
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody(responseJson))
       )
@@ -478,7 +477,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "fail when BE returns OK with invalid JSON" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "unexpectedField": true }"""))
       )
@@ -491,7 +490,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(s"""{"storn":"$storn"}""", true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
@@ -504,8 +503,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
   }
 
   "updateAgentDetails" should {
-    val stubUrl = "/stamp-duty-land-tax-stub/update/predefined-agent"
-    val formpUrl = "/formp-proxy/update/predefined-agent"
+    val anyUrl = eitherBase("/update/predefined-agent")
 
     val agentName = "John Snow"
     val req = UpdatePredefinedAgentRequest(
@@ -527,7 +525,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "select formPUrl when stubFormPBool = true and return CREATED with valid JSON object" in {
       stubFor(
-        post(urlPathEqualTo(formpUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "updated": true }"""))
       )
@@ -538,7 +536,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "select stubURL when stubFormPBool = false and return OK with valid JSON object" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "updated": true }"""))
       )
@@ -549,7 +547,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
           .willReturn(aResponse().withStatus(INTERNAL_SERVER_ERROR).withBody("boom"))
       )
@@ -561,7 +559,7 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     }
     "propagate Exception  when BE throws unexpected JSResult " in {
       stubFor(
-        post(urlPathEqualTo(stubUrl))
+        post(urlPathMatching(anyUrl))
           .withRequestBody(equalToJson(Json.stringify(payLoad), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("""{deleted": "ANY_VALUE}"""))
       )

@@ -56,7 +56,8 @@ class ChrisConnectorISpec
     new GuiceApplicationBuilder()
       .configure(
         "microservice.services.chris.host" -> "localhost",
-        "microservice.services.chris.port" -> wireMockPort
+        "microservice.services.chris.port" -> wireMockPort,
+        "microservice.services.chris.submit-url" -> "/ChRIS/SDLT/Filing/sync/SDLT"
       )
       .build()
 

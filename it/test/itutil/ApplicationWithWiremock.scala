@@ -47,7 +47,8 @@ trait ApplicationWithWiremock
       "microservice.services.formp-proxy.host" -> WireMockConstants.stubHost,
       "microservice.services.formp-proxy.port" -> WireMockConstants.stubPort,
       "microservice.services.stamp-duty-land-tax-stub.port" -> WireMockConstants.stubPort,
-      "microservice.services.stamp-duty-land-tax-stub.host" -> WireMockConstants.stubHost
+      "microservice.services.stamp-duty-land-tax-stub.host" -> WireMockConstants.stubHost,
+      "features.stub-formp-enabled" -> false
     )
   }
 
@@ -63,7 +64,8 @@ trait ApplicationWithWiremock
       "microservice.services.formp-proxy.port" -> WireMockConstants.stubPort,
       "microservice.services.stamp-duty-land-tax-stub.port" -> WireMockConstants.stubPort,
       "features.stub-formp-enabled" -> stubFormPBool,
-      "microservice.services.stamp-duty-land-tax-stub.host" -> WireMockConstants.stubHost
+      "microservice.services.stamp-duty-land-tax-stub.host" -> WireMockConstants.stubHost,
+      "features.stub-formp-enabled" -> false
     )
   }
 
