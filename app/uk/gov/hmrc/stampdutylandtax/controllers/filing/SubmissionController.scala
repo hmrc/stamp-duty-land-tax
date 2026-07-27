@@ -69,7 +69,7 @@ class SubmissionController @Inject() (
 
     logger.info(s"[SubmissionController] runSubmission START returnId=$returnId sender=$sender periodEnd=$periodEnd affinityGroup=$affinityGroup hasCredential=${credentialId.nonEmpty}")
 
-    submissionService.submit(fullReturn, sender, periodEnd, credentialId).map { outcome =>
+    submissionService.submit(fullReturn, sender, periodEnd, credentialId, email).map { outcome =>
       logger.info(s"[SubmissionController] service returned returnId=$returnId status=${outcome.status} utrn=${outcome.utrn.getOrElse("-")} errorCount=${outcome.errors.size}")
       SubmissionResponse.from(outcome) match
         case s: SubmissionResponse.Submitted =>

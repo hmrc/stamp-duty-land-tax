@@ -405,7 +405,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       addressLine3 = Some("Building A"),
       addressLine4 = Some("District B"),
       postcode = Some("TE23 5TT"),
-      isRepresentedByAgent = "YES"
+      isRepresentedByAgent = Some("yes")
     )
 
     "return CreateVendorReturn when BE returns OK with valid JSON" in {
@@ -469,8 +469,8 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val yesPayload = payload.copy(isRepresentedByAgent = "YES")
-      val noPayload = payload.copy(isRepresentedByAgent = "NO")
+      val yesPayload = payload.copy(isRepresentedByAgent = Some("yes"))
+      val noPayload = payload.copy(isRepresentedByAgent = Some("no"))
 
       connector.createVendor(yesPayload).futureValue.vendorId mustBe "VID-001"
       connector.createVendor(noPayload).futureValue.vendorId mustBe "VID-001"
@@ -524,7 +524,7 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       addressLine3 = Some("Building A"),
       addressLine4 = Some("District B"),
       postcode = Some("TE23 5TT"),
-      isRepresentedByAgent = "YES",
+      isRepresentedByAgent = Some("yes"),
       vendorResourceRef = "VRF-001",
       nextVendorId = Some("VID-002")
     )

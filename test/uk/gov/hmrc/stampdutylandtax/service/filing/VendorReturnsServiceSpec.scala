@@ -45,7 +45,7 @@ final class VendorReturnsServiceSpec extends SpecBase {
       addressLine3 = Some("Building A"),
       addressLine4 = Some("District B"),
       postcode = Some("TE23 5TT"),
-      isRepresentedByAgent = "YES"
+      isRepresentedByAgent = Some("yes")
     )
 
   private def mkCreateVendorReturn(
@@ -75,7 +75,7 @@ final class VendorReturnsServiceSpec extends SpecBase {
       addressLine3 = Some("Building A"),
       addressLine4 = Some("District B"),
       postcode = Some("TE23 5TT"),
-      isRepresentedByAgent = "YES",
+      isRepresentedByAgent = Some("yes"),
       vendorResourceRef = vendorResourceRef,
       nextVendorId = Some("VID-002")
     )
@@ -196,8 +196,8 @@ final class VendorReturnsServiceSpec extends SpecBase {
     "must handle different isRepresentedByAgent values" in {
       val connector                            = mock[FilingFormpProxyConnector]
       val service                              = new VendorReturnsService(connector)
-      val yesRequest: CreateVendorRequest      = mkCreateVendorRequest().copy(isRepresentedByAgent = "YES")
-      val noRequest: CreateVendorRequest       = mkCreateVendorRequest().copy(isRepresentedByAgent = "NO")
+      val yesRequest: CreateVendorRequest      = mkCreateVendorRequest().copy(isRepresentedByAgent = Some("yes"))
+      val noRequest: CreateVendorRequest       = mkCreateVendorRequest().copy(isRepresentedByAgent = Some("no"))
       implicit val hc: HeaderCarrier           = HeaderCarrier()
 
       when(connector.createVendor(eqTo(yesRequest))(any[HeaderCarrier]))

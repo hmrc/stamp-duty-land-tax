@@ -60,7 +60,7 @@ class VendorReturnsControllerISpec extends BaseSpec
             title = None, forename1 = None, forename2 = None, name = "name",
             houseNumber = None, addressLine1 = "address1", addressLine2 = None,
             addressLine3 = None, addressLine4 = None,
-            postcode = None, isRepresentedByAgent = "isRep"))
+            postcode = None, isRepresentedByAgent = None))
 
         val result = wsClient.url(createVendorUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
@@ -77,7 +77,7 @@ class VendorReturnsControllerISpec extends BaseSpec
             title = None, forename1 = None, forename2 = None, name = "name",
             houseNumber = None, addressLine1 = "address1", addressLine2 = None,
             addressLine3 = None, addressLine4 = None,
-            postcode = None, isRepresentedByAgent = "isRep"))
+            postcode = None, isRepresentedByAgent = None))
 
         val result = wsClient.url(createVendorUrl)
           .withHttpHeaders("Authorization" -> "Bearer123")
@@ -98,7 +98,7 @@ class VendorReturnsControllerISpec extends BaseSpec
             title = None, forename1 = None, forename2 = None, name = "name",
             houseNumber = None, addressLine1 = "address1", addressLine2 = None,
             addressLine3 = None, addressLine4 = None,
-            postcode = None, isRepresentedByAgent = "isRep", vendorResourceRef = "ref",
+            postcode = None, isRepresentedByAgent = None, vendorResourceRef = "ref",
             nextVendorId = None))
 
         val result = wsClient.url(updateVendorUrl)
@@ -116,7 +116,7 @@ class VendorReturnsControllerISpec extends BaseSpec
             title = None, forename1 = None, forename2 = None, name = "name",
             houseNumber = None, addressLine1 = "address1", addressLine2 = None,
             addressLine3 = None, addressLine4 = None,
-            postcode = None, isRepresentedByAgent = "isRep", vendorResourceRef = "ref",
+            postcode = None, isRepresentedByAgent = None, vendorResourceRef = "ref",
             nextVendorId = None))
 
         val result = wsClient.url(updateVendorUrl)

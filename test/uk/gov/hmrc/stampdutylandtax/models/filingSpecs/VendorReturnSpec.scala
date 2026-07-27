@@ -72,7 +72,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
     "addressLine3" -> "Building A",
     "addressLine4" -> "District B",
     "postcode" -> "TE23 5TT",
-    "isRepresentedByAgent" -> "YES",
+    "isRepresentedByAgent" -> "yes",
     "vendorResourceRef" -> "VRF-001",
     "nextVendorId" -> "VID-002"
   )
@@ -82,7 +82,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
     "returnResourceRef" -> "45678",
     "name" -> "Test",
     "addressLine1" -> "Test Street",
-    "isRepresentedByAgent" -> "YES",
+    "isRepresentedByAgent" -> "yes",
     "vendorResourceRef" -> "VRF-001"
   )
 
@@ -99,7 +99,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
     addressLine3 = Some("Building A"),
     addressLine4 = Some("District B"),
     postcode = Some("TE23 5TT"),
-    isRepresentedByAgent = "YES",
+    isRepresentedByAgent = Some("yes"),
     vendorResourceRef = "VRF-001",
     nextVendorId = Some("VID-002")
   )
@@ -109,7 +109,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
     returnResourceRef = "45678",
     name = "Test",
     addressLine1 = "Test Street",
-    isRepresentedByAgent = "YES",
+    isRepresentedByAgent = Some("yes"),
     vendorResourceRef = "VRF-001"
   )
 
@@ -127,7 +127,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
     "addressLine3" -> "Building A",
     "addressLine4" -> "District B",
     "postcode" -> "TE23 5TT",
-    "isRepresentedByAgent" -> "YES"
+    "isRepresentedByAgent" -> "yes"
   )
 
   private val validCreateVendorRequestJsonMinimal = Json.obj(
@@ -135,7 +135,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
     "returnResourceRef" -> "45678",
     "name" -> "Test",
     "addressLine1" -> "Test Street",
-    "isRepresentedByAgent" -> "YES"
+    "isRepresentedByAgent" -> "yes"
   )
 
   private val completeCreateVendorRequest = CreateVendorRequest(
@@ -151,14 +151,14 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
     addressLine3 = Some("Building A"),
     addressLine4 = Some("District B"),
     postcode = Some("TE23 5TT"),
-    isRepresentedByAgent = "YES"
+    isRepresentedByAgent = Some("yes")
   )
 
   private val minimalCreateVendorRequest = CreateVendorRequest(
     stornId = "12345",
     returnResourceRef = "45678",
     addressLine1 = "Test Street",
-    isRepresentedByAgent = "YES",
+    isRepresentedByAgent = Some("yes"),
     name = "Test"
   )
 
@@ -185,7 +185,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         result.addressLine3 mustBe Some("Building A")
         result.addressLine4 mustBe Some("District B")
         result.postcode mustBe Some("TE23 5TT")
-        result.isRepresentedByAgent mustBe "YES"
+        result.isRepresentedByAgent mustBe Some("yes")
       }
 
       "must deserialize valid JSON with only required fields" in {
@@ -203,7 +203,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         result.addressLine3 must not be defined
         result.addressLine4 must not be defined
         result.postcode must not be defined
-        result.isRepresentedByAgent mustBe "YES"
+        result.isRepresentedByAgent mustBe Some("yes")
       }
 
       "must deserialize JSON with null optional fields" in {
@@ -220,7 +220,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
           "addressLine3" -> JsNull,
           "addressLine4" -> JsNull,
           "postcode" -> JsNull,
-          "isRepresentedByAgent" -> "YES"
+          "isRepresentedByAgent" -> "yes"
         )
 
         val result = Json.fromJson[CreateVendorRequest](json).asEither.value
@@ -238,12 +238,12 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         result.isLeft mustBe true
       }
 
-      "must fail to deserialize when isRepresentedByAgent is missing" in {
+      "must deserialize when isRepresentedByAgent is missing" in {
         val json = validCreateVendorRequestJsonComplete - "isRepresentedByAgent"
 
         val result = Json.fromJson[CreateVendorRequest](json).asEither
 
-        result.isLeft mustBe true
+        result.isLeft mustBe false
       }
 
       "must fail to deserialize when name is missing" in {
@@ -309,7 +309,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         (json \ "addressLine3").asOpt[String] mustBe Some("Building A")
         (json \ "addressLine4").asOpt[String] mustBe Some("District B")
         (json \ "postcode").asOpt[String] mustBe Some("TE23 5TT")
-        (json \ "isRepresentedByAgent").as[String] mustBe "YES"
+        (json \ "isRepresentedByAgent").asOpt[String] mustBe Some("yes")
       }
 
       "must serialize CreateVendorRequest with only required fields" in {
@@ -319,7 +319,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         (json \ "returnResourceRef").as[String] mustBe "45678"
         (json \ "name").as[String] mustBe "Test"
         (json \ "addressLine1").as[String] mustBe "Test Street"
-        (json \ "isRepresentedByAgent").as[String] mustBe "YES"
+        (json \ "isRepresentedByAgent").asOpt[String] mustBe Some("yes")
       }
 
       "must serialize None optional fields correctly" in {
@@ -373,7 +373,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
           addressLine3 = None,
           addressLine4 = Some("District B"),
           postcode = Some("TE23 5TT"),
-          isRepresentedByAgent = "YES"
+          isRepresentedByAgent = Some("yes")
         )
 
         val json = Json.toJson(mixedCreateVendorRequest)
@@ -461,7 +461,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         result.addressLine3 mustBe Some("Building A")
         result.addressLine4 mustBe Some("District B")
         result.postcode mustBe Some("TE23 5TT")
-        result.isRepresentedByAgent mustBe "YES"
+        result.isRepresentedByAgent mustBe Some("yes")
         result.vendorResourceRef mustBe "VRF-001"
         result.nextVendorId mustBe Some("VID-002")
       }
@@ -481,7 +481,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         result.addressLine3 must not be defined
         result.addressLine4 must not be defined
         result.postcode must not be defined
-        result.isRepresentedByAgent mustBe "YES"
+        result.isRepresentedByAgent mustBe Some("yes")
         result.vendorResourceRef mustBe "VRF-001"
         result.nextVendorId must not be defined
       }
@@ -500,7 +500,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
           "addressLine3" -> JsNull,
           "addressLine4" -> JsNull,
           "postcode" -> JsNull,
-          "isRepresentedByAgent" -> "YES",
+          "isRepresentedByAgent" -> "yes",
           "vendorResourceRef" -> "VRF-001",
           "nextVendorId" -> JsNull
         )
@@ -545,12 +545,12 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         result.isLeft mustBe true
       }
 
-      "must fail to deserialize when isRepresentedByAgent is missing" in {
+      "must deserialize when isRepresentedByAgent is missing" in {
         val json = validUpdateVendorRequestJsonComplete - "isRepresentedByAgent"
 
         val result = Json.fromJson[UpdateVendorRequest](json).asEither
 
-        result.isLeft mustBe true
+        result.isLeft mustBe false
       }
 
       "must fail to deserialize when vendorResourceRef is missing" in {
@@ -607,7 +607,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         (json \ "addressLine3").asOpt[String] mustBe Some("Building A")
         (json \ "addressLine4").asOpt[String] mustBe Some("District B")
         (json \ "postcode").asOpt[String] mustBe Some("TE23 5TT")
-        (json \ "isRepresentedByAgent").as[String] mustBe "YES"
+        (json \ "isRepresentedByAgent").asOpt[String] mustBe Some("yes")
         (json \ "vendorResourceRef").as[String] mustBe "VRF-001"
         (json \ "nextVendorId").asOpt[String] mustBe Some("VID-002")
       }
@@ -619,7 +619,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
         (json \ "returnResourceRef").as[String] mustBe "45678"
         (json \ "name").as[String] mustBe "Test"
         (json \ "addressLine1").as[String] mustBe "Test Street"
-        (json \ "isRepresentedByAgent").as[String] mustBe "YES"
+        (json \ "isRepresentedByAgent").asOpt[String] mustBe Some("yes")
         (json \ "vendorResourceRef").as[String] mustBe "VRF-001"
       }
 
@@ -675,7 +675,7 @@ class VendorReturnSpec extends AnyFreeSpec with Matchers with EitherValues with 
           addressLine3 = None,
           addressLine4 = Some("District B"),
           postcode = Some("TE23 5TT"),
-          isRepresentedByAgent = "YES",
+          isRepresentedByAgent = Some("yes"),
           vendorResourceRef = "VRF-001",
           nextVendorId = Some("VID-002")
         )

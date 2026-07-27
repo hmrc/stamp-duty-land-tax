@@ -113,19 +113,6 @@ class VendorReturnsControllerSpec extends SpecBase {
         (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
       }
 
-      "return BAD_REQUEST when isRepresentedByAgent is missing" in new BaseSetup {
-        val invalidRequest: JsObject = Json.obj(
-          "stornId" -> "STORN12345",
-          "returnResourceRef" -> "RRF-2024-001",
-          "name" -> "Smith",
-          "addressLine1" -> "Main Street"
-        )
-        val result: Future[Result] = controller.createVendor()(fakeRequest.withBody(invalidRequest))
-
-        status(result) mustBe BAD_REQUEST
-        (contentAsJson(result) \ "message").as[String] mustBe "Invalid payload"
-      }
-
       "return 500 Unexpected error on unknown exception" in new BaseSetup {
         when(mockVendorReturnsService.createVendor(any[CreateVendorRequest])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("unexpected")))
@@ -169,8 +156,8 @@ class VendorReturnsControllerSpec extends SpecBase {
       }
 
       "handle different isRepresentedByAgent values" in new BaseSetup {
-        val yesRequest: CreateVendorRequest = testCreateVendorRequest.copy(isRepresentedByAgent = "YES")
-        val noRequest: CreateVendorRequest = testCreateVendorRequest.copy(isRepresentedByAgent = "NO")
+        val yesRequest: CreateVendorRequest = testCreateVendorRequest.copy(isRepresentedByAgent = Some("yes"))
+        val noRequest: CreateVendorRequest = testCreateVendorRequest.copy(isRepresentedByAgent = Some("no"))
 
         when(mockVendorReturnsService.createVendor(any[CreateVendorRequest])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testCreateVendorReturn))
@@ -490,7 +477,7 @@ class VendorReturnsControllerSpec extends SpecBase {
       addressLine3 = Some("Building A"),
       addressLine4 = Some("District B"),
       postcode = Some("TE23 5TT"),
-      isRepresentedByAgent = "YES"
+      isRepresentedByAgent = Some("yes")
     )
 
     val testCreateVendorRequestMinimal: CreateVendorRequest = CreateVendorRequest(
@@ -506,7 +493,7 @@ class VendorReturnsControllerSpec extends SpecBase {
       addressLine3 = None,
       addressLine4 = None,
       postcode = None,
-      isRepresentedByAgent = "YES"
+      isRepresentedByAgent = Some("yes")
     )
 
     val testCreateVendorReturn: CreateVendorReturn = CreateVendorReturn(
@@ -527,7 +514,7 @@ class VendorReturnsControllerSpec extends SpecBase {
       addressLine3 = Some("Building A"),
       addressLine4 = Some("District B"),
       postcode = Some("TE23 5TT"),
-      isRepresentedByAgent = "YES",
+      isRepresentedByAgent = Some("yes"),
       vendorResourceRef = "VRF-001",
       nextVendorId = Some("VID-002")
     )
@@ -545,7 +532,7 @@ class VendorReturnsControllerSpec extends SpecBase {
       addressLine3 = None,
       addressLine4 = None,
       postcode = None,
-      isRepresentedByAgent = "YES",
+      isRepresentedByAgent = Some("yes"),
       vendorResourceRef = "VRF-001",
       nextVendorId = None
     )
