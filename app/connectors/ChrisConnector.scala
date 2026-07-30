@@ -51,7 +51,7 @@ class ChrisConnector @Inject() (
   def submit(envelope: scala.xml.Elem, endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
     val target    = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
     val xmlString = XmlDecl + "\n" + envelope.toString()
-    logger.debug(s"[ChrisConnector] SUBMIT target=$target corrId=$correlationId")
+    logger.info(s"[ChrisConnector] SUBMIT target=$target corrId=$correlationId xml=$xmlString")
     httpClient
       .post(url"$target")
       .setHeader(
@@ -191,16 +191,19 @@ class ChrisConnector @Inject() (
 
       (qualifier, function) match
         case ("response", "submit") =>
+          logger.info("[ChrisConnector][parse] response submit" + body + xml)
           ChrisResponse.Completed(extractUtrn(xml), extractIrMark(xml), corrId, responseEndPoint(xml), body)
 
         case ("error", _) =>
+          logger.info("[ChrisConnector][parse] response error" + body + xml)
           ChrisResponse.Errored(parseErrors(xml), corrId, responseEndPoint(xml), body)
 
         case ("acknowledgement", _) =>
+          logger.info("[ChrisConnector][parse] response acknowledgement" + body + xml)
           ChrisResponse.Acknowledged(corrId, pollInterval(xml), responseEndPoint(xml), body)
 
         case other =>
-          logger.error(s"[ChrisConnector] Unexpected GovTalk qualifier/function $other")
+          logger.error(s"[ChrisConnector] Unexpected GovTalk qualifier/function $other" + xml)
           ChrisResponse.TransportError(s"Unexpected GovTalk message: $other")
     catch
       case NonFatal(e) =>
