@@ -216,7 +216,7 @@ class FullReturnSpec extends AnyFreeSpec with Matchers with EitherValues with Op
         val result = Json.fromJson[Purchaser](validPurchaserJson).asEither.value
 
         result.purchaserID mustBe Some("PUR001")
-        result.isCompany mustBe Some("YES")
+        result.isCompany mustBe Some("yes")
         result.surname mustBe Some("Smith")
       }
 

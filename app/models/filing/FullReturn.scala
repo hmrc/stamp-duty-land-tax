@@ -87,7 +87,7 @@ object Purchaser {
   private val baseFormat: OFormat[Purchaser] = Json.format[Purchaser]
 
   private def normalizeYesNo(value: Option[String]): Option[String] =
-    value.map(_.toUpperCase)
+    value.map(_.toLowerCase)
 
   implicit val format: OFormat[Purchaser] = new OFormat[Purchaser] {
     override def reads(json: JsValue): JsResult[Purchaser] = {
@@ -159,7 +159,7 @@ object Vendor {
   private val baseFormat: OFormat[Vendor] = Json.format[Vendor]
 
   private def normalizeYesNo(value: Option[String]): Option[String] =
-    value.map(_.toUpperCase)
+    value.map(_.toLowerCase)
 
   implicit val format: OFormat[Vendor] = new OFormat[Vendor] {
     override def reads(json: JsValue): JsResult[Vendor] = {
