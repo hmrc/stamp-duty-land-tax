@@ -19,16 +19,23 @@ package service.filing
 import connectors.FilingFormpProxyConnector
 import models.filing._
 import uk.gov.hmrc.http.HeaderCarrier
+import models.purge._
+import connectors.FormpProxyConnector
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class FilingReturnsService @Inject()(formp: FilingFormpProxyConnector) {
+class FilingReturnsService @Inject()(formp: FilingFormpProxyConnector,
+                                     formpProx: FormpProxyConnector) {
 
   def createReturn(createReturnRequest: CreateReturnRequest)
                   (implicit hc: HeaderCarrier): Future[CreateReturnResult] =
     formp.createReturn(createReturnRequest)
+
+  def deleteReturn(deleteReturnRequest: DeleteReturnRequest)
+                  (implicit hc: HeaderCarrier): Future[DeleteReturnResponse] =
+    formpProx.deleteReturn(deleteReturnRequest)
 
   def getFullReturn(getReturnByRefRequest: GetReturnByRefRequest)
                    (implicit hc: HeaderCarrier): Future[FullReturn] =

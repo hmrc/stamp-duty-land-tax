@@ -11,6 +11,7 @@ POST        /manage-returns/get-returns                     uk.gov.hmrc.stampdut
 # Filing Routes
 
 POST        /filing/create/return                           uk.gov.hmrc.stampdutylandtax.controllers.filing.FilingReturnsController.createReturn()
+POST        /filing/delete/return                           uk.gov.hmrc.stampdutylandtax.controllers.filing.FilingReturnsController.deleteReturn()
 POST        /filing/receive/full-return                     uk.gov.hmrc.stampdutylandtax.controllers.filing.FilingReturnsController.getFullReturn()
 POST        /filing/update/return-info                      uk.gov.hmrc.stampdutylandtax.controllers.filing.FilingReturnsController.updateReturnInfo()
 

@@ -36,8 +36,9 @@ object ReturnsForPurgeResponse {
 }
 
 case class DeleteReturnRequest(storn: String, returnResourceRef: String)
+
 object DeleteReturnRequest {
-  implicit val writes: OWrites[DeleteReturnRequest] = Json.writes[DeleteReturnRequest]
+  implicit val format: OFormat[DeleteReturnRequest] = Json.format[DeleteReturnRequest]
 }
 
 case class DeleteReturnResponse(deleted: Boolean)

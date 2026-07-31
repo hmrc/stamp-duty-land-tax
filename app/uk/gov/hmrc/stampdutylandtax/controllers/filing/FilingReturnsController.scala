@@ -17,6 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing.{CreateReturnRequest, GetReturnByRefRequest, UpdateReturnRequest}
+import models.purge.DeleteReturnRequest
 import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
@@ -52,6 +53,26 @@ class FilingReturnsController @Inject()(
             }
       )
   }
+
+  def deleteReturn(): Action[JsValue] = auth.async(parse.json) { implicit request =>
+    request.body
+      .validate[DeleteReturnRequest]
+      .fold(
+        errs =>
+          Future.successful(BadRequest(Json.obj("message" -> "[deleteReturn] Invalid payload", "errors" -> JsError.toJson(errs)))),
+        body =>
+          service
+            .deleteReturn(body)
+            .map { result =>
+              Created(Json.toJson(result))
+            }
+            .recover { case t =>
+              logger.error("[deleteReturn] failed", t)
+              InternalServerError(Json.obj("message" -> "Unexpected error"))
+            }
+      )
+  }
+  
 
   def getFullReturn: Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body

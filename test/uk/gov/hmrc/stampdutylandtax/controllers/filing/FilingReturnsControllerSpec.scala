@@ -26,6 +26,7 @@ import play.api.mvc.Result
 import play.api.test.Helpers.{contentAsJson, status}
 import service.filing.FilingReturnsService
 import uk.gov.hmrc.http.HeaderCarrier
+import models.purge.{DeleteReturnRequest, DeleteReturnResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -367,6 +368,71 @@ class FilingReturnsControllerSpec extends SpecBase {
         status(result3) mustBe OK
       }
     }
+
+    "POST /delete-return (deleteReturn)" - {
+
+      "return CREATED with delete response when service returns successfully" in new BaseSetup {
+        when(mockFilingReturnsService.deleteReturn(eqTo(testDeleteReturnRequest))(any[HeaderCarrier]))
+          .thenReturn(Future.successful(testDeleteReturnResponse))
+
+        val result: Future[Result] = controller.deleteReturn()(fakeRequest.withBody(Json.toJson(testDeleteReturnRequest)))
+
+        status(result) mustBe CREATED
+        contentAsJson(result) mustBe Json.toJson(testDeleteReturnResponse)
+        verify(mockFilingReturnsService).deleteReturn(eqTo(testDeleteReturnRequest))(any[HeaderCarrier])
+      }
+
+      "return BAD_REQUEST with message when given an invalid json body" in new BaseSetup {
+        val result: Future[Result] = controller.deleteReturn()(fakeRequest.withBody(Json.obj("invalid" -> "data")))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "[deleteReturn] Invalid payload"
+        (contentAsJson(result) \ "errors").isDefined mustBe true
+      }
+
+      "return BAD_REQUEST when returnResourceRef is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj("storn" -> "STORN123456")
+        val result: Future[Result] = controller.deleteReturn()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "[deleteReturn] Invalid payload"
+      }
+
+      "return BAD_REQUEST when storn is missing" in new BaseSetup {
+        val invalidRequest: JsObject = Json.obj("returnResourceRef" -> "RRF-2024-001")
+        val result: Future[Result] = controller.deleteReturn()(fakeRequest.withBody(invalidRequest))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "[deleteReturn] Invalid payload"
+      }
+
+      "return BAD_REQUEST when all fields are missing" in new BaseSetup {
+        val result: Future[Result] = controller.deleteReturn()(fakeRequest.withBody(Json.obj()))
+
+        status(result) mustBe BAD_REQUEST
+        (contentAsJson(result) \ "message").as[String] mustBe "[deleteReturn] Invalid payload"
+      }
+
+      "return 500 Unexpected error on unknown exception" in new BaseSetup {
+        when(mockFilingReturnsService.deleteReturn(any[DeleteReturnRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new RuntimeException("unexpected")))
+
+        val result: Future[Result] = controller.deleteReturn()(fakeRequest.withBody(Json.toJson(testDeleteReturnRequest)))
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
+      }
+
+      "return 500 when service fails with exception" in new BaseSetup {
+        when(mockFilingReturnsService.deleteReturn(any[DeleteReturnRequest])(any[HeaderCarrier]))
+          .thenReturn(Future.failed(new Exception("Service failure")))
+
+        val result: Future[Result] = controller.deleteReturn()(fakeRequest.withBody(Json.toJson(testDeleteReturnRequest)))
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        (contentAsJson(result) \ "message").as[String] mustBe "Unexpected error"
+      }
+    }
   }
 
   private trait BaseSetup {
@@ -430,5 +496,15 @@ class FilingReturnsControllerSpec extends SpecBase {
       stornId = Some("STORN123456"),
       returnResourceRef = Some("RRF-2024-001")
     )
+    
+    val testDeleteReturnRequest: DeleteReturnRequest = DeleteReturnRequest(
+      storn = "STORN123456",
+      returnResourceRef = "RRF-2024-001"
+    )
+
+    val testDeleteReturnResponse: DeleteReturnResponse = DeleteReturnResponse(
+      deleted = true
+    )
+    
   }
 }

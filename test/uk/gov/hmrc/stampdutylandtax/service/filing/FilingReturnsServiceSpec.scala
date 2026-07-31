@@ -17,16 +17,29 @@
 package uk.gov.hmrc.stampdutylandtax.service.filing
 
 import base.SpecBase
-import connectors.FilingFormpProxyConnector
+import connectors.{FilingFormpProxyConnector, FormpProxyConnector}
 import models.filing.*
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
 import service.filing.FilingReturnsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import models.purge._
 
 import scala.concurrent.Future
 
 final class FilingReturnsServiceSpec extends SpecBase {
+
+  private def mkDeleteReturnRequest(
+                                     storn: String = "STORN12345",
+                                     returnResourceRef: String = "RRF-2024-001"
+                                   ): DeleteReturnRequest =
+    DeleteReturnRequest(
+      storn = storn,
+      returnResourceRef = returnResourceRef
+    )
+
+  private def mkDeleteReturnResponse(deleted: Boolean = true): DeleteReturnResponse =
+    DeleteReturnResponse(deleted = deleted)
 
   private def mkCreateRequest(stornId: String = "STORN12345"): CreateReturnRequest =
     CreateReturnRequest(
@@ -110,7 +123,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must delegate to connector (happy path)" in {
       val connector                    = mock[FilingFormpProxyConnector]
-      val service                      = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: CreateReturnRequest = mkCreateRequest()
       implicit val hc: HeaderCarrier   = HeaderCarrier()
 
@@ -126,7 +140,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must return different results for different requests" in {
       val connector                     = mock[FilingFormpProxyConnector]
-      val service                       = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: CreateReturnRequest = mkCreateRequest("STORN11111")
       val request2: CreateReturnRequest = mkCreateRequest("STORN22222")
       implicit val hc: HeaderCarrier    = HeaderCarrier()
@@ -146,7 +161,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must propagate failures from connector" in {
       val connector                    = mock[FilingFormpProxyConnector]
-      val service                      = new FilingReturnsService(connector)
+      val FPconnector = mock[FormpProxyConnector]
+      val service = new FilingReturnsService(connector, FPconnector)
       val request: CreateReturnRequest = mkCreateRequest()
       val boom                         = UpstreamErrorResponse("Service unavailable", 503)
       implicit val hc: HeaderCarrier   = HeaderCarrier()
@@ -163,7 +179,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle company purchaser requests" in {
       val connector                    = mock[FilingFormpProxyConnector]
-      val service                      = new FilingReturnsService(connector)
+     val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: CreateReturnRequest = mkCreateRequest().copy(
         purchaserIsCompany = "Y",
         surNameOrCompanyName = "ABC Property Ltd",
@@ -183,7 +200,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle minimal request with no optional fields" in {
       val connector                    = mock[FilingFormpProxyConnector]
-      val service                      = new FilingReturnsService(connector)
+     val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: CreateReturnRequest = mkCreateRequest().copy(
         houseNumber = None,
         addressLine2 = None,
@@ -205,7 +223,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle request with all optional fields populated" in {
       val connector                    = mock[FilingFormpProxyConnector]
-      val service                      = new FilingReturnsService(connector)
+     val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: CreateReturnRequest = mkCreateRequest().copy(
         houseNumber = Some(42),
         addressLine2 = Some("Kensington"),
@@ -227,7 +246,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle different transaction types" in {
       val connector                                  = mock[FilingFormpProxyConnector]
-      val service                                    = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val residentialRequest: CreateReturnRequest    = mkCreateRequest().copy(transactionType = "RESIDENTIAL")
       val nonResidentialRequest: CreateReturnRequest = mkCreateRequest().copy(transactionType = "NON_RESIDENTIAL")
       val mixedRequest: CreateReturnRequest          = mkCreateRequest().copy(transactionType = "MIXED")
@@ -252,7 +272,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle different storn ID formats" in {
       val connector                     = mock[FilingFormpProxyConnector]
-      val service                       = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: CreateReturnRequest = mkCreateRequest("STORN12345")
       val request2: CreateReturnRequest = mkCreateRequest("STORN-ABC-123")
       val request3: CreateReturnRequest = mkCreateRequest("12345678")
@@ -277,7 +298,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must call connector exactly once per request" in {
       val connector                    = mock[FilingFormpProxyConnector]
-      val service                      = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: CreateReturnRequest = mkCreateRequest()
       implicit val hc: HeaderCarrier   = HeaderCarrier()
 
@@ -292,7 +314,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle consecutive requests independently" in {
       val connector                     = mock[FilingFormpProxyConnector]
-      val service                       = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: CreateReturnRequest = mkCreateRequest("STORN11111")
       val request2: CreateReturnRequest = mkCreateRequest("STORN22222")
       val request3: CreateReturnRequest = mkCreateRequest("STORN33333")
@@ -315,7 +338,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must propagate RuntimeException from connector" in {
       val connector                    = mock[FilingFormpProxyConnector]
-      val service                      = new FilingReturnsService(connector)
+     val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: CreateReturnRequest = mkCreateRequest()
       val boom                         = new RuntimeException("Connection failed")
       implicit val hc: HeaderCarrier   = HeaderCarrier()
@@ -335,7 +359,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must delegate to connector" in {
       val connector                             = mock[FilingFormpProxyConnector]
-      val service                               = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: GetReturnByRefRequest        = mkGetReturnRequest()
       val response:FullReturn            = mkGetReturnResponse()
       implicit val hc: HeaderCarrier            = HeaderCarrier()
@@ -352,7 +377,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must return correct data for different return IDs" in {
       val connector                              = mock[FilingFormpProxyConnector]
-      val service                                = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: GetReturnByRefRequest        = mkGetReturnRequest("RRF-001", "STORN11111")
       val request2: GetReturnByRefRequest        = mkGetReturnRequest("RRF-002", "STORN22222")
       val response1:FullReturn            = mkGetReturnResponse("STORN11111", "RRF-001")
@@ -374,7 +400,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must propagate failures from connector" in {
       val connector                      = mock[FilingFormpProxyConnector]
-      val service                        = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: GetReturnByRefRequest = mkGetReturnRequest()
       val boom                           = UpstreamErrorResponse("Not found", 404)
       implicit val hc: HeaderCarrier     = HeaderCarrier()
@@ -391,7 +418,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle different returnResourceRef formats" in {
       val connector                       = mock[FilingFormpProxyConnector]
-      val service                         = FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: GetReturnByRefRequest = mkGetReturnRequest("123456", "STORN12345")
       val request2: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "STORN12345")
       val request3: GetReturnByRefRequest = mkGetReturnRequest("ABC-123-XYZ", "STORN12345")
@@ -413,7 +441,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle different storn formats" in {
       val connector                       = mock[FilingFormpProxyConnector]
-      val service                         = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "STORN123456")
       val request2: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "STORN-ABC-123")
       val request3: GetReturnByRefRequest = mkGetReturnRequest("RRF-2024-001", "12345678")
@@ -435,7 +464,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must call connector exactly once per request" in {
       val connector                      = mock[FilingFormpProxyConnector]
-      val service                        = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: GetReturnByRefRequest = mkGetReturnRequest()
       val response:FullReturn     = mkGetReturnResponse()
       implicit val hc: HeaderCarrier     = HeaderCarrier()
@@ -451,7 +481,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle consecutive requests independently" in {
       val connector                        = mock[FilingFormpProxyConnector]
-      val service                          = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: GetReturnByRefRequest  = mkGetReturnRequest("RRF-001", "STORN11111")
       val request2: GetReturnByRefRequest  = mkGetReturnRequest("RRF-002", "STORN22222")
       val request3: GetReturnByRefRequest  = mkGetReturnRequest("RRF-003", "STORN33333")
@@ -477,7 +508,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must propagate RuntimeException from connector" in {
       val connector                      = mock[FilingFormpProxyConnector]
-      val service                        = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: GetReturnByRefRequest = mkGetReturnRequest()
       val boom                           = new RuntimeException("Connection timeout")
       implicit val hc: HeaderCarrier     = HeaderCarrier()
@@ -497,7 +529,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must delegate to connector (happy path)" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: UpdateReturnRequest = mkUpdateReturnRequest()
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -513,7 +546,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must return different results for different requests" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: UpdateReturnRequest = mkUpdateReturnRequest("STORN11111", "100001")
       val request2: UpdateReturnRequest = mkUpdateReturnRequest("STORN22222", "100002")
       implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -533,7 +567,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must propagate failures from connector" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: UpdateReturnRequest = mkUpdateReturnRequest()
       val boom = UpstreamErrorResponse("Service unavailable", 503)
       implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -550,7 +585,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle update with Y values for boolean fields" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: UpdateReturnRequest = mkUpdateReturnRequest(
         landCertForEachProp = Some("Y"),
         declaration = Some("Y")
@@ -569,7 +605,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle update with N values for boolean fields" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: UpdateReturnRequest = mkUpdateReturnRequest(
         landCertForEachProp = Some("N"),
         declaration = Some("N")
@@ -588,7 +625,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle different IRMark formats" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: UpdateReturnRequest = mkUpdateReturnRequest(IRMarkGenerated = Some("IRMark123456"))
       val request2: UpdateReturnRequest = mkUpdateReturnRequest(IRMarkGenerated = Some("IRMark-ABC-123"))
       val request3: UpdateReturnRequest = mkUpdateReturnRequest(IRMarkGenerated = Some("12345678"))
@@ -609,7 +647,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle different entity IDs" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: UpdateReturnRequest = mkUpdateReturnRequest(
         mainPurchaserID = Some("1"),
         mainVendorID = Some("1"),
@@ -635,7 +674,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must call connector exactly once per request" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: UpdateReturnRequest = mkUpdateReturnRequest()
       implicit val hc: HeaderCarrier = HeaderCarrier()
 
@@ -650,7 +690,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle consecutive requests independently" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: UpdateReturnRequest = mkUpdateReturnRequest("STORN11111", "100001")
       val request2: UpdateReturnRequest = mkUpdateReturnRequest("STORN22222", "100002")
       val request3: UpdateReturnRequest = mkUpdateReturnRequest("STORN33333", "100003")
@@ -673,7 +714,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must propagate RuntimeException from connector" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request: UpdateReturnRequest = mkUpdateReturnRequest()
       val boom = new RuntimeException("Connection failed")
       implicit val hc: HeaderCarrier = HeaderCarrier()
@@ -690,7 +732,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle different return resource reference formats" in {
       val connector = mock[FilingFormpProxyConnector]
-      val service = new FilingReturnsService(connector)
+      val FPconnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, FPconnector)
       val request1: UpdateReturnRequest = mkUpdateReturnRequest(returnResourceRef = "100001")
       val request2: UpdateReturnRequest = mkUpdateReturnRequest(returnResourceRef = "RRF-2024-001")
       val request3: UpdateReturnRequest = mkUpdateReturnRequest(returnResourceRef = "999999")
@@ -707,6 +750,115 @@ final class FilingReturnsServiceSpec extends SpecBase {
       verify(connector).updateReturnInfo(eqTo(request2))(any[HeaderCarrier])
       verify(connector).updateReturnInfo(eqTo(request3))(any[HeaderCarrier])
       verifyNoMoreInteractions(connector)
+    }
+  }
+
+  "FilingReturnsService deleteReturn" - {
+
+    "must delegate to the proxy connector (happy path)" in {
+      val connector = mock[FilingFormpProxyConnector]
+      val FPconnector = mock[FormpProxyConnector]
+      val service = new FilingReturnsService(connector, FPconnector)
+      val request: DeleteReturnRequest = mkDeleteReturnRequest()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
+      when(FPconnector.deleteReturn(eqTo(request))(any[HeaderCarrier]))
+        .thenReturn(Future.successful(mkDeleteReturnResponse()))
+
+      val result: DeleteReturnResponse = service.deleteReturn(request).futureValue
+      result mustBe mkDeleteReturnResponse()
+
+      verify(FPconnector).deleteReturn(eqTo(request))(any[HeaderCarrier])
+      verifyNoMoreInteractions(FPconnector)
+    }
+
+    "must use the proxy connector and never the filing connector" in {
+      val connector = mock[FilingFormpProxyConnector]
+      val FPconnector = mock[FormpProxyConnector]
+      val service = new FilingReturnsService(connector, FPconnector)
+      val request: DeleteReturnRequest = mkDeleteReturnRequest()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
+      when(FPconnector.deleteReturn(eqTo(request))(any[HeaderCarrier]))
+        .thenReturn(Future.successful(mkDeleteReturnResponse()))
+
+      service.deleteReturn(request).futureValue
+
+      verify(FPconnector).deleteReturn(eqTo(request))(any[HeaderCarrier])
+      verifyNoInteractions(connector)
+    }
+
+    "must return different results for different requests" in {
+      val connector = mock[FilingFormpProxyConnector]
+      val FPconnector = mock[FormpProxyConnector]
+      val service = new FilingReturnsService(connector, FPconnector)
+      val request1: DeleteReturnRequest = mkDeleteReturnRequest("STORN11111", "RRF-001")
+      val request2: DeleteReturnRequest = mkDeleteReturnRequest("STORN22222", "RRF-002")
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
+      when(FPconnector.deleteReturn(eqTo(request1))(any[HeaderCarrier]))
+        .thenReturn(Future.successful(mkDeleteReturnResponse(deleted = true)))
+      when(FPconnector.deleteReturn(eqTo(request2))(any[HeaderCarrier]))
+        .thenReturn(Future.successful(mkDeleteReturnResponse(deleted = false)))
+
+      service.deleteReturn(request1).futureValue mustBe mkDeleteReturnResponse(deleted = true)
+      service.deleteReturn(request2).futureValue mustBe mkDeleteReturnResponse(deleted = false)
+
+      verify(FPconnector).deleteReturn(eqTo(request1))(any[HeaderCarrier])
+      verify(FPconnector).deleteReturn(eqTo(request2))(any[HeaderCarrier])
+      verifyNoMoreInteractions(FPconnector)
+    }
+
+    "must propagate failures from connector" in {
+      val connector = mock[FilingFormpProxyConnector]
+      val FPconnector = mock[FormpProxyConnector]
+      val service = new FilingReturnsService(connector, FPconnector)
+      val request: DeleteReturnRequest = mkDeleteReturnRequest()
+      val boom = UpstreamErrorResponse("Service unavailable", 503)
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
+      when(FPconnector.deleteReturn(eqTo(request))(any[HeaderCarrier]))
+        .thenReturn(Future.failed(boom))
+
+      val ex: Throwable = service.deleteReturn(request).failed.futureValue
+      ex mustBe boom
+
+      verify(FPconnector).deleteReturn(eqTo(request))(any[HeaderCarrier])
+      verifyNoMoreInteractions(FPconnector)
+    }
+
+    "must propagate RuntimeException from connector" in {
+      val connector = mock[FilingFormpProxyConnector]
+      val FPconnector = mock[FormpProxyConnector]
+      val service = new FilingReturnsService(connector, FPconnector)
+      val request: DeleteReturnRequest = mkDeleteReturnRequest()
+      val boom = new RuntimeException("Connection failed")
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
+      when(FPconnector.deleteReturn(eqTo(request))(any[HeaderCarrier]))
+        .thenReturn(Future.failed(boom))
+
+      val ex: Throwable = service.deleteReturn(request).failed.futureValue
+      ex mustBe boom
+
+      verify(FPconnector).deleteReturn(eqTo(request))(any[HeaderCarrier])
+      verifyNoMoreInteractions(FPconnector)
+    }
+
+    "must call connector exactly once per request" in {
+      val connector = mock[FilingFormpProxyConnector]
+      val FPconnector = mock[FormpProxyConnector]
+      val service = new FilingReturnsService(connector, FPconnector)
+      val request: DeleteReturnRequest = mkDeleteReturnRequest()
+      implicit val hc: HeaderCarrier = HeaderCarrier()
+
+      when(FPconnector.deleteReturn(eqTo(request))(any[HeaderCarrier]))
+        .thenReturn(Future.successful(mkDeleteReturnResponse()))
+
+      service.deleteReturn(request).futureValue
+
+      verify(FPconnector, times(1)).deleteReturn(eqTo(request))(any[HeaderCarrier])
+      verifyNoMoreInteractions(FPconnector)
     }
   }
 }
