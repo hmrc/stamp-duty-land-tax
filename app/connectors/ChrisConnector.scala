@@ -45,7 +45,7 @@ class ChrisConnector @Inject() (
   private val requestTimeout: Duration = 120.seconds
   private val UtrnPattern: Regex = "^[0-9]{9}M[A-HJ-NP-TV-Z]$".r
   private val XmlDecl: String = """<?xml version="1.0" encoding="UTF-8"?>"""
-  
+
   private val RetryableHttpStatuses: Set[Int] = Set(408, 429, 500, 502, 503, 504)
 
   def submit(envelope: scala.xml.Elem, endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
@@ -80,7 +80,12 @@ class ChrisConnector @Inject() (
           ChrisResponse.Errored(Seq(timeout2005), Some(correlationId), None, "<timeout/>")
         case NonFatal(e) =>
           logger.error(s"[ChrisConnector] Transport exception corrId=$correlationId", e)
-          ChrisResponse.TransportError(Option(e.getMessage).getOrElse(e.toString))
+          ChrisResponse.Errored(
+            Seq(transportFatal(Option(e.getMessage).getOrElse(e.toString))),
+            Some(correlationId),
+            None,
+            "<transport-error/>"
+          )
       }
 
   def delete(endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisDeleteResponse] =
@@ -168,13 +173,22 @@ class ChrisConnector @Inject() (
       text = Some("The Service has not received an acknowledgement of your submission within the permitted timescale (client timeout)."),
       location = None
     )
-  
+
   private def retryableHttp(status: Int): GovTalkError =
     GovTalkError(
       raisedBy = "Gateway",
       number = Some("2005"),
       errorType = "fatal",
       text = Some(s"ChRIS returned a transient HTTP $status; the submission was not acknowledged and can be retried."),
+      location = None
+    )
+
+  private def transportFatal(message: String): GovTalkError =
+    GovTalkError(
+      raisedBy = "Gateway",
+      number = None,
+      errorType = "fatal",
+      text = Some(message),
       location = None
     )
 

@@ -435,13 +435,17 @@ class ChrisConnectorISpec
         case other => fail(s"expected TransportError, got $other")
     }
 
-    "return TransportError when the connection is reset mid-request" in {
+    "return an Errored carrying the transport failure message when the connection is reset mid-request" in {
       wireMockServer.stubFor(
         post(urlEqualTo(submitPath))
           .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER))
       )
 
-      connector.submit(envelope, None, corrId).futureValue shouldBe a [ChrisResponse.TransportError]
+      connector.submit(envelope, None, corrId).futureValue match
+        case e: ChrisResponse.Errored =>
+          e.correlationId shouldBe Some(corrId)
+          e.errors.headOption.flatMap(_.text) should not be empty
+        case other => fail(s"expected Errored, got $other")
     }
 
     "POST to the supplied endpoint when one is given, not the default path" in {
