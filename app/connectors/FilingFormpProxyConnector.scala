@@ -454,8 +454,15 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
       .execute[HttpResponse]
       .map { response =>
         if (response.status >= 200 && response.status < 300) {
-          logger.debug(s"[FormpProxyConnector][createSubmission]: OK status=${response.status} storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef}")
-          CreateSubmissionReturn(success = true)
+          val submissionId = response.json.asOpt[CreateSubmissionReturn].flatMap(_.submissionId).map(_.trim).filter(_.nonEmpty)
+          submissionId match {
+            case Some(id) =>
+              logger.debug(s"[FormpProxyConnector][createSubmission]: OK status=${response.status} storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef} submissionId=$id")
+              CreateSubmissionReturn(success = true, submissionId = Some(id))
+            case None =>
+              logger.error(s"[FormpProxyConnector][createSubmission]: ${response.status} but no submissionId in body storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef} body=${response.body}")
+              throw new RuntimeException(s"createSubmission returned ${response.status} without a submissionId for return ${createSubmissionRequest.returnResourceRef}")
+          }
         } else {
           throw UpstreamErrorResponse(s"createSubmission failed: ${response.status} ${response.body}", response.status)
         }
@@ -468,7 +475,9 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][createSubmission]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
-
+    
+  
+  
   def updateSubmission(updateSubmissionRequest: UpdateSubmissionRequest)(implicit hc: HeaderCarrier): Future[UpdateSubmissionReturn] =
     val url: URL = if(stubFormPBool) url"$stubPath/filing/update/submission" else url"$formpPath/filing/update/submission"
     http.post(url)

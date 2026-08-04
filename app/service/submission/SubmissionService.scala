@@ -45,6 +45,9 @@ final case class ReturnLockConflictException(returnId: String, status: Int, mess
 final case class GovTalkLockNotAcquiredException(formResultId: String, cause: Throwable)
   extends RuntimeException(s"Could not acquire GovTalk Status lock for formResultId=$formResultId", cause)
 
+final case class MissingSubmissionIdException(returnId: String)
+  extends RuntimeException(s"No submissionId available for return $returnId; cannot key GovTalk status by Submission ID")
+
 class SubmissionService @Inject() (
                                     envelopeBuilder: GovTalkEnvelopeBuilder,
                                     validator: SchemaValidator,
@@ -68,31 +71,32 @@ class SubmissionService @Inject() (
         logger.error(s"[SubmissionService] $msg")
         Future.failed(MissingSubmissionContextException(msg))
 
-      case Right(ctx) =>
-        logger.info(s"[SubmissionService] submit START returnId=${ctx.returnId} storn=${ctx.storn} version=${ctx.version} sender=$sender periodEnd=$periodEnd hasExistingSubmission=${fullReturn.submission.isDefined} corrId=$correlationId")
+      case Right(ctx0) =>
+        logger.info(s"[SubmissionService] submit START returnId=${ctx0.returnId} storn=${ctx0.storn} version=${ctx0.version} sender=$sender periodEnd=$periodEnd hasExistingSubmission=${fullReturn.submission.isDefined} corrId=$correlationId")
         val started: Future[SubmissionOutcome] = for
-          _                <- prepareReturn(ctx, fullReturn, correlationId, email)
+          submissionId     <- prepareReturn(ctx0, fullReturn, correlationId, email)
+          ctx              =  ctx0.copy(submissionId = Some(submissionId))
           submitUrl        <- prepareGovTalkStatus(ctx, correlationId)
           built            <- buildAndValidate(ctx, fullReturn, sender, periodEnd, correlationId)
           (envelope, seed) = built
           sentIrMark       = seed.IRMarkSent.getOrElse("")
           _                <- acquireGovTalkLock(ctx, correlationId)
           resp             <- sendAndHandle(ctx, fullReturn, envelope, seed, sentIrMark, submitUrl, correlationId, email)
-        yield SubmissionOutcome.fromChrisResponse(ctx.returnId, resp, Some(sentIrMark))
+        yield SubmissionOutcome.fromChrisResponse(ctx0.returnId, resp, Some(sentIrMark))
 
         started.andThen {
           case Success(outcome) =>
-            logger.info(s"[SubmissionService] submit END returnId=${ctx.returnId} corrId=$correlationId status=${outcome.status} utrn=${outcome.utrn.getOrElse("-")}")
+            logger.info(s"[SubmissionService] submit END returnId=${ctx0.returnId} corrId=$correlationId status=${outcome.status} utrn=${outcome.utrn.getOrElse("-")}")
           case Failure(e) =>
-            logger.error(s"[SubmissionService] submit FAILED returnId=${ctx.returnId} corrId=$correlationId error=${e.getClass.getSimpleName}: ${e.getMessage}")
+            logger.error(s"[SubmissionService] submit FAILED returnId=${ctx0.returnId} corrId=$correlationId error=${e.getClass.getSimpleName}: ${e.getMessage}")
         }
 
   private def prepareReturn(ctx: SubmissionContext, fullReturn: FullReturn, correlationId: String, email: Option[String] = None)
-                           (implicit hc: HeaderCarrier): Future[Unit] =
+                           (implicit hc: HeaderCarrier): Future[String] =
     for
-      _ <- lockReturn(ctx, correlationId)
-      _ <- handleExistingSubmission(ctx, fullReturn, correlationId, email)
-    yield ()
+      _            <- lockReturn(ctx, correlationId)
+      submissionId <- handleExistingSubmission(ctx, fullReturn, correlationId, email)
+    yield submissionId
 
   private def lockReturn(ctx: SubmissionContext, correlationId: String)(implicit hc: HeaderCarrier): Future[Unit] =
     logger.info(s"[SubmissionService] locking return returnId=${ctx.returnId} version=${ctx.version} corrId=$correlationId")
@@ -105,20 +109,39 @@ class SubmissionService @Inject() (
         Future.failed(ReturnLockConflictException(ctx.returnId, error.statusCode, error.message))
     }
 
+  // Resolves the Submission ID to use as the GovTalk formResultId:
+  //  - an existing submission -> its submissionID
+  //  - no submission          -> create one and use the id it returns
   private def handleExistingSubmission(ctx: SubmissionContext, fullReturn: FullReturn, correlationId: String, email: Option[String] = None)
-                                      (implicit hc: HeaderCarrier): Future[Unit] =
+                                      (implicit hc: HeaderCarrier): Future[String] =
     fullReturn.submission match
       case Some(existing) if isResubmittable(existing) =>
-        logger.info(s"[SubmissionService] existing submission is re-submittable (status=${existing.submissionStatus.getOrElse("-")}); clearing prior error details returnId=${ctx.returnId} corrId=$correlationId")
-        chrisService.deleteSubmissionErrorDetail(DeleteSubmissionErrorDetailRequest(ctx.storn, ctx.returnId)).map(_ => ())
+        requireSubmissionId(existing.submissionID, ctx) { submissionId =>
+          logger.info(s"[SubmissionService] existing submission is re-submittable (status=${existing.submissionStatus.getOrElse("-")}, submissionId=$submissionId); clearing prior error details returnId=${ctx.returnId} corrId=$correlationId")
+          chrisService.deleteSubmissionErrorDetail(DeleteSubmissionErrorDetailRequest(ctx.storn, ctx.returnId)).map(_ => submissionId)
+        }
 
       case Some(existing) =>
-        logger.info(s"[SubmissionService] existing submission present but NOT re-submittable (status=${existing.submissionStatus.getOrElse("-")}) returnId=${ctx.returnId} corrId=$correlationId")
-        Future.successful(())
+        requireSubmissionId(existing.submissionID, ctx) { submissionId =>
+          logger.info(s"[SubmissionService] existing submission present (status=${existing.submissionStatus.getOrElse("-")}, submissionId=$submissionId) returnId=${ctx.returnId} corrId=$correlationId")
+          Future.successful(submissionId)
+        }
 
       case None =>
         logger.info(s"[SubmissionService] no existing submission; creating new submission returnId=${ctx.returnId} corrId=$correlationId")
-        chrisService.createSubmission(CreateSubmissionRequest(ctx.storn, ctx.returnId, email)).map(_ => ())
+        chrisService.createSubmission(CreateSubmissionRequest(ctx.storn, ctx.returnId, email)).flatMap { ret =>
+          requireSubmissionId(ret.submissionId, ctx) { submissionId =>
+            logger.info(s"[SubmissionService] new submission created submissionId=$submissionId returnId=${ctx.returnId} corrId=$correlationId")
+            Future.successful(submissionId)
+          }
+        }
+  
+  private def requireSubmissionId[A](id: Option[String], ctx: SubmissionContext)(f: String => Future[A]): Future[A] =
+    id.map(_.trim).filter(_.nonEmpty) match
+      case Some(submissionId) => f(submissionId)
+      case None =>
+        logger.error(s"[SubmissionService] missing submissionId returnId=${ctx.returnId}; cannot key GovTalk status")
+        Future.failed(MissingSubmissionIdException(ctx.returnId))
 
   private def isResubmittable(existing: Submission): Boolean =
     existing.submissionStatus.exists { s =>
@@ -131,54 +154,54 @@ class SubmissionService @Inject() (
                                   (implicit hc: HeaderCarrier): Future[Option[String]] =
     selectGovTalkStatus(ctx).flatMap {
       case Some(existing) =>
-        logger.info(s"[SubmissionService] GovTalk Status row FOUND returnId=${ctx.returnId} corrId=$correlationId protocolStatus=${existing.protocolStatus.getOrElse("-")} storedGatewayUrl=${existing.gatewayUrl.getOrElse("-")} row=$existing")
+        logger.info(s"[SubmissionService] GovTalk Status row FOUND formResultId=${ctx.formResultId} corrId=$correlationId protocolStatus=${existing.protocolStatus.getOrElse("-")} storedGatewayUrl=${existing.gatewayUrl.getOrElse("-")} row=$existing")
         existing.protocolStatus match
           case Some(status) if status.nonEmpty =>
             val storedUrl = existing.gatewayUrl.map(_.trim).filter(_.nonEmpty)
-            logger.info(s"[SubmissionService] RESETTING GovTalk Status formResultId=${ctx.returnId} corrId=$correlationId oldProtocol=$status storedGatewayUrl=${storedUrl.getOrElse("-")} -> this value will be used as the ChRIS submit URL")
+            logger.info(s"[SubmissionService] RESETTING GovTalk Status formResultId=${ctx.formResultId} corrId=$correlationId oldProtocol=$status storedGatewayUrl=${storedUrl.getOrElse("-")} -> this value will be used as the ChRIS submit URL")
             chrisService
               .resetGovTalkStatus(buildResetRequest(ctx, correlationId, status))
               .map { _ =>
-                logger.info(s"[SubmissionService] GovTalk Status reset OK returnId=${ctx.returnId} corrId=$correlationId resolvedSubmitUrl=${storedUrl.getOrElse("<default>")}")
+                logger.info(s"[SubmissionService] GovTalk Status reset OK formResultId=${ctx.formResultId} corrId=$correlationId resolvedSubmitUrl=${storedUrl.getOrElse("<default>")}")
                 storedUrl
               }
 
           case _ =>
-            logger.warn(s"[SubmissionService] GovTalk Status row present but protocolStatus EMPTY formResultId=${ctx.returnId} corrId=$correlationId; deleting and re-inserting")
+            logger.warn(s"[SubmissionService] GovTalk Status row present but protocolStatus EMPTY formResultId=${ctx.formResultId} corrId=$correlationId; deleting and re-inserting")
             deleteThenInsert(ctx, correlationId).map { _ =>
-              logger.info(s"[SubmissionService] GovTalk Status delete+insert OK returnId=${ctx.returnId} corrId=$correlationId resolvedSubmitUrl=<default>")
+              logger.info(s"[SubmissionService] GovTalk Status delete+insert OK formResultId=${ctx.formResultId} corrId=$correlationId resolvedSubmitUrl=<default>")
               None
             }
       case None =>
-        logger.info(s"[SubmissionService] no GovTalk Status row; inserting initial row formResultId=${ctx.returnId} corrId=$correlationId")
+        logger.info(s"[SubmissionService] no GovTalk Status row; inserting initial row formResultId=${ctx.formResultId} corrId=$correlationId")
         chrisService.insertInitialGovTalkStatus(buildInitialInsertRequest(ctx, correlationId)).map { _ =>
-          logger.info(s"[SubmissionService] initial GovTalk Status inserted returnId=${ctx.returnId} corrId=$correlationId resolvedSubmitUrl=<default>")
+          logger.info(s"[SubmissionService] initial GovTalk Status inserted formResultId=${ctx.formResultId} corrId=$correlationId resolvedSubmitUrl=<default>")
           None
         }
     }
 
   private def deleteThenInsert(ctx: SubmissionContext, correlationId: String)
                               (implicit hc: HeaderCarrier): Future[Unit] =
-    logger.info(s"[SubmissionService] deleting GovTalk Status row formResultId=${ctx.returnId} corrId=$correlationId")
-    chrisService.deleteGovTalkStatus(DeleteGovTalkStatusRequest(resultId = ctx.returnId))
+    logger.info(s"[SubmissionService] deleting GovTalk Status row formResultId=${ctx.formResultId} corrId=$correlationId")
+    chrisService.deleteGovTalkStatus(DeleteGovTalkStatusRequest(resultId = ctx.formResultId))
       .flatMap { _ =>
-        logger.info(s"[SubmissionService] GovTalk Status row deleted; re-inserting initial row formResultId=${ctx.returnId} corrId=$correlationId")
+        logger.info(s"[SubmissionService] GovTalk Status row deleted; re-inserting initial row formResultId=${ctx.formResultId} corrId=$correlationId")
         chrisService.insertInitialGovTalkStatus(buildInitialInsertRequest(ctx, correlationId))
           .map(_ => ())
           .recoverWith { case e =>
             logger.error(
               s"[SubmissionService] delete succeeded but insert FAILED — GovTalk Status row for " +
-                s"formResultId=${ctx.returnId} corrId=$correlationId is now MISSING, must re-seed on retry", e)
+                s"formResultId=${ctx.formResultId} corrId=$correlationId is now MISSING, must re-seed on retry", e)
             Future.failed(e)
           }
       }
 
   private def selectGovTalkStatus(ctx: SubmissionContext)(implicit hc: HeaderCarrier): Future[Option[SelectGovTalkStatusResponse]] =
-    logger.info(s"[SubmissionService] selecting GovTalk Status returnId=${ctx.returnId} storn=${ctx.storn} corrId=?")
-    chrisService.selectGovTalkStatus(SelectGovTalkStatusRequest(ctx.storn, ctx.returnId))
+    logger.info(s"[SubmissionService] selecting GovTalk Status formResultId=${ctx.formResultId} storn=${ctx.storn} corrId=?")
+    chrisService.selectGovTalkStatus(SelectGovTalkStatusRequest(ctx.storn, ctx.formResultId))
       .map(resp => Option.when(resp.formResultId.exists(_.trim.nonEmpty))(resp))
       .recover { case e =>
-        logger.warn(s"[SubmissionService] selectGovTalkStatus lookup failed (treating as no row) returnId=${ctx.returnId}: ${e.getMessage}")
+        logger.warn(s"[SubmissionService] selectGovTalkStatus lookup failed (treating as no row) formResultId=${ctx.formResultId}: ${e.getMessage}")
         None
       }
 
@@ -186,7 +209,7 @@ class SubmissionService @Inject() (
     val now = nowSqlTimestamp
     InsertInitialGovTalkStatusRequest(
       userIdentifier = ctx.storn,
-      formResultId   = ctx.returnId,
+      formResultId   = ctx.formResultId,
       correlationId  = correlationId,
       govTalkStatus  = GovTalkStatusInitial(
         formLock             = "N",
@@ -204,7 +227,7 @@ class SubmissionService @Inject() (
     val now = nowSqlTimestamp
     ResetGovTalkStatusRequest(
       userIdentifier = ctx.storn,
-      formResultId   = ctx.returnId,
+      formResultId   = ctx.formResultId,
       correlationId  = "empty",
       govTalkStatus  = GovTalkStatusReset(
         formLock             = "N",
@@ -259,32 +282,32 @@ class SubmissionService @Inject() (
           }
 
   private def acquireGovTalkLock(ctx: SubmissionContext, correlationId: String)(implicit hc: HeaderCarrier): Future[Unit] =
-    logger.info(s"[SubmissionService] acquiring GovTalk lock (N->Y) formResultId=${ctx.returnId} corrId=$correlationId")
+    logger.info(s"[SubmissionService] acquiring GovTalk lock (N->Y) formResultId=${ctx.formResultId} corrId=$correlationId")
     val req = UpdateGovTalkStatusLockRequest(
       userIdentifier = ctx.storn,
-      formResultId   = ctx.returnId,
+      formResultId   = ctx.formResultId,
       govTalkStatus  = GovTalkStatusLock(formLockOld = "N", formLockNew = "Y", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
     )
     chrisService.updateGovTalkStatusLock(req).map { _ =>
-      logger.info(s"[SubmissionService] GovTalk lock ACQUIRED formResultId=${ctx.returnId} corrId=$correlationId")
+      logger.info(s"[SubmissionService] GovTalk lock ACQUIRED formResultId=${ctx.formResultId} corrId=$correlationId")
       ()
     }.recoverWith { case e =>
-      logger.error(s"[SubmissionService] GovTalk lock NOT acquired formResultId=${ctx.returnId} corrId=$correlationId", e)
-      Future.failed(GovTalkLockNotAcquiredException(ctx.returnId, e))
+      logger.error(s"[SubmissionService] GovTalk lock NOT acquired formResultId=${ctx.formResultId} corrId=$correlationId", e)
+      Future.failed(GovTalkLockNotAcquiredException(ctx.formResultId, e))
     }
 
   private def releaseGovTalkLock(ctx: SubmissionContext, correlationId: String)(implicit hc: HeaderCarrier): Future[Unit] =
-    logger.info(s"[SubmissionService] releasing GovTalk lock (Y->N) formResultId=${ctx.returnId} corrId=$correlationId")
+    logger.info(s"[SubmissionService] releasing GovTalk lock (Y->N) formResultId=${ctx.formResultId} corrId=$correlationId")
     val req = UpdateGovTalkStatusLockRequest(
       userIdentifier = ctx.storn,
-      formResultId   = ctx.returnId,
+      formResultId   = ctx.formResultId,
       govTalkStatus  = GovTalkStatusLock(formLockOld = "Y", formLockNew = "N", pollInterval = "0", gatewayUrl = appConfig.baseUrl("chris"))
     )
     chrisService.updateGovTalkStatusLock(req).map { _ =>
-      logger.info(s"[SubmissionService] GovTalk lock RELEASED formResultId=${ctx.returnId} corrId=$correlationId")
+      logger.info(s"[SubmissionService] GovTalk lock RELEASED formResultId=${ctx.formResultId} corrId=$correlationId")
       ()
     }.recover { case e =>
-      logger.error(s"[SubmissionService] GovTalk lock release FAILED (suppressed) formResultId=${ctx.returnId} corrId=$correlationId", e)
+      logger.error(s"[SubmissionService] GovTalk lock release FAILED (suppressed) formResultId=${ctx.formResultId} corrId=$correlationId", e)
       ()
     }
 
@@ -398,10 +421,10 @@ class SubmissionService @Inject() (
       _ <- setGovTalkProtocol(ctx, "endState", correlationId)
       _ <- chrisService.resetGovTalkStatus(buildResetRequest(ctx, correlationId, "endState")).map(_ => ())
     yield {
-      logger.info(s"[SubmissionService] GovTalk Status finalised (endState + reset) returnId=${ctx.returnId} corrId=$correlationId")
+      logger.info(s"[SubmissionService] GovTalk Status finalised (endState + reset) formResultId=${ctx.formResultId} corrId=$correlationId")
       ()
     }).recover { case e =>
-      logger.warn(s"[SubmissionService] GovTalk finalise (endState/reset) FAILED (suppressed) returnId=${ctx.returnId} corrId=$correlationId: ${e.getMessage}")
+      logger.warn(s"[SubmissionService] GovTalk finalise (endState/reset) FAILED (suppressed) formResultId=${ctx.formResultId} corrId=$correlationId: ${e.getMessage}")
       ()
     }
 
@@ -520,12 +543,12 @@ class SubmissionService @Inject() (
                                 (implicit hc: HeaderCarrier): Future[Unit] =
     val req = UpdateGovTalkStatusRequest(
       userIdentifier    = ctx.storn,
-      formResultId      = ctx.returnId,
+      formResultId      = ctx.formResultId,
       endStateTimestamp = nowSqlTimestamp,
       protocolStatus    = protocolStatus
     )
     chrisService.updateGovTalkStatus(req).map { _ =>
-      logger.info(s"[SubmissionService] GovTalk protocolStatus set to '$protocolStatus' returnId=${ctx.returnId} corrId=$correlationId")
+      logger.info(s"[SubmissionService] GovTalk protocolStatus set to '$protocolStatus' formResultId=${ctx.formResultId} corrId=$correlationId")
       ()
     }
 
@@ -537,7 +560,7 @@ class SubmissionService @Inject() (
     val gatewayUrl = responseEndPoint.filter(_.nonEmpty).getOrElse(appConfig.baseUrl("chris"))
     val req = UpdateGovTalkStatisticsRequest(
       userIdentifier = ctx.storn,
-      formResultId   = ctx.returnId,
+      formResultId   = ctx.formResultId,
       govTalkStatus  = GovTalkStatusStatistics(
         lastMessageTimestamp = nowSqlTimestamp,
         numberOfPolls        = "0",
@@ -546,7 +569,7 @@ class SubmissionService @Inject() (
       )
     )
     chrisService.updateGovTalkStatistics(req).map { _ =>
-      logger.info(s"[SubmissionService] GovTalk statistics updated gatewayUrl=$gatewayUrl pollInterval=${pollIntervalSeconds.map(_.toString).getOrElse("0")} returnId=${ctx.returnId} corrId=$correlationId")
+      logger.info(s"[SubmissionService] GovTalk statistics updated gatewayUrl=$gatewayUrl pollInterval=${pollIntervalSeconds.map(_.toString).getOrElse("0")} formResultId=${ctx.formResultId} corrId=$correlationId")
       ()
     }
 
@@ -572,14 +595,24 @@ class SubmissionService @Inject() (
       false
     }
 
-  private case class SubmissionContext(storn: String, returnId: String, version: Int, credentialIdentifier: String)
+  private case class SubmissionContext(
+                                        storn: String,
+                                        returnId: String,
+                                        version: Int,
+                                        credentialIdentifier: String,
+                                        submissionId: Option[String] = None
+                                      ):
+    def formResultId: String =
+      submissionId.map(_.trim).filter(_.nonEmpty)
+        .getOrElse(throw MissingSubmissionIdException(returnId))
 
   private def requireContext(fullReturn: FullReturn, credentialIdentifier: String): Either[String, SubmissionContext] =
     (fullReturn.stornId, fullReturn.returnResourceRef, fullReturn.returnInfo.flatMap(_.version)) match
       case _ if credentialIdentifier.trim.isEmpty =>
         Left("Missing credentialIdentifier; cannot submit. Auth context did not provide a credential ID.")
       case (Some(storn), Some(returnId), Some(version)) =>
-        Right(SubmissionContext(storn, returnId, version.toInt, credentialIdentifier))
+        Right(SubmissionContext(storn, returnId, version.toInt, credentialIdentifier,
+          submissionId = fullReturn.submission.flatMap(_.submissionID)))
       case _ =>
         Left(s"FullReturn missing one of stornId / returnResourceRef / returnInfo.version; cannot submit. " +
           s"stornId=${fullReturn.stornId}, returnResourceRef=${fullReturn.returnResourceRef}, " +
