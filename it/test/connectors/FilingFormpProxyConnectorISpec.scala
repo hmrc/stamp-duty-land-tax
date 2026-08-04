@@ -2716,30 +2716,60 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
 
     val url = "/formp-proxy/filing/submission"
 
+    val submissionId = "SUB-0001"
+
     val payload = CreateSubmissionRequest(
-      storn             = stornId,
+      storn = stornId,
       returnResourceRef = returnResourceRef,
-      email             = Some("filer@example.test")
+      email = Some("filer@example.test")
     )
 
-    "return CreateSubmissionReturn(success=true) when BE returns OK" in {
+    "return CreateSubmissionReturn with the submissionId when BE returns OK" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(OK).withBody(s"""{ "success": true, "submissionId": "$submissionId" }"""))
+      )
+
+      connector.createSubmission(payload).futureValue mustBe
+        CreateSubmissionReturn(success = true, submissionId = Some(submissionId))
+    }
+
+    "return the submissionId when BE returns CREATED (any 2xx)" in {
+      stubFor(
+        post(urlPathEqualTo(url))
+          .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
+          .willReturn(aResponse().withStatus(CREATED).withBody(s"""{ "success": true, "submissionId": "$submissionId" }"""))
+      )
+
+      connector.createSubmission(payload).futureValue mustBe
+        CreateSubmissionReturn(success = true, submissionId = Some(submissionId))
+    }
+
+    "fail when BE returns 2xx but the body has no submissionId" in {
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
           .willReturn(aResponse().withStatus(OK).withBody("{}"))
       )
 
-      connector.createSubmission(payload).futureValue mustBe CreateSubmissionReturn(success = true)
+      val ex = intercept[Exception] {
+        connector.createSubmission(payload).futureValue
+      }
+      ex.getMessage.toLowerCase must include("submissionid")
     }
 
-    "return CreateSubmissionReturn(success=true) when BE returns CREATED (any 2xx)" in {
+    "fail when BE returns 2xx with a blank submissionId" in {
       stubFor(
         post(urlPathEqualTo(url))
           .withRequestBody(equalToJson(Json.stringify(Json.toJson(payload)), true, true))
-          .willReturn(aResponse().withStatus(CREATED).withBody("{}"))
+          .willReturn(aResponse().withStatus(OK).withBody(s"""{ "success": true, "submissionId": "   " }"""))
       )
 
-      connector.createSubmission(payload).futureValue mustBe CreateSubmissionReturn(success = true)
+      val ex = intercept[Exception] {
+        connector.createSubmission(payload).futureValue
+      }
+      ex.getMessage.toLowerCase must include("submissionid")
     }
 
     "propagate an upstream error when BE returns INTERNAL_SERVER_ERROR" in {
@@ -2768,7 +2798,6 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       ex.getMessage must include("400")
     }
   }
-
   "updateSubmission" should {
 
     val url = "/formp-proxy/filing/update/submission"

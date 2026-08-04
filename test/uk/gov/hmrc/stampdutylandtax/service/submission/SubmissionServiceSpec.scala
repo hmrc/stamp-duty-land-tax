@@ -46,6 +46,7 @@ final class SubmissionServiceSpec extends SpecBase {
   private val periodEnd = LocalDate.parse("2026-01-31")
   private val sentMark  = "SENT-MARK"
   private val utrn      = "123456789MA"
+  private val submissionId = "SUB-1"
 
   private def aReturn(
                        stornId: Option[String] = Some(storn),
@@ -61,7 +62,10 @@ final class SubmissionServiceSpec extends SpecBase {
     )
 
   private def withStatus(status: String): FullReturn =
-    aReturn(submission = Some(Submission(submissionStatus = Some(status))))
+    aReturn(submission = Some(Submission(
+      submissionID     = Some(submissionId),
+      submissionStatus = Some(status)
+    )))
 
   private def completed(utrn: Option[String], receivedIrMark: Option[String]): ChrisResponse.Completed =
     ChrisResponse.Completed(utrn, receivedIrMark, Some("corr"), Some("url"), "<response/>")
@@ -133,7 +137,7 @@ final class SubmissionServiceSpec extends SpecBase {
     when(chrisService.deleteSubmissionErrorDetail(any[DeleteSubmissionErrorDetailRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(DeleteSubmissionErrorDetailReturn(true)))
     when(chrisService.createSubmission(any[CreateSubmissionRequest])(any[HeaderCarrier]))
-      .thenReturn(Future.successful(CreateSubmissionReturn(true)))
+      .thenReturn(Future.successful(CreateSubmissionReturn(true, Some(submissionId))))
     when(chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
       .thenReturn(Future.successful(SelectGovTalkStatusResponse(None, None, None, None, None, None, None, None, None, None, None)))
     when(chrisService.resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier]))

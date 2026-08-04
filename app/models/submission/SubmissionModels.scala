@@ -85,7 +85,7 @@ object DeleteSubmissionErrorDetailRequest {
   implicit val format: OFormat[DeleteSubmissionErrorDetailRequest] = Json.format[DeleteSubmissionErrorDetailRequest]
 }
 
-case class CreateSubmissionReturn(success: Boolean)
+case class CreateSubmissionReturn(success: Boolean, submissionId: Option[String] = None)
 
 object CreateSubmissionReturn {
   implicit val format: OFormat[CreateSubmissionReturn] = Json.format[CreateSubmissionReturn]
