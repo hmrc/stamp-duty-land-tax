@@ -324,7 +324,7 @@ class SubmissionService @Inject() (
 
     val work: Future[(ChrisResponse, SubmissionUpdate)] =
       for
-        resp     <- connector.submit(envelope, submitUrl, correlationId)
+        resp     <- connector.submit(envelope, submitUrl, correlationId, Some(ctx.returnId))
         _        =  logger.info(s"[SubmissionService] ChRIS response received returnId=${ctx.returnId} corrId=$correlationId response=${resp.getClass.getSimpleName}")
         finalAcc <- handleResponse(ctx, fullReturn, resp, seed, sentIrMark, correlationId, email)
       yield (resp, finalAcc)
