@@ -83,7 +83,8 @@ object SdltReturnFixtures:
   )
 
   val baselineLeaseTransaction: Transaction =
-    baselineFreeholdTransaction.copy(transactionDescription = Some("L"))
+    baselineFreeholdTransaction.copy(transactionDescription = Some("L"),
+      totalConsiderationBusiness = Some("481516.00") )
 
   val baselineTaxCalculation: TaxCalculation = TaxCalculation(
     amountPaid      = Some("400.00"),
@@ -132,6 +133,7 @@ object SdltReturnFixtures:
       isDependantOnFutureEvent  = Some("YES"),
       agreedToDeferPayment      = Some("YES"),
       includesStock             = Some("YES"),
+      totalConsiderationBusiness = Some("481516.00"),
       includesGoodwill          = Some("NO"),
       includesOther             = Some("NO"),
       includesChattel           = Some("YES")

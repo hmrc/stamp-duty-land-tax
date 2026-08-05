@@ -108,10 +108,7 @@ class SubmissionService @Inject() (
         logger.warn(s"[SubmissionService] return lock CONFLICT returnId=${ctx.returnId} corrId=$correlationId: ${error.statusCode} ${error.message}")
         Future.failed(ReturnLockConflictException(ctx.returnId, error.statusCode, error.message))
     }
-
-  // Resolves the Submission ID to use as the GovTalk formResultId:
-  //  - an existing submission -> its submissionID
-  //  - no submission          -> create one and use the id it returns
+  
   private def handleExistingSubmission(ctx: SubmissionContext, fullReturn: FullReturn, correlationId: String, email: Option[String] = None)
                                       (implicit hc: HeaderCarrier): Future[String] =
     fullReturn.submission match
@@ -258,7 +255,7 @@ class SubmissionService @Inject() (
 
       case Right(_) =>
         logger.info(s"[SubmissionService] schema validation OK returnId=${ctx.returnId} corrId=$correlationId")
-        val irMarkResult = envelopeBuilder.submissionRequest(sdlt, ctx.storn, periodEnd, sender, ctx.credentialIdentifier)
+        val irMarkResult = envelopeBuilder.submissionRequest(sdlt, ctx.storn, periodEnd, sender, ctx.credentialIdentifier, correlationId)
         logger.info(s"[SubmissionService] IRmark computed returnId=${ctx.returnId} corrId=$correlationId b32=${irMarkResult.base32}")
 
         val pending = SubmissionUpdate(

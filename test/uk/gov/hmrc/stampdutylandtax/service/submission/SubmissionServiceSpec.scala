@@ -129,7 +129,7 @@ final class SubmissionServiceSpec extends SpecBase {
 
     when(appConfig.baseUrl("chris")).thenReturn("http://chris")
     when(validator.validateSdlt(any[Elem])).thenReturn(Right(()))
-    when(envelopeBuilder.submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String]))
+    when(envelopeBuilder.submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String], any[String]))
       .thenReturn(IrMarkResult(<Envelope/>, sentMark, "SENT-MARK-B32"))
 
     when(chrisService.lockReturn(any[LockReturnRequest])(any[HeaderCarrier]))
@@ -425,7 +425,7 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       when(f.validator.validateSdlt(any[Elem])).thenReturn(Left(Seq("bad element")))
       f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
-      verify(f.envelopeBuilder, never()).submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String])
+      verify(f.envelopeBuilder, never()).submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String], any[String])
       f.neverSubmitted()
     }
 
@@ -442,7 +442,8 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
-      verify(f.envelopeBuilder).submissionRequest(any[Elem], eqTo(storn), eqTo(periodEnd), eqTo(sender), eqTo(cred))
+      verify(f.envelopeBuilder)
+        .submissionRequest(any[Elem], eqTo(storn), eqTo(periodEnd), eqTo(sender), eqTo(cred), any[String])
     }
   }
 

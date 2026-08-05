@@ -58,9 +58,10 @@ class GovTalkEnvelopeBuilder @Inject() (
                          storn: String,
                          periodEnd: LocalDate,
                          sender: SenderType,
-                         credentialIdentifier: String
+                         credentialIdentifier: String,
+                         correlationId: String
                        ): IrMarkResult =
-    val unmarkedEnvelope = buildEnvelope(sdlt, storn, periodEnd, sender, credentialIdentifier)
+    val unmarkedEnvelope = buildEnvelope(sdlt, storn, periodEnd, sender, credentialIdentifier, correlationId)
     irMarkService.applyIrMark(unmarkedEnvelope)
 
   private def buildEnvelope(
@@ -68,7 +69,8 @@ class GovTalkEnvelopeBuilder @Inject() (
                              storn: String,
                              periodEnd: LocalDate,
                              sender: SenderType,
-                             credentialIdentifier: String
+                             credentialIdentifier: String,
+                             correlationId: String
                            ): Elem =
     val irEnvelope = buildIrEnvelope(sdlt, storn, periodEnd, sender)
     <GovTalkMessage xmlns={EnvelopeNs}>
@@ -78,7 +80,7 @@ class GovTalkEnvelopeBuilder @Inject() (
           <Class>{SdltClass}</Class>
           <Qualifier>request</Qualifier>
           <Function>submit</Function>
-          <CorrelationID></CorrelationID>
+          <CorrelationID>{correlationId}</CorrelationID>
           <Transformation>XML</Transformation>
           {gatewayTestElement}
           <GatewayTimestamp></GatewayTimestamp>
