@@ -23,7 +23,7 @@ import org.mockito.Mockito.*
 import service.submission.*
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.time.LocalDate
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import scala.xml.Elem
 
 final class GovTalkEnvelopeBuilderSpec extends SpecBase {
@@ -40,6 +40,8 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
 
   private val markResult: IrMarkResult = IrMarkResult(<Marked/>, "b64-mark", "b32-mark")
 
+  private val fixedClock: Clock = Clock.fixed(Instant.parse("2026-08-05T12:29:52Z"), ZoneId.of("UTC"))
+
   private def mockServicesConfig(useExternalTestService: Boolean): ServicesConfig = {
     val sc = mock[ServicesConfig]
     when(sc.getString("chris.channel.uri")).thenReturn(channelUri)
@@ -53,7 +55,7 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
                           irMarkService: IrMarkService,
                           useExternalTestService: Boolean = false
                         ): GovTalkEnvelopeBuilder =
-    new GovTalkEnvelopeBuilder(mockServicesConfig(useExternalTestService), irMarkService)
+    new GovTalkEnvelopeBuilder(mockServicesConfig(useExternalTestService), irMarkService, fixedClock)
 
   private def capturedEnvelope(
                                 useExternalTestService: Boolean = false,
@@ -121,6 +123,18 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
       (env \\ "Qualifier").text mustBe "request"
       (env \\ "Function").text mustBe "submit"
       (env \\ "Transformation").text mustBe "XML"
+    }
+
+    "must stamp the GatewayTimestamp from the clock, matching the AS-IS format" in {
+      (capturedEnvelope() \\ "GatewayTimestamp").text mustBe "2026-08-05T12:29:52"
+    }
+
+    "must stamp a GatewayTimestamp with no offset and no fractional seconds" in {
+      (capturedEnvelope() \\ "GatewayTimestamp").text must fullyMatch regex """\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"""
+    }
+
+    "must carry the correlation id through to the envelope" in {
+      (capturedEnvelope() \\ "CorrelationID").text mustBe correlationId
     }
 
     "must include the STORN key in both the GovTalkDetails and IRheader" in {
