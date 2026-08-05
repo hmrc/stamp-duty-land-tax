@@ -29,14 +29,14 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 import scala.xml.{Elem, Node, XML}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 
 class ChrisConnector @Inject() (
                                  httpClient: HttpClientV2,
                                  appConfig: ServicesConfig
                                )(implicit ec: ExecutionContext)
   extends Logging:
-
-  import uk.gov.hmrc.http.HttpReads.Implicits.*
 
   private val chrisUrl: String   = appConfig.baseUrl("chris")
   private val submitPath: String = chrisUrl + appConfig.getConfString("chris.submit-url", "/ChRIS/SDLT/Filing/sync/SDLT")
@@ -45,20 +45,31 @@ class ChrisConnector @Inject() (
   private val requestTimeout: Duration = 120.seconds
   private val UtrnPattern: Regex = "^[0-9]{9}M[A-HJ-NP-TV-Z]$".r
   private val XmlDecl: String = """<?xml version="1.0" encoding="UTF-8"?>"""
+  private val stubMode: Boolean = appConfig.getConfBool("chris.stub", false)
 
   private val RetryableHttpStatuses: Set[Int] = Set(408, 429, 500, 502, 503, 504)
 
-  def submit(envelope: scala.xml.Elem, endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
-    val target    = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
-    val xmlString = XmlDecl + "\n" + envelope.toString()
-    logger.info(s"[ChrisConnector] SUBMIT target=$target corrId=$correlationId xml=$xmlString")
+  private def withResourceRefKey(envelope: Elem, ref: String): Elem =
+    val key = <Key Type="ReturnResourceRef">
+      {ref}
+    </Key>
+    val rule = new RewriteRule:
+      override def transform(n: Node): Seq[Node] = n match
+        case e: Elem if e.label == "Keys" => e.copy(child = e.child ++ key)
+        case other => other
+    new RuleTransformer(rule).transform(envelope).collectFirst { case e: Elem => e }.getOrElse(envelope)
+
+  def submit(envelope: scala.xml.Elem, endpoint: Option[String], correlationId: String,
+             returnResourceRef: Option[String] = None)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
+    val target = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
+    val toSend =
+      if stubMode then returnResourceRef.map(_.trim).filter(_.nonEmpty).map(withResourceRefKey(envelope, _)).getOrElse(envelope)
+      else envelope
+    val xmlString = XmlDecl + "\n" + toSend.toString()
+    logger.info(s"[ChrisConnector] SUBMIT target=$target corrId=$correlationId stubMode=$stubMode ref=${returnResourceRef.getOrElse("-")} xml=$xmlString")
     httpClient
       .post(url"$target")
-      .setHeader(
-        "Content-Type" -> "application/xml",
-        "Accept" -> "application/xml",
-        "CorrelationId" -> correlationId
-      )
+      .setHeader("Content-Type" -> "application/xml", "Accept" -> "application/xml", "CorrelationId" -> correlationId)
       .withBody(xmlString)
       .transform(_.withRequestTimeout(requestTimeout))
       .execute[HttpResponse]

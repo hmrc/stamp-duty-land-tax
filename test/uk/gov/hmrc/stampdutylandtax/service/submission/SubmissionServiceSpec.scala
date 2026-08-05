@@ -164,7 +164,7 @@ final class SubmissionServiceSpec extends SpecBase {
       .thenReturn(Future.successful(ChrisDeleteResponse.Deleted(Some("corr"), "<delete-response/>")))
 
     def onResponse(resp: ChrisResponse): Unit =
-      when(connector.submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier])).thenReturn(Future.successful(resp))
+      when(connector.submit(any[Elem], any[Option[String]], any[String], any[Option[String]])(any[HeaderCarrier])).thenReturn(Future.successful(resp))
 
     def submissions: Seq[SubmissionUpdate] =
       val captor = ArgumentCaptor.forClass(classOf[UpdateSubmissionRequest])
@@ -190,7 +190,12 @@ final class SubmissionServiceSpec extends SpecBase {
 
     def submitUrls: Seq[Option[String]] =
       val captor = ArgumentCaptor.forClass(classOf[Option[String]])
-      verify(connector, atLeastOnce()).submit(any[Elem], captor.capture(), any[String])(any[HeaderCarrier])
+      verify(connector, atLeastOnce()).submit(any[Elem], captor.capture(), any[String], any[Option[String]])(any[HeaderCarrier])
+      captor.getAllValues.asScala.toSeq
+
+    def submitRefs: Seq[Option[String]] =
+      val captor = ArgumentCaptor.forClass(classOf[Option[String]])
+      verify(connector, atLeastOnce()).submit(any[Elem], any[Option[String]], any[String], captor.capture())(any[HeaderCarrier])
       captor.getAllValues.asScala.toSeq
 
     def statisticsPollIntervals: Seq[String] =
@@ -199,7 +204,7 @@ final class SubmissionServiceSpec extends SpecBase {
       captor.getAllValues.asScala.toSeq.map(_.govTalkStatus.pollInterval)
 
     def neverSubmitted(): Unit =
-      verify(connector, never()).submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier])
+      verify(connector, never()).submit(any[Elem], any[Option[String]], any[String], any[Option[String]])(any[HeaderCarrier])
 
   "SubmissionService.submit requireContext" - {
 
@@ -462,7 +467,14 @@ final class SubmissionServiceSpec extends SpecBase {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
-      verify(f.connector).submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier])
+      verify(f.connector).submit(any[Elem], any[Option[String]], any[String], any[Option[String]])(any[HeaderCarrier])
+    }
+
+    "must forward the return resource ref to the ChRIS submit call" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      f.submitRefs must contain(Some(returnId))
     }
   }
 
@@ -825,7 +837,7 @@ final class SubmissionServiceSpec extends SpecBase {
 
     "must release the GovTalk lock even when the ChRIS submit fails" in {
       val f = new Fixtures
-      when(f.connector.submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier]))
+      when(f.connector.submit(any[Elem], any[Option[String]], any[String], any[Option[String]])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("chris down")))
       f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
       f.lockFlags must contain("N")
@@ -836,7 +848,7 @@ final class SubmissionServiceSpec extends SpecBase {
 
     "must fail and write no status beyond PENDING when the ChRIS submit fails" in {
       val f = new Fixtures
-      when(f.connector.submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier]))
+      when(f.connector.submit(any[Elem], any[Option[String]], any[String], any[Option[String]])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("chris down")))
       f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
       f.statuses.toSet mustBe Set("PENDING")
@@ -845,7 +857,7 @@ final class SubmissionServiceSpec extends SpecBase {
 
     "must not stamp a submission-request datetime when the ChRIS submit fails" in {
       val f = new Fixtures
-      when(f.connector.submit(any[Elem], any[Option[String]], any[String])(any[HeaderCarrier]))
+      when(f.connector.submit(any[Elem], any[Option[String]], any[String], any[Option[String]])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("chris down")))
       f.service.submit(aReturn(), sender, periodEnd, cred).failed.futureValue
       f.submissions.forall(_.submissionRequestDate.isEmpty) mustBe true
