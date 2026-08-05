@@ -160,12 +160,12 @@ object SdltReturnMapper:
     val lands           = fr.land.getOrElse(Nil)
     val first           = lands.headOption.getOrElse(emptyLand)
     val additionalLands = lands.drop(1)
-    val certificateForEach: NodeSeq =
+    val certificateForEach: String =
       fr.returnInfo.flatMap(_.landCertForEachProp).flatMap(s => yesNo(Option(s)))
-        .map(v => <CertificateForEach>{v}</CertificateForEach>: NodeSeq).getOrElse(NodeSeq.Empty)
+        .filter(v => v == "yes" || v == "no").getOrElse("no")
     <LandDetail>
       <NumberOfProperties>{lands.size.max(1)}</NumberOfProperties>
-      {certificateForEach}
+      <CertificateForEach>{certificateForEach}</CertificateForEach>
       {if leased then landDetailLeaseDetails(fr) else NodeSeq.Empty}
       {property(first)}
       {if leased then NodeSeq.Empty else additionalLands.flatMap(additionalProperty)}

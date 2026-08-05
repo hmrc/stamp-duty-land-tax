@@ -23,7 +23,7 @@ import org.mockito.Mockito.*
 import service.submission.*
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.time.LocalDate
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import scala.xml.Elem
 
 final class GovTalkEnvelopeBuilderSpec extends SpecBase {
@@ -40,6 +40,9 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
 
   private val markResult: IrMarkResult = IrMarkResult(<Marked/>, "b64-mark", "b32-mark")
 
+  private val summerClock: Clock = Clock.fixed(Instant.parse("2026-08-05T12:29:52Z"), ZoneId.of("UTC"))
+  private val winterClock: Clock = Clock.fixed(Instant.parse("2026-01-15T12:29:52Z"), ZoneId.of("UTC"))
+
   private def mockServicesConfig(useExternalTestService: Boolean): ServicesConfig = {
     val sc = mock[ServicesConfig]
     when(sc.getString("chris.channel.uri")).thenReturn(channelUri)
@@ -51,16 +54,18 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
 
   private def newBuilder(
                           irMarkService: IrMarkService,
-                          useExternalTestService: Boolean = false
+                          useExternalTestService: Boolean = false,
+                          clock: Clock = summerClock
                         ): GovTalkEnvelopeBuilder =
-    new GovTalkEnvelopeBuilder(mockServicesConfig(useExternalTestService), irMarkService)
+    new GovTalkEnvelopeBuilder(mockServicesConfig(useExternalTestService), irMarkService, clock)
 
   private def capturedEnvelope(
                                 useExternalTestService: Boolean = false,
-                                sender: SenderType = SenderType.Agent
+                                sender: SenderType = SenderType.Agent,
+                                clock: Clock = summerClock
                               ): Elem = {
     val irMarkService = mock[IrMarkService]
-    val builder       = newBuilder(irMarkService, useExternalTestService)
+    val builder       = newBuilder(irMarkService, useExternalTestService, clock)
 
     when(irMarkService.applyIrMark(any[Elem])).thenReturn(markResult)
 
@@ -121,6 +126,26 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
       (env \\ "Qualifier").text mustBe "request"
       (env \\ "Function").text mustBe "submit"
       (env \\ "Transformation").text mustBe "XML"
+    }
+
+    "must set the GatewayTimestamp from the clock" in {
+      (capturedEnvelope() \\ "GatewayTimestamp").text mustBe "2026-08-05T13:29:52"
+    }
+
+    "must use London time over the summer (BST) so it lines up with the portal" in {
+      (capturedEnvelope(clock = summerClock) \\ "GatewayTimestamp").text mustBe "2026-08-05T13:29:52"
+    }
+
+    "must use London time in winter too" in {
+      (capturedEnvelope(clock = winterClock) \\ "GatewayTimestamp").text mustBe "2026-01-15T12:29:52"
+    }
+
+    "must write it with no offset and no fractional seconds" in {
+      (capturedEnvelope() \\ "GatewayTimestamp").text must fullyMatch regex """\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"""
+    }
+
+    "must set the CorrelationID it was passed" in {
+      (capturedEnvelope() \\ "CorrelationID").text mustBe correlationId
     }
 
     "must include the STORN key in both the GovTalkDetails and IRheader" in {
