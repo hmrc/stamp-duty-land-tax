@@ -456,7 +456,7 @@ object SdltReturnMapper:
       .getOrElse(NodeSeq.Empty)
 
   private def totalConsiderationWithFlags(tx: Transaction): NodeSeq =
-    tx.totalConsideration.map { value =>
+    tx.totalConsiderationBusiness.map { value =>
       <TotalConsideration
       Stock={yesNo(tx.includesStock).getOrElse("no")}
       Goodwill={yesNo(tx.includesGoodwill).getOrElse("no")}

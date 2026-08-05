@@ -32,6 +32,7 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
   private val storn: String            = "STORN12345"
   private val periodEnd: LocalDate     = LocalDate.parse("2026-01-31")
   private val credentialIdentifier: String = "CRED-123"
+  private val correlationId: String = "CORREL-123"
 
   private val channelUri: String     = "http://channel/uri"
   private val channelProduct: String = "SDLT-PRODUCT"
@@ -63,7 +64,7 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
 
     when(irMarkService.applyIrMark(any[Elem])).thenReturn(markResult)
 
-    builder.submissionRequest(sdlt, storn, periodEnd, sender, credentialIdentifier)
+    builder.submissionRequest(sdlt, storn, periodEnd, sender, credentialIdentifier, correlationId)
 
     val captor = ArgumentCaptor.forClass(classOf[Elem])
     verify(irMarkService).applyIrMark(captor.capture())
@@ -78,7 +79,7 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
 
       when(irMarkService.applyIrMark(any[Elem])).thenReturn(markResult)
 
-      val result = builder.submissionRequest(sdlt, storn, periodEnd, SenderType.Agent, credentialIdentifier)
+      val result = builder.submissionRequest(sdlt, storn, periodEnd, SenderType.Agent, credentialIdentifier, correlationId)
       result mustBe markResult
 
       verify(irMarkService).applyIrMark(any[Elem])
@@ -91,7 +92,7 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
 
       when(irMarkService.applyIrMark(any[Elem])).thenReturn(markResult)
 
-      builder.submissionRequest(sdlt, storn, periodEnd, SenderType.Agent, credentialIdentifier)
+      builder.submissionRequest(sdlt, storn, periodEnd, SenderType.Agent, credentialIdentifier, correlationId)
 
       verify(irMarkService, times(1)).applyIrMark(any[Elem])
       verifyNoMoreInteractions(irMarkService)
@@ -105,7 +106,7 @@ final class GovTalkEnvelopeBuilderSpec extends SpecBase {
       when(irMarkService.applyIrMark(any[Elem])).thenThrow(boom)
 
       val ex = intercept[RuntimeException] {
-        builder.submissionRequest(sdlt, storn, periodEnd, SenderType.Agent, credentialIdentifier)
+        builder.submissionRequest(sdlt, storn, periodEnd, SenderType.Agent, credentialIdentifier, correlationId)
       }
       ex mustBe boom
     }
