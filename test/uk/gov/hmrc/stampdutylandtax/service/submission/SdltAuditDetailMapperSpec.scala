@@ -250,6 +250,27 @@ class SdltAuditDetailMapperSpec extends AnyWordSpec with Matchers:
     }
   }
 
+  "SdltAuditDetailMapper landDetails certificateForEach" should {
+
+    val multiProperty = freeholdReturn(1, 1, 2)
+    val baseInfo      = ReturnInfo(returnID = Some("R1"))
+
+    "encode certificateForEach as true when the question was answered yes" in {
+      val fr = multiProperty.copy(returnInfo = Some(baseInfo.copy(landCertForEachProp = Some("yes"))))
+      (mapper.submissionDetail(fr) \ "landDetails" \ "certificateForEach").as[Boolean] shouldBe true
+    }
+
+    "encode certificateForEach as false when the question was answered no" in {
+      val fr = multiProperty.copy(returnInfo = Some(baseInfo.copy(landCertForEachProp = Some("no"))))
+      (mapper.submissionDetail(fr) \ "landDetails" \ "certificateForEach").as[Boolean] shouldBe false
+    }
+
+    "omit certificateForEach when the question was not asked" in {
+      val fr = multiProperty.copy(returnInfo = Some(baseInfo))
+      (mapper.submissionDetail(fr) \ "landDetails" \ "certificateForEach").toOption shouldBe None
+    }
+  }
+
   "SdltAuditDetailMapper prune behaviour" should {
 
     val freehold = mapper.submissionDetail(freeholdReturn(1, 1, 1))

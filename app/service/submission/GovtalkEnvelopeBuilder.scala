@@ -19,7 +19,7 @@ package service.submission
 import com.google.inject.{Inject, Singleton}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.time.LocalDate
+import java.time.{Clock, LocalDate, LocalDateTime, ZoneId}
 import java.time.format.DateTimeFormatter
 import scala.xml.{Elem, NodeSeq}
 
@@ -40,13 +40,19 @@ final case class IrMarkResult(envelope: Elem, base64: String, base32: String)
 @Singleton
 class GovTalkEnvelopeBuilder @Inject() (
                                          servicesConfig: ServicesConfig,
-                                         irMarkService: IrMarkService
+                                         irMarkService: IrMarkService,
+                                         clock: Clock
                                        ):
 
   private val EnvelopeNs  = "http://www.govtalk.gov.uk/CM/envelope"
   private val SdltNs      = "http://www.govtalk.gov.uk/taxation/SDLT/6"
   private val SubmitterNs = "http://www.govtalk.gov.uk/gateway/submitterdetails"
   private val SdltClass   = "IR-SDLT-LTR"
+
+  private val GatewayTimestampZone: ZoneId = ZoneId.of("Europe/London")
+
+  private val GatewayTimestampFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   private val channelUri:             String  = servicesConfig.getString("chris.channel.uri")
   private val channelProduct:         String  = servicesConfig.getString("chris.channel.product")
@@ -83,7 +89,7 @@ class GovTalkEnvelopeBuilder @Inject() (
           <CorrelationID>{correlationId}</CorrelationID>
           <Transformation>XML</Transformation>
           {gatewayTestElement}
-          <GatewayTimestamp></GatewayTimestamp>
+          <GatewayTimestamp>{LocalDateTime.now(clock.withZone(GatewayTimestampZone)).format(GatewayTimestampFormatter)}</GatewayTimestamp>
         </MessageDetails>
         <SenderDetails></SenderDetails>
       </Header>

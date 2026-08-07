@@ -621,6 +621,65 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     }
   }
 
+  "Mapper CertificateForEach mapping" should {
+
+    "default to no when landCertForEachProp was never answered" in {
+      val sdlt = certificateForEachReturn(None)
+      (sdlt \\ "LandDetail" \ "CertificateForEach").map(_.text.trim) shouldBe Seq("no")
+    }
+
+    "still emit it when the return has no returnInfo" in {
+      val sdlt = SdltReturnMapper.toSdltElement(freeholdReturn(1, 1, 1).copy(returnInfo = None))
+      (sdlt \\ "LandDetail" \ "CertificateForEach").map(_.text.trim) shouldBe Seq("no")
+    }
+
+    "map YES and Y to yes" in {
+      Seq("YES", "yes", "Y", "y").foreach { stored =>
+        (certificateForEachReturn(Some(stored)) \\ "CertificateForEach").text.trim shouldBe "yes"
+      }
+    }
+
+    "map NO and N to no" in {
+      Seq("NO", "no", "N", "n").foreach { stored =>
+        (certificateForEachReturn(Some(stored)) \\ "CertificateForEach").text.trim shouldBe "no"
+      }
+    }
+
+    "not pass through junk the schema would reject" in {
+      Seq("true", "1", "rubbish").foreach { stored =>
+        (certificateForEachReturn(Some(stored)) \\ "CertificateForEach").text.trim shouldBe "no"
+      }
+    }
+
+    "treat blank as no" in {
+      (certificateForEachReturn(Some("  ")) \\ "CertificateForEach").text.trim shouldBe "no"
+    }
+
+    "put CertificateForEach straight after NumberOfProperties" in {
+      val kids = (certificateForEachReturn(Some("YES")) \\ "LandDetail").head.child
+        .collect { case e: scala.xml.Elem => e.label }
+      kids.indexOf("CertificateForEach") shouldBe kids.indexOf("NumberOfProperties") + 1
+    }
+
+    "emit it for leases too" in {
+      val leased = leaseReturn(1, 1, 1)
+      val sdlt   = SdltReturnMapper.toSdltElement(
+        leased.copy(returnInfo = leased.returnInfo.map(_.copy(landCertForEachProp = Some("YES"))))
+      )
+      (sdlt \\ "LandDetail" \ "CertificateForEach").map(_.text.trim) shouldBe Seq("yes")
+    }
+
+    "validate against the SDLT/6 schema" in {
+      assertValid(certificateForEachReturn(None), "sdlt-certificate-for-each.xml")
+    }
+  }
+
+  private def certificateForEachReturn(stored: Option[String]): Elem =
+    val base = freeholdReturn(1, 1, 1)
+    SdltReturnMapper.toSdltElement(
+      base.copy(returnInfo = base.returnInfo.map(_.copy(landCertForEachProp = stored)))
+    )
+
   private def companyTypeReturn(setFlags: CompanyDetails => CompanyDetails): Elem =
     val base    = companyPurchaserFreehold()
     val cleared = clearCompanyTypes(base.companyDetails.getOrElse(CompanyDetails()))
