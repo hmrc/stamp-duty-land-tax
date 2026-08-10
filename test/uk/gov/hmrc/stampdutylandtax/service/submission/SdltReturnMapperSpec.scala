@@ -674,6 +674,147 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     }
   }
 
+  "Mapper on a return carrying both a vendor and a purchaser agent" should {
+
+    val sdlt = SdltReturnMapper.toSdltElement(twoAgentReturn)
+
+    "give VendorDetails the vendor's own agent, not the purchaser's" in {
+      val agent = (sdlt \\ "VendorDetails" \ "AgentDetails").head
+      (agent \ "Name").text.trim         shouldBe "Agent One"
+      (agent \ "Reference").text.trim    shouldBe "5435435"
+      (agent \ "Telephone").text.trim    shouldBe "8757647647"
+      (agent \ "EmailAddress").text.trim shouldBe "agentone@xyz.com"
+    }
+
+    "leave the purchaser's agent under Purchaser" in {
+      val agent = (sdlt \\ "Purchaser" \ "AgentDetails").head
+      (agent \ "Name").text.trim      shouldBe "Johnson & Co."
+      (agent \ "Reference").text.trim shouldBe "ABCD123456789"
+      (agent \ "Telephone").text.trim shouldBe "1122334455"
+    }
+
+    "carry EmailAddress on the vendor's agent only" in {
+      (sdlt \\ "Purchaser" \ "AgentDetails" \ "EmailAddress") shouldBe empty
+    }
+
+    "read AuthoriseAgent off the purchaser agent, the only one that carries it" in {
+      (sdlt \\ "Purchaser" \ "AuthoriseAgent").text.trim shouldBe "yes"
+    }
+
+    "not depend on the order FormP happens to return the agents in" in {
+      val swapped = twoAgentReturn.copy(returnAgent = Some(Seq(agentOne, johnsonAndCo)))
+      val out     = SdltReturnMapper.toSdltElement(swapped)
+      (out \\ "VendorDetails" \ "AgentDetails" \ "Name").text.trim shouldBe "Agent One"
+      (out \\ "Purchaser" \ "AgentDetails" \ "Name").text.trim     shouldBe "Johnson & Co."
+    }
+
+    "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-two-agents.xml") }
+  }
+
+  "Mapper on a purchaser agent not authorised for correspondence" should {
+
+    val sdlt = SdltReturnMapper.toSdltElement(
+      twoAgentReturn.copy(returnAgent = Some(Seq(johnsonAndCo.copy(isAuthorised = Some("no")), agentOne)))
+    )
+
+    "write AuthoriseAgent = no" in {
+      (sdlt \\ "Purchaser" \ "AuthoriseAgent").text.trim shouldBe "no"
+    }
+
+    "still file the agent, which is not the same as having no agent at all" in {
+      (sdlt \\ "Purchaser" \ "AgentDetails" \ "Name").text.trim shouldBe "Johnson & Co."
+    }
+  }
+
+  "Mapper when a stale agent row outlives the represented-by-agent answer" should {
+
+    "drop the vendor's AgentDetails once the vendor answers no" in {
+      val answeredNo = twoAgentReturn.copy(vendor = Some(Seq(buildVendor(1).copy(isRepresentedByAgent = Some("no")))))
+      (SdltReturnMapper.toSdltElement(answeredNo) \\ "VendorDetails" \ "AgentDetails") shouldBe empty
+    }
+
+    "drop it too when the vendor never answered at all" in {
+      val neverAnswered = twoAgentReturn.copy(vendor = Some(Seq(buildVendor(1))))
+      (SdltReturnMapper.toSdltElement(neverAnswered) \\ "VendorDetails" \ "AgentDetails") shouldBe empty
+    }
+
+    "fall back to AuthoriseAgent = no once the purchaser answers no" in {
+      val answeredNo = twoAgentReturn.copy(purchaser = Some(Seq(buildPurchaser(1).copy(isRepresentedByAgent = Some("no")))))
+      val sdlt       = SdltReturnMapper.toSdltElement(answeredNo)
+      (sdlt \\ "Purchaser" \ "AuthoriseAgent").text.trim shouldBe "no"
+      (sdlt \\ "Purchaser" \ "AgentDetails")             shouldBe empty
+    }
+
+    "treat a missing purchaser answer the same as no" in {
+      val neverAnswered = twoAgentReturn.copy(purchaser = Some(Seq(buildPurchaser(1))))
+      val sdlt          = SdltReturnMapper.toSdltElement(neverAnswered)
+      (sdlt \\ "Purchaser" \ "AuthoriseAgent").text.trim shouldBe "no"
+      (sdlt \\ "Purchaser" \ "AgentDetails")             shouldBe empty
+    }
+
+    "leave the other party's agent alone" in {
+      val answeredNo = twoAgentReturn.copy(vendor = Some(Seq(buildVendor(1).copy(isRepresentedByAgent = Some("no")))))
+      (SdltReturnMapper.toSdltElement(answeredNo) \\ "Purchaser" \ "AgentDetails" \ "Name").text.trim shouldBe "Johnson & Co."
+    }
+  }
+
+  "Mapper on an agent with details missing" should {
+
+    "omit AuthoriseAgent rather than defaulting it to no" in {
+      val noAnswer = twoAgentReturn.copy(returnAgent = Some(Seq(johnsonAndCo.copy(isAuthorised = None), agentOne)))
+      (SdltReturnMapper.toSdltElement(noAnswer) \\ "Purchaser" \ "AuthoriseAgent") shouldBe empty
+    }
+
+    "omit AuthoriseAgent when the purchaser said yes but no agent was ever saved" in {
+      val noPurchaserAgent = twoAgentReturn.copy(returnAgent = Some(Seq(agentOne)))
+      val sdlt             = SdltReturnMapper.toSdltElement(noPurchaserAgent)
+      (sdlt \\ "Purchaser" \ "AuthoriseAgent") shouldBe empty
+      (sdlt \\ "Purchaser" \ "AgentDetails")   shouldBe empty
+    }
+
+    "fail schema validation without AuthoriseAgent, so the return cannot be filed at all" in {
+      val noPurchaserAgent = twoAgentReturn.copy(returnAgent = Some(Seq(agentOne)))
+      validator.validateSdlt(SdltReturnMapper.toSdltElement(noPurchaserAgent)).isLeft shouldBe true
+    }
+
+    "omit Name rather than writing an empty one" in {
+      val nameless = twoAgentReturn.copy(returnAgent = Some(Seq(johnsonAndCo, agentOne.copy(name = None))))
+      (SdltReturnMapper.toSdltElement(nameless) \\ "VendorDetails" \ "AgentDetails" \ "Name") shouldBe empty
+    }
+  }
+
+  private def johnsonAndCo = ReturnAgent(
+    agentType    = Some("PURCHASER"),
+    name         = Some("Johnson & Co."),
+    address1     = Some("Apartment 8, Devell House"),
+    address2     = Some("11 Rusholme Place"),
+    address3     = Some("Manchester"),
+    postcode     = Some("M14 5TG"),
+    phone        = Some("1122334455"),
+    email        = Some("johnson@xyz.com"),
+    reference    = Some("ABCD123456789"),
+    isAuthorised = Some("yes")
+  )
+
+  private def agentOne = ReturnAgent(
+    agentType = Some("VENDOR"),
+    name      = Some("Agent One"),
+    address1  = Some("Apartment 11, Devell House"),
+    address2  = Some("11 Rusholme Place"),
+    address3  = Some("Manchester"),
+    postcode  = Some("M14 5TG"),
+    phone     = Some("8757647647"),
+    email     = Some("agentone@xyz.com"),
+    reference = Some("5435435")
+  )
+
+  private def twoAgentReturn: FullReturn =
+    freeholdReturn(1, 1, 1).copy(
+      vendor      = Some(Seq(buildVendor(1).copy(isRepresentedByAgent = Some("yes")))),
+      purchaser   = Some(Seq(buildPurchaser(1).copy(isRepresentedByAgent = Some("yes")))),
+      returnAgent = Some(Seq(johnsonAndCo, agentOne))
+    )
+
   private def certificateForEachReturn(stored: Option[String]): Elem =
     val base = freeholdReturn(1, 1, 1)
     SdltReturnMapper.toSdltElement(
