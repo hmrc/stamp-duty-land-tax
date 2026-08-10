@@ -245,11 +245,11 @@ object SdltReturnMapper:
     val primary     = vendors.headOption.getOrElse(emptyVendor)
     val additional  = vendors.lift(1)
     val sdlt2       = vendors.drop(2)
-    val returnAgent = fr.returnAgent.getOrElse(Nil).headOption
+    val vendorAgent = if isYes(primary.isRepresentedByAgent) then agentOf(fr, "VENDOR") else None
     <VendorDetails>
       <NumberOfVendors>{vendors.size.max(1)}</NumberOfVendors>
       {primaryVendor(primary)}
-      {returnAgent.map(vendorAgentDetails).getOrElse(NodeSeq.Empty)}
+      {vendorAgent.map(vendorAgentDetails).getOrElse(NodeSeq.Empty)}
       {additional.map(additionalVendor).getOrElse(NodeSeq.Empty)}
       {sdlt2.flatMap(sdlt2Vendor)}
     </VendorDetails>
@@ -286,12 +286,15 @@ object SdltReturnMapper:
 
   private def vendorAgentDetails(agent: ReturnAgent): NodeSeq =
     <AgentDetails>
-      <Name>{agent.name.getOrElse("")}</Name>
+      {nonBlank(agent.name).map(n => <Name>{n}</Name>: NodeSeq).getOrElse(NodeSeq.Empty)}
       {agentAddress(agent)}
       {nonBlank(agent.email).map(e => <EmailAddress>{e}</EmailAddress>: NodeSeq).getOrElse(NodeSeq.Empty)}
       {nonBlank(agent.reference).map(r => <Reference>{r}</Reference>: NodeSeq).getOrElse(NodeSeq.Empty)}
       {nonBlank(agent.phone).map(p => <Telephone>{p}</Telephone>: NodeSeq).getOrElse(NodeSeq.Empty)}
     </AgentDetails>
+
+  private def agentOf(fr: FullReturn, agentType: String): Option[ReturnAgent] =
+    fr.returnAgent.getOrElse(Nil).find(_.agentType.exists(_.equalsIgnoreCase(agentType)))
 
   private def agentAddress(agent: ReturnAgent): NodeSeq =
     val lines = Seq(agent.address1, agent.address2, agent.address3, agent.address4).flatMap(nonBlank)
@@ -315,7 +318,8 @@ object SdltReturnMapper:
     </PurchaserDetails>
 
   private def primaryPurchaser(p: Purchaser, fr: FullReturn): Elem =
-    val agent = fr.returnAgent.getOrElse(Nil).headOption
+    val representedByAgent = isYes(p.isRepresentedByAgent)
+    val purchaserAgent     = if representedByAgent then agentOf(fr, "PURCHASER") else None
     <Purchaser>
       {purchaserName(p)}
       {purchaserAddress(p)}
@@ -325,8 +329,8 @@ object SdltReturnMapper:
       {nonBlank(p.phone).map(ph => <Telephone>{ph}</Telephone>: NodeSeq).getOrElse(NodeSeq.Empty)}
       <VendorConnected>{yesNo(p.isConnectedToVendor).getOrElse("no")}</VendorConnected>
       <CertificateAddress>Property</CertificateAddress>
-      <AuthoriseAgent>{agent.flatMap(a => yesNo(a.isAuthorised)).getOrElse("no")}</AuthoriseAgent>
-      {agent.map(purchaserAgentDetails).getOrElse(NodeSeq.Empty)}
+      {authoriseAgent(representedByAgent, purchaserAgent)}
+      {purchaserAgent.map(purchaserAgentDetails).getOrElse(NodeSeq.Empty)}
     </Purchaser>
 
   private def additionalPurchaser(p: Purchaser): NodeSeq =
@@ -357,9 +361,13 @@ object SdltReturnMapper:
     val lines = Seq(p.address1, p.address2, p.address3, p.address4).flatMap(nonBlank)
     <Address>{addressBody(p.postcode, p.houseNumber, lines)}</Address>
 
+  private def authoriseAgent(representedByAgent: Boolean, agent: Option[ReturnAgent]): NodeSeq =
+    if !representedByAgent then <AuthoriseAgent>no</AuthoriseAgent>
+    else agent.flatMap(a => yesNo(a.isAuthorised)).map(v => <AuthoriseAgent>{v}</AuthoriseAgent>: NodeSeq).getOrElse(NodeSeq.Empty)
+
   private def purchaserAgentDetails(agent: ReturnAgent): NodeSeq =
     <AgentDetails>
-      <Name>{agent.name.getOrElse("")}</Name>
+      {nonBlank(agent.name).map(n => <Name>{n}</Name>: NodeSeq).getOrElse(NodeSeq.Empty)}
       {agentAddress(agent)}
       {nonBlank(agent.reference).map(r => <Reference>{r}</Reference>: NodeSeq).getOrElse(NodeSeq.Empty)}
       {nonBlank(agent.phone).map(ph => <Telephone>{ph}</Telephone>: NodeSeq).getOrElse(NodeSeq.Empty)}

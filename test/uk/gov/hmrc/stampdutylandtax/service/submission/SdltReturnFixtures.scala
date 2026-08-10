@@ -160,15 +160,17 @@ object SdltReturnFixtures:
     )
 
     val primaryPurchaser = buildPurchaser(1).copy(
-      nino                = Some("AB686456D"),
-      dateOfBirth         = Some("12/08/1980"),
-      phone               = Some("01234567890"),
-      isConnectedToVendor = Some("YES"),
-      isTrustee           = Some("YES")
+      nino                 = Some("AB686456D"),
+      dateOfBirth          = Some("12/08/1980"),
+      phone                = Some("01234567890"),
+      isConnectedToVendor  = Some("YES"),
+      isTrustee            = Some("YES"),
+      isRepresentedByAgent = Some("YES")
     )
 
     val agent = ReturnAgent(
       returnAgentID     = Some("A1"),
+      agentType   = Some("PURCHASER"),
       name        = Some("Agent Smith"),
       houseNumber = Some("2"),
       address1    = Some("Vendor Agent Gardens"),
