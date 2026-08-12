@@ -299,6 +299,34 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-company-freehold.xml") }
   }
 
+  "Mapper on a leasehold with a COMPANY purchaser (UTR + VAT + registration + purchaser/company details triggers)" should {
+
+    val sdlt = SdltReturnMapper.toSdltElement(sdlt4LeaseholdReturn())
+
+    "emit PurchaserVATreferenceNumber as the 9-digit body (GB prefix stripped to satisfy the 9-char schema limit)" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserVATreferenceNumber").text.trim shouldBe "123456789"
+    }
+
+    "populate PurchaserCompanyDetails with TaxReferenceNumber and PlaceOfRegistration" in {
+      val pcd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "PurchaserCompanyDetails"
+      pcd.size shouldBe 1
+      (pcd \ "TaxReferenceNumber").text.trim shouldBe "1234567890"
+      (pcd \ "PlaceOfRegistration").text.trim shouldBe "England and Wales"
+    }
+
+    "emit PurchaserDescription with relevant codes" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserDescription").size shouldBe 2
+      (atd \ "PurchaserDescription").text.trim should include("04")
+      (atd \ "PurchaserDescription").text.trim should include("09")
+    }
+
+    "validate against the SDLT/6 schema" in {
+      assertValid(sdlt, "sdlt-lease-triggered.xml")
+    }
+  }
+
   "Mapper on a lease with an INDIVIDUAL purchaser (NINO + DOB + 2 lands, no triggers)" should {
 
     val sdlt = SdltReturnMapper.toSdltElement(individualPurchaserLease())
