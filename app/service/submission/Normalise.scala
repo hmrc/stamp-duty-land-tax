@@ -25,6 +25,9 @@ object Normalise:
   def isBlank(s: Option[String]): Boolean = s.forall(_.trim.isEmpty)
   def nonBlank(s: Option[String]): Option[String] = s.map(_.trim).filter(_.nonEmpty)
   def nonBlank(s: String): Option[String] = nonBlank(Option(s))
+
+  def anyNonBlank(values: Seq[Option[String]]): Boolean =
+    values.exists(nonBlank(_).isDefined)
   
   def isYes(s: Option[String]): Boolean = s.exists(v => v.trim.equalsIgnoreCase("yes") || v.trim.equalsIgnoreCase("y"))
   def yesNo(s: Option[String]): Option[String] = nonBlank(s).map { v =>

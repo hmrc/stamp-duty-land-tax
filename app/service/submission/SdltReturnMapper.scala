@@ -422,11 +422,15 @@ object SdltReturnMapper:
   
   private def triggered(fr: FullReturn): Boolean =
     val tx = fr.transaction.getOrElse(emptyTransaction)
+    val p  = fr.purchaser.flatMap(_.headOption).getOrElse(emptyPurchaser)
+    val cd = fr.companyDetails.getOrElse(emptyCompanyDetails)
+    val l  = fr.lease.isDefined
     isYes(tx.postTransRulingApplied) ||
       isYes(tx.agreedToDeferPayment) ||
       isYes(tx.isDependantOnFutureEvent) ||
       Seq(tx.usedAsFactory, tx.usedAsHotel, tx.usedAsIndustrial, tx.usedAsOffice,
-        tx.usedAsOther, tx.usedAsShop, tx.usedAsWarehouse).exists(isYes)
+        tx.usedAsOther, tx.usedAsShop, tx.usedAsWarehouse).exists(isYes) ||
+      (l && anyNonBlank(Seq(cd.VATReference, cd.UTR, p.registrationNumber, p.placeOfRegistration)))
   
   private def additionalTransactionDetailsFull(fr: FullReturn): Elem =
     val tx = fr.transaction.getOrElse(emptyTransaction)
@@ -577,7 +581,8 @@ object SdltReturnMapper:
   private def transactionDescription(fr: FullReturn): String =
     fr.transaction.flatMap(_.transactionDescription).map(_.trim.toUpperCase).getOrElse("F")
 
-  private def emptyTransaction: Transaction = Transaction()
-  private def emptyLand: Land               = Land()
-  private def emptyVendor: Vendor           = Vendor()
-  private def emptyPurchaser: Purchaser     = Purchaser()
+  private def emptyTransaction: Transaction       = Transaction()
+  private def emptyLand: Land                     = Land()
+  private def emptyVendor: Vendor                 = Vendor()
+  private def emptyPurchaser: Purchaser           = Purchaser()
+  private def emptyCompanyDetails: CompanyDetails = CompanyDetails()
