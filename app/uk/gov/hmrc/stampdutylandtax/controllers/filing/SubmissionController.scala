@@ -42,6 +42,8 @@ class SubmissionController @Inject() (
   extends BackendController(cc)
     with Logging:
 
+  private val chrisPeriodEnd = LocalDate.of(2004, 3, 1)
+
   def submit(): Action[AnyContent] = identify.async { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
@@ -65,7 +67,7 @@ class SubmissionController @Inject() (
   private def runSubmission(fullReturn: FullReturn, email: Option[String], credentialId: String, affinityGroup: AffinityGroup)(implicit hc: HeaderCarrier): Future[Result] =
     val returnId  = fullReturn.returnResourceRef.getOrElse("")
     val sender    = resolveSenderType(affinityGroup)
-    val periodEnd = resolvePeriodEnd(fullReturn)
+    val periodEnd = chrisPeriodEnd
 
     logger.info(s"[SubmissionController] runSubmission START returnId=$returnId sender=$sender periodEnd=$periodEnd affinityGroup=$affinityGroup hasCredential=${credentialId.nonEmpty}")
 
@@ -119,8 +121,5 @@ class SubmissionController @Inject() (
 
   private def resolveSenderType(affinityGroup: AffinityGroup): SenderType =
     affinityGroup match
-      case AffinityGroup.Organisation => SenderType.Company
-      case AffinityGroup.Agent        => SenderType.Agent
-      case AffinityGroup.Individual   => SenderType.Individual
-
-  private def resolvePeriodEnd(fullReturn: FullReturn): LocalDate = LocalDate.now()
+      case AffinityGroup.Agent => SenderType.Agent
+      case _                   => SenderType.Other

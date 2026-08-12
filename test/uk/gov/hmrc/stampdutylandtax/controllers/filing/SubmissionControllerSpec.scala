@@ -18,11 +18,16 @@ package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import base.SpecBase
 import models.filing.*
-import org.mockito.ArgumentMatchers.any
+import models.auth.IdentifierRequest
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
 import play.api.http.Status.{ACCEPTED, BAD_GATEWAY, BAD_REQUEST, CONFLICT, INTERNAL_SERVER_ERROR, OK, SERVICE_UNAVAILABLE}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{AnyContentAsEmpty, AnyContentAsJson, Result}
+import play.api.mvc.{AnyContent, AnyContentAsEmpty, AnyContentAsJson, BodyParser, Request, Result}
+import uk.gov.hmrc.auth.core.AffinityGroup
+import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+
+import java.time.LocalDate
 import play.api.test.Helpers.{contentAsJson, status}
 import service.submission.*
 import uk.gov.hmrc.http.HeaderCarrier
@@ -182,6 +187,24 @@ class SubmissionControllerSpec extends SpecBase {
         status(result) mustBe INTERNAL_SERVER_ERROR
         (contentAsJson(result) \ "error").as[String] mustBe "Could not acquire submission lock; please retry"
       }
+
+      "send Other as the sender and 2004-03-01 as the period end to the service" in new BaseSetup {
+        onOutcome(UniversalStatus.SUBMITTED, Some(utrn))
+
+        val result: Future[Result] = controller.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
+
+        status(result) mustBe OK
+        verify(mockSubmissionService).submit(any, eqTo(SenderType.Other), eqTo(LocalDate.of(2004, 3, 1)), any, any)(any[HeaderCarrier])
+      }
+
+      "send Agent as the sender to the service when the filer is an agent" in new BaseSetup {
+        onOutcome(UniversalStatus.SUBMITTED, Some(utrn))
+
+        val result: Future[Result] = agentController.submit()(fakeRequest.withBody(AnyContentAsJson(validBody)))
+
+        status(result) mustBe OK
+        verify(mockSubmissionService).submit(any, eqTo(SenderType.Agent), any, any, any)(any[HeaderCarrier])
+      }
     }
   }
 
@@ -190,6 +213,14 @@ class SubmissionControllerSpec extends SpecBase {
     implicit val ec: ExecutionContext = cc.executionContext
     implicit val hc: HeaderCarrier = HeaderCarrier()
     val controller = new SubmissionController(mockSubmissionService, fakeIdentifierAction, cc)
+
+    val agentIdentifierAction: IdentifierAction = new IdentifierAction {
+      override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] =
+        block(IdentifierRequest(request, "test-credential-id", AffinityGroup.Agent))
+      override def parser: BodyParser[AnyContent] = fakeIdentifierAction.parser
+      override protected def executionContext: ExecutionContext = ec
+    }
+    val agentController = new SubmissionController(mockSubmissionService, agentIdentifierAction, cc)
 
     val utrn     = "123456789MA"
     val corrId   = "CORR-1"
