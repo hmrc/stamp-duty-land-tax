@@ -327,6 +327,48 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     }
   }
 
+  "Mapper on a freehold where the company VAT reference is the only SDLT4 answer" should {
+
+    val sdlt = SdltReturnMapper.toSdltElement(sdlt4FreeholdCompanyReturn())
+
+    "set SDLT4Count = 1 for a non-leased return" in {
+      (sdlt \\ "SDLT4Count").text.trim shouldBe "1"
+    }
+
+    "emit PurchaserVATreferenceNumber with the GB prefix stripped" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserVATreferenceNumber").text.trim shouldBe "123456789"
+    }
+
+    "validate against the SDLT/6 schema" in {
+      assertValid(sdlt, "sdlt-freehold-company-triggered.xml")
+    }
+  }
+
+  "Mapper on a leasehold where a company type description is the only SDLT4 answer" should {
+
+    val sdlt = SdltReturnMapper.toSdltElement(sdlt4LeaseholdCompanyTypeOnlyReturn())
+
+    "set SDLT4Count = 1" in {
+      (sdlt \\ "SDLT4Count").text.trim shouldBe "1"
+    }
+
+    "emit PurchaserDescription with the relevant code" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserDescription").text.trim should include("04")
+    }
+
+    "not emit PurchaserVATreferenceNumber or PurchaserCompanyDetails" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserVATreferenceNumber").size shouldBe 0
+      (atd \ "PurchaserCompanyDetails").size shouldBe 0
+    }
+
+    "validate against the SDLT/6 schema" in {
+      assertValid(sdlt, "sdlt-lease-company-type-triggered.xml")
+    }
+  }
+
   "Mapper on a lease with an INDIVIDUAL purchaser (NINO + DOB + 2 lands, no triggers)" should {
 
     val sdlt = SdltReturnMapper.toSdltElement(individualPurchaserLease())

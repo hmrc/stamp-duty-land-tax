@@ -164,6 +164,16 @@ object SdltReturnFixtures:
       ))
     )
 
+  def sdlt4FreeholdCompanyReturn(): FullReturn =
+    freeholdReturn(vendors = 1, purchasers = 1, lands = 1).copy(
+      companyDetails = Some(CompanyDetails(VATReference = Some("GB123456789")))
+    )
+
+  def sdlt4LeaseholdCompanyTypeOnlyReturn(): FullReturn =
+    leaseReturn(vendors = 1, purchasers = 1, lands = 1).copy(
+      companyDetails = Some(CompanyDetails(companyTypePartnership = Some("YES")))
+    )
+
   def richFreeholdReturn(): FullReturn =
     val tx = baselineFreeholdTransaction.copy(
       restrictionsAffectInterest = Some("YES"),
