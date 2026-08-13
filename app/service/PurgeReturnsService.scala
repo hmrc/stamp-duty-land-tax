@@ -41,8 +41,7 @@ class PurgeReturnsService @Inject() (
 
   val jobName: String = "PurgeReturnsJob"
 
-  private implicit val hc: HeaderCarrier =
-    HeaderCarrier(extraHeaders = Seq("X-API-Key" -> servicesConfig.getString("internal-service-api-key")))
+  private implicit val hc: HeaderCarrier = HeaderCarrier()
 
   lazy val mongoLockTimeoutDuration: duration.Duration =
     duration.Duration(servicesConfig.getString(s"schedules.${MongoLockKeys.purgeReturnsLock}.mongoLockTimeout"))
