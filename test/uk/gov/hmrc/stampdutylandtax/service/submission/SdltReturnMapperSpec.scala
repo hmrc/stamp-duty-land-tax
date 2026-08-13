@@ -154,7 +154,7 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-rich.xml") }
   }
 
-  "Mapper on a non-leased return that triggers SDLT4" should {
+  "Mapper on a non-leased return that triggers SDLT4 due to transaction answers" should {
 
     val sdlt = SdltReturnMapper.toSdltElement(sdlt4FreeholdReturn(vendors = 1, purchasers = 1, lands = 1))
 
@@ -206,6 +206,42 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     }
 
     "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-sdlt4.xml") }
+  }
+
+  "Mapper on a non-leased return that triggers SDLT4 due to company details/purchaser answers" should {
+
+    val sdlt = SdltReturnMapper.toSdltElement(sdlt4FreeholdReturnWithCompanyDetails())
+
+    "set SDLT4Count = 1 when sdlt4-warranting flags are set on a non-leased return" in {
+      (sdlt \\ "SDLT2Count").text.trim shouldBe "0"
+      (sdlt \\ "SDLT3Count").text.trim shouldBe "0"
+      (sdlt \\ "SDLT4Count").text.trim shouldBe "1"
+    }
+
+    "emit PurchaserVATreferenceNumber as the 9-digit body (GB prefix stripped to satisfy the 9-char schema limit)" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserVATreferenceNumber").text.trim shouldBe "123456789"
+    }
+
+    "populate PurchaserCompanyDetails with TaxReferenceNumber and PlaceOfRegistration" in {
+      val pcd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "PurchaserCompanyDetails"
+      pcd.size shouldBe 1
+      (pcd \ "TaxReferenceNumber").text.trim shouldBe "1234567890"
+      (pcd \ "PlaceOfRegistration").text.trim shouldBe "England and Wales"
+    }
+
+    "emit PurchaserDescription with relevant codes" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserDescription").size shouldBe 4
+      (atd \ "PurchaserDescription").text.trim should include("01")
+      (atd \ "PurchaserDescription").text.trim should include("05")
+      (atd \ "PurchaserDescription").text.trim should include("08")
+      (atd \ "PurchaserDescription").text.trim should include("12")
+    }
+
+    "validate against the SDLT/6 schema" in {
+      assertValid(sdlt, "sdlt-sdlt4.xml")
+    }
   }
 
   "Mapper on a triggered lease with 3 lands" should {
