@@ -140,6 +140,31 @@ object SdltReturnFixtures:
     )
     freeholdReturn(vendors, purchasers, lands).copy(transaction = Some(sdlt4Tx))
 
+  def sdlt4FreeholdReturnWithCompanyDetails(): FullReturn =
+    val purchaser = buildPurchaser(1, true).copy(
+      registrationNumber = Some("123456789"),
+      placeOfRegistration = Some("England and Wales")
+    )
+
+    FullReturn(
+      stornId = Some("1142344344"),
+      returnResourceRef = Some("R1"),
+      returnInfo = Some(ReturnInfo(returnID = Some("R1"))),
+      transaction = Some(baselineFreeholdTransaction),
+      taxCalculation = Some(baselineTaxCalculation),
+      purchaser = Some(Seq(purchaser)),
+      vendor = Some(Seq(buildVendor(1, withForenames = true))),
+      land = Some(Seq(buildLand(1))),
+      companyDetails = Some(CompanyDetails(
+        UTR = Some("1234567890"),
+        VATReference = Some("GB123456789"),
+        companyTypeBuilder = Some("YES"),
+        companyTypeLocalauth = Some("YES"),
+        companyTypeProperty = Some("YES"),
+        companyTypePensionfund = Some("YES"),
+      ))
+    )
+  
   def sdlt4LeaseholdReturn(): FullReturn =
     val purchaser = buildPurchaser(1, true).copy(
       registrationNumber = Some("123456789"),
