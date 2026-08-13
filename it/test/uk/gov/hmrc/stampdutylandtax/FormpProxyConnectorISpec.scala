@@ -576,20 +576,18 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     val formpUrl = "/formp-proxy/returns-for-purge"
     val request  = GetReturnsForPurgeRequest(LocalDate.parse("2026-07-06"))
 
-    "send the X-API-Key header from the HeaderCarrier and return the returns due for purge" in {
-      val hcWithApiKey: HeaderCarrier = HeaderCarrier(extraHeaders = Seq("X-API-Key" -> "local-test-api-key"))
-
+    "return the returns due for purge" in {
       stubFor(
         post(urlPathEqualTo(formpUrl))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "returnsForPurge": [] }"""))
       )
 
-      connectorWithFormP.getReturnsForPurge(request)(hcWithApiKey).futureValue mustBe ReturnsForPurgeResponse(Nil)
+      connectorWithFormP.getReturnsForPurge(request).futureValue mustBe ReturnsForPurgeResponse(Nil)
 
-      verify(postRequestedFor(urlPathEqualTo(formpUrl)).withHeader("X-API-Key", equalTo("local-test-api-key")))
+      verify(postRequestedFor(urlPathEqualTo(formpUrl)))
     }
 
-    "fail with a 401 error when formp-proxy rejects the X-API-Key" in {
+    "fail with a 401 error when formp-proxy rejects the request" in {
       stubFor(
         post(urlPathEqualTo(formpUrl))
           .willReturn(aResponse().withStatus(UNAUTHORIZED))
@@ -607,20 +605,18 @@ class FormpProxyConnectorISpec extends AnyWordSpec
     val formpUrl = "/formp-proxy/delete/return"
     val request  = DeleteReturnRequest(storn = "STN001", returnResourceRef = "9000001")
 
-    "send the X-API-Key header from the HeaderCarrier and return the delete response" in {
-      val hcWithApiKey: HeaderCarrier = HeaderCarrier(extraHeaders = Seq("X-API-Key" -> "local-test-api-key"))
-
+    "return the delete response" in {
       stubFor(
         post(urlPathEqualTo(formpUrl))
           .willReturn(aResponse().withStatus(OK).withBody("""{ "deleted": true }"""))
       )
 
-      connectorWithFormP.deleteReturn(request)(hcWithApiKey).futureValue mustBe DeleteReturnResponse(deleted = true)
+      connectorWithFormP.deleteReturn(request).futureValue mustBe DeleteReturnResponse(deleted = true)
 
-      verify(postRequestedFor(urlPathEqualTo(formpUrl)).withHeader("X-API-Key", equalTo("local-test-api-key")))
+      verify(postRequestedFor(urlPathEqualTo(formpUrl)))
     }
 
-    "fail with a 401 error when formp-proxy rejects the X-API-Key" in {
+    "fail with a 401 error when formp-proxy rejects the request" in {
       stubFor(
         post(urlPathEqualTo(formpUrl))
           .willReturn(aResponse().withStatus(UNAUTHORIZED))

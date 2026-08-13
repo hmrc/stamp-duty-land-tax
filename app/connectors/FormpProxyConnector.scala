@@ -117,9 +117,6 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       .withBody(Json.toJson(request))
       .execute[ReturnsForPurgeResponse]
       .recover {
-        case e: UpstreamErrorResponse if e.statusCode == 401 =>
-          logger.error(s"[FormpProxyConnector][getReturnsForPurge]: 401 Unauthorized from formp-proxy, the X-API-Key was rejected, check internal-service-api-key matches in both services")
-          throw new RuntimeException(e.getMessage)
         case e: UpstreamErrorResponse =>
           logger.error(s"[FormpProxyConnector][getReturnsForPurge]: Upstream error ${e.statusCode} - ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
@@ -134,9 +131,6 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
       .withBody(Json.toJson(request))
       .execute[DeleteReturnResponse]
       .recover {
-        case e: UpstreamErrorResponse if e.statusCode == 401 =>
-          logger.error(s"[FormpProxyConnector][deleteReturn]: 401 Unauthorized from formp-proxy, the X-API-Key was rejected, check internal-service-api-key matches in both services")
-          throw new RuntimeException(e.getMessage)
         case e: UpstreamErrorResponse =>
           logger.error(s"[FormpProxyConnector][deleteReturn]: Upstream error ${e.statusCode} - ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
