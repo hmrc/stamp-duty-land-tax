@@ -210,7 +210,7 @@ object SdltReturnMapper:
       {nonBlank(land.NLPGUPRN).map(n => <NLPGUPRN>{n}</NLPGUPRN>: NodeSeq).getOrElse(NodeSeq.Empty)}
       {landArea(land)}
       <PlanSubmitted>{yesNo(land.willSendPlanByPost).getOrElse("no")}</PlanSubmitted>
-      <InterestTransfered>{land.interestCreatedTransferred.getOrElse("OT")}</InterestTransfered>
+      <InterestTransfered>{land.interestCreatedTransferred.map(_.trim.take(2)).getOrElse("OT")}</InterestTransfered>
     </Property>
 
   private def additionalProperty(land: Land): NodeSeq =
@@ -222,7 +222,7 @@ object SdltReturnMapper:
       {longAddressOfLand(land)}
       {landArea(land)}
       <PlanSubmitted>{yesNo(land.willSendPlanByPost).getOrElse("no")}</PlanSubmitted>
-      <InterestTransfered>{land.interestCreatedTransferred.getOrElse("OT")}</InterestTransfered>
+      <InterestTransfered>{land.interestCreatedTransferred.map(_.trim.take(2)).getOrElse("OT")}</InterestTransfered>
       {yesNo(land.mineralRights).map(v => <MineralRights>{v}</MineralRights>: NodeSeq).getOrElse(NodeSeq.Empty)}
     </AdditionalProperty>
 
@@ -557,7 +557,7 @@ object SdltReturnMapper:
       {nonBlank(land.NLPGUPRN).map(n => <NLPGUPRN>{n}</NLPGUPRN>: NodeSeq).getOrElse(NodeSeq.Empty)}
       {landArea(land)}
       {yesNo(land.willSendPlanByPost).map(v => <PlanSubmitted>{v}</PlanSubmitted>: NodeSeq).getOrElse(NodeSeq.Empty)}
-      {nonBlank(land.interestCreatedTransferred).map(i => <InterestTransfered>{i}</InterestTransfered>: NodeSeq).getOrElse(NodeSeq.Empty)}
+      {nonBlank(land.interestCreatedTransferred).map(i => <InterestTransfered>{i.trim.take(2)}</InterestTransfered>: NodeSeq).getOrElse(NodeSeq.Empty)}
     </Property>
   
   private def aboutTheLeaseDetails(fr: FullReturn): NodeSeq =

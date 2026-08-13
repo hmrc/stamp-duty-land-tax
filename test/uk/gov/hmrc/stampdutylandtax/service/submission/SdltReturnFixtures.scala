@@ -58,7 +58,7 @@ object SdltReturnFixtures:
       postcode            = Some("SE1 0NZ")
     )
 
-  def buildLand(i: Int, propertyType: String = "02", interest: String = "FG"): Land =
+  def buildLand(i: Int, propertyType: String = "02", interest: String = "FGS"): Land =
     Land(
       landID                     = Some(s"L$i"),
       propertyType               = Some(propertyType),
