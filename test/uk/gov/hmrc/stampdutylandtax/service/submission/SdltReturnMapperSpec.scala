@@ -271,14 +271,13 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (atd1 \ "PurchaserCompanyDetails") shouldBe empty
     }
 
-    "carry the STRIPPED AdditionalTransactionDetails on SDLT4 #2: trigger fields + MineralRights but no TotalConsideration / PurchaserCompanyDetails" in {
+    "carry the STRIPPED AdditionalTransactionDetails on SDLT4 #2: trigger fields but no TotalConsideration / PurchaserCompanyDetails" in {
       val atd2 = (sdlt \\ "SDLT4")(1) \ "AdditionalTransactionDetails"
 
       (atd2 \ "PostTransactionRuling").text.trim                shouldBe "yes"
       (atd2 \ "PostTransactionRulingFollowed").text.trim        shouldBe "yes"
       (atd2 \ "ConsiderationDependentOnFutureEvents").text.trim shouldBe "yes"
       (atd2 \ "DeferredPayment").text.trim                      shouldBe "yes"
-      (atd2 \ "MineralRights").text.trim shouldBe "no"
       (atd2 \ "TotalConsideration")     shouldBe empty
       (atd2 \ "PropertyUse")            shouldBe empty
       (atd2 \ "PurchaserCompanyDetails") shouldBe empty
@@ -682,6 +681,56 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
         considerationBuild = Some("YES")
       ))
       assertValid(sdlt, "sdlt-consideration-formcodes.xml")
+    }
+  }
+
+  "Mapper MineralRights mapping" should {
+
+    "omit MineralRights from every SDLT4 when the answer is no" in {
+      val sdlt = SdltReturnMapper.toSdltElement(leaseReturnTriggered())
+      (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "MineralRights") shouldBe empty
+    }
+
+    "emit MineralRights on every additional land SDLT4 when the answer is yes" in {
+      val lease = leaseReturnTriggered()
+      val sdlt  = SdltReturnMapper.toSdltElement(
+        lease.copy(land = lease.land.map(_.map(_.copy(mineralRights = Some("yes")))))
+      )
+      (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "MineralRights").map(_.text.trim) shouldBe Seq("yes", "yes")
+    }
+
+    "emit MineralRights for the first additional land of a two land lease" in {
+      val lease = leaseReturn(vendors = 1, purchasers = 1, lands = 2)
+      val sdlt  = SdltReturnMapper.toSdltElement(
+        lease.copy(land = lease.land.map(_.map(_.copy(mineralRights = Some("yes")))))
+      )
+      (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "MineralRights").map(_.text.trim) shouldBe Seq("yes")
+    }
+
+    "omit MineralRights when the SDLT4 has no additional land" in {
+      val freehold = companyPurchaserFreehold()
+      val sdlt     = SdltReturnMapper.toSdltElement(
+        freehold.copy(land = freehold.land.map(_.map(_.copy(mineralRights = Some("yes")))))
+      )
+      (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "MineralRights") shouldBe empty
+    }
+
+    "never emit MineralRights under AdditionalProperty" in {
+      val freehold = freeholdReturn(1, 1, 2)
+      val sdlt     = SdltReturnMapper.toSdltElement(
+        freehold.copy(land = freehold.land.map(_.map(_.copy(mineralRights = Some("yes")))))
+      )
+      (sdlt \\ "LandDetail" \ "AdditionalProperty" \ "MineralRights") shouldBe empty
+    }
+
+    "throw when MineralRights is neither yes nor no" in {
+      val lease = leaseReturnTriggered()
+      val ex = intercept[IllegalArgumentException] {
+        SdltReturnMapper.toSdltElement(
+          lease.copy(land = lease.land.map(_.map(_.copy(mineralRights = Some("02")))))
+        )
+      }
+      ex.getMessage should include("Unknown MineralRights '02'")
     }
   }
 

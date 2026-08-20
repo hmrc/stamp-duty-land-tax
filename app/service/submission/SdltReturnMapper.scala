@@ -223,7 +223,6 @@ object SdltReturnMapper:
       {landArea(land)}
       <PlanSubmitted>{yesNo(land.willSendPlanByPost).getOrElse("no")}</PlanSubmitted>
       <InterestTransfered>{land.interestCreatedTransferred.map(_.trim.take(2)).getOrElse("OT")}</InterestTransfered>
-      {yesNo(land.mineralRights).map(v => <MineralRights>{v}</MineralRights>: NodeSeq).getOrElse(NodeSeq.Empty)}
     </AdditionalProperty>
 
   private def addressOfLand(land: Land): Elem =
@@ -397,14 +396,14 @@ object SdltReturnMapper:
       val additionalLands = fr.land.getOrElse(Nil).drop(1)
       if additionalLands.isEmpty then
         if triggered(fr) then
-          <SDLT4>{additionalTransactionDetailsFull(fr)}</SDLT4>
+          <SDLT4>{additionalTransactionDetailsFull(fr, None)}</SDLT4>
         else NodeSeq.Empty
       else
         val firstAdd = additionalLands.head
         val tail     = additionalLands.tail
         val firstBlock: NodeSeq =
           <SDLT4>
-            {additionalTransactionDetailsFull(fr)}
+            {additionalTransactionDetailsFull(fr, Some(firstAdd))}
             {aboutTheLease(fr, firstAdd)}
           </SDLT4>
         val tailBlocks: NodeSeq =
@@ -416,7 +415,7 @@ object SdltReturnMapper:
           )
         firstBlock ++ tailBlocks
     else if triggered(fr) then
-      <SDLT4>{additionalTransactionDetailsFull(fr)}</SDLT4>
+      <SDLT4>{additionalTransactionDetailsFull(fr, None)}</SDLT4>
     else
       NodeSeq.Empty
   
@@ -431,12 +430,13 @@ object SdltReturnMapper:
         tx.usedAsOther, tx.usedAsShop, tx.usedAsWarehouse).exists(isYes) ||
       anyNonBlank(Seq(cd.VATReference, cd.UTR, p.registrationNumber, p.placeOfRegistration))
   
-  private def additionalTransactionDetailsFull(fr: FullReturn): Elem =
+  private def additionalTransactionDetailsFull(fr: FullReturn, land: Option[Land]): Elem =
     val tx = fr.transaction.getOrElse(emptyTransaction)
     <AdditionalTransactionDetails>
       {totalConsiderationWithFlags(tx)}
       {propertyUse(tx)}
       {triggerFields(tx)}
+      {land.map(mineralRights).getOrElse(NodeSeq.Empty)}
       {purchaserVatReferenceNumber(fr)}
       {purchaserCompanyDetails(fr)}
       {purchaserDescriptions(fr)}
@@ -446,8 +446,16 @@ object SdltReturnMapper:
     val tx = fr.transaction.getOrElse(emptyTransaction)
     <AdditionalTransactionDetails>
       {triggerFields(tx)}
-      {yesNo(land.mineralRights).map(v => <MineralRights>{v}</MineralRights>: NodeSeq).getOrElse(NodeSeq.Empty)}
+      {mineralRights(land)}
     </AdditionalTransactionDetails>
+
+  private def mineralRights(land: Land): NodeSeq =
+    nonBlank(land.mineralRights) match
+      case None                                 => NodeSeq.Empty
+      case Some(v) if v.equalsIgnoreCase("yes") => <MineralRights>yes</MineralRights>
+      case Some(v) if v.equalsIgnoreCase("no")  => NodeSeq.Empty
+      case Some(other)                          =>
+        throw new IllegalArgumentException(s"Unknown MineralRights '$other'; expected yes or no")
 
   private def triggerFields(tx: Transaction): NodeSeq =
     nonBlank(tx.postTransRulingApplied).flatMap(s => yesNo(Option(s))).map(v => <PostTransactionRuling>{v}</PostTransactionRuling>: NodeSeq).getOrElse(NodeSeq.Empty) ++
