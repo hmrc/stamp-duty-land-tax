@@ -609,3 +609,38 @@ class ChrisConnectorISpec
       wireMockServer.verify(postRequestedFor(urlEqualTo(overridePath)))
     }
   }
+
+  "ChrisConnector endpoint resolution" should {
+
+    "rewrite a ChRIS supplied endpoint onto the configured host, keeping its path" in {
+      val chrisSuppliedPath = "/ChRIS/SDLT/Filing/action/SDLT"
+      wireMockServer.stubFor(
+        post(urlEqualTo(chrisSuppliedPath))
+          .willReturn(aResponse().withStatus(200).withBody(ackBody()))
+      )
+
+      connector.poll(Some(s"http://sa.chris.hmrc.gov.uk:9102$chrisSuppliedPath"), corrId).futureValue
+
+      wireMockServer.verify(postRequestedFor(urlEqualTo(chrisSuppliedPath)))
+    }
+
+    "leave an endpoint that already points at the configured host untouched" in {
+      val ownPath = "/ChRIS/SDLT/Filing/action/OWN"
+      wireMockServer.stubFor(
+        post(urlEqualTo(ownPath))
+          .willReturn(aResponse().withStatus(200).withBody(ackBody()))
+      )
+
+      connector.poll(Some(s"http://localhost:$wireMockPort$ownPath"), corrId).futureValue
+
+      wireMockServer.verify(postRequestedFor(urlEqualTo(ownPath)))
+    }
+
+    "fall back to the configured submit path when the supplied endpoint carries no path" in {
+      stubChris(200, ackBody())
+
+      connector.poll(Some("http://sa.chris.hmrc.gov.uk:9102"), corrId).futureValue
+
+      wireMockServer.verify(postRequestedFor(urlEqualTo(submitPath)))
+    }
+  }
