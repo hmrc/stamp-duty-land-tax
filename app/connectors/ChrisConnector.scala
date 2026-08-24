@@ -26,6 +26,7 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import scala.concurrent.duration.*
 import scala.concurrent.{ExecutionContext, Future}
+import java.net.URI
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import scala.util.Try
@@ -52,6 +53,16 @@ class ChrisConnector @Inject() (
 
   private val RetryableHttpStatuses: Set[Int] = Set(408, 429, 500, 502, 503, 504)
 
+  private def resolveTarget(endpoint: Option[String]): String =
+    endpoint.map(_.trim).filter(_.nonEmpty) match
+      case None => defaultPath
+      case Some(url) if url.startsWith(chrisUrl) => url
+      case Some(url) =>
+        Try(URI.create(url).getPath).toOption.filter(_.nonEmpty).map(chrisUrl + _).getOrElse {
+          logger.warn(s"[ChrisConnector] no usable path in ChRIS endpoint $url, using $defaultPath")
+          defaultPath
+        }
+
   private def withResourceRefKey(envelope: Elem, ref: String): Elem =
     val key = <Key Type="ReturnResourceRef">
       {ref}
@@ -64,7 +75,7 @@ class ChrisConnector @Inject() (
 
   def submit(envelope: scala.xml.Elem, endpoint: Option[String], correlationId: String,
              returnResourceRef: Option[String] = None)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
-    val target = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
+    val target = resolveTarget(endpoint)
     val toSend =
       if stubMode then returnResourceRef.map(_.trim).filter(_.nonEmpty).map(withResourceRefKey(envelope, _)).getOrElse(envelope)
       else envelope
@@ -103,7 +114,7 @@ class ChrisConnector @Inject() (
       }
 
   def poll(endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
-    val target    = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
+    val target    = resolveTarget(endpoint)
     val xmlString = XmlDecl + "\n" + pollEnvelope(correlationId).toString()
     logger.debug(s"[ChrisConnector] POLL target=$target corrId=$correlationId")
     httpClient
@@ -157,7 +168,7 @@ class ChrisConnector @Inject() (
     </GovTalkMessage>
 
   def delete(endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisDeleteResponse] =
-    val target    = endpoint.filter(_.nonEmpty).getOrElse(defaultPath)
+    val target    = resolveTarget(endpoint)
     val xmlString = XmlDecl + "\n" + deleteEnvelope(correlationId).toString()
     logger.debug(s"[ChrisConnector] DELETE target=$target corrId=$correlationId")
     httpClient
