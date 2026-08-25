@@ -69,7 +69,14 @@ final case class GovTalkError(
 
   def isDepartmental: Boolean = classification == "departmentalError"
 
+  def isTimeOut: Boolean = errorType.equalsIgnoreCase("timeOut")
+
+  def isRecoverable: Boolean =
+    number.exists(GovTalkError.RecoverableCodes.contains) || (isTimeOut && number.contains("2005"))
+
 object GovTalkError:
+  val RecoverableCodes: Set[String] = Set("1000", "3000")
+
   given Format[GovTalkError] = Json.format[GovTalkError]
 
 sealed trait ChrisResponse:
@@ -254,8 +261,6 @@ object UniversalStatus:
       case "FATAL_ERROR"          => Right(UniversalStatus.FATAL_ERROR)
       case status                 => Left(s"Unable to convert status: $status")
 
-  private val ResetToStartedNumbers: Set[String] = Set("1000", "2005", "3000")
-
   def fromChrisResponse(resp: ChrisResponse, expectedIrMark: Option[String]): UniversalStatus =
     resp match
       case c: ChrisResponse.Completed =>
@@ -283,7 +288,7 @@ object UniversalStatus:
     errors.exists(_.isDepartmental)
 
   def resetsToStarted(errors: Seq[GovTalkError]): Boolean =
-    errors.exists(_.number.exists(ResetToStartedNumbers.contains))
+    errors.exists(_.isRecoverable)
 
   private def isTimeout(message: String): Boolean =
     val m = message.toLowerCase

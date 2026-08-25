@@ -410,16 +410,37 @@ class ChrisResponseModelsSpec extends AnyWordSpec with Matchers {
       govTalkError(raisedBy = "Gateway", number = Some("9999"), errorType = "fatal").classification mustBe "systemError"
     }
 
-    "map a resettable error number (1000, 2005, 3000) to STARTED" in {
-      Seq("1000", "2005", "3000").foreach { n =>
+    "map a resettable error number (1000, 3000) to STARTED" in {
+      Seq("1000", "3000").foreach { n =>
         val resp = ChrisResponse.Errored(Seq(govTalkError(number = Some(n), errorType = "fatal", raisedBy = "Gateway")), None, Some("url"), "<x/>")
         UniversalStatus.fromChrisResponse(resp, None) mustBe UniversalStatus.STARTED
       }
     }
 
-    "map a ChRIS 2005 to STARTED even though the wire type is fatal" in {
+    "map a ChRIS 2005 to FATAL_ERROR when the wire type is not a timeout" in {
       val fromChris = ChrisResponse.Errored(Seq(govTalkError(number = Some("2005"), errorType = "fatal", raisedBy = "Gateway")), None, Some("url"), "<x/>")
-      UniversalStatus.fromChrisResponse(fromChris, None) mustBe UniversalStatus.STARTED
+      UniversalStatus.fromChrisResponse(fromChris, None) mustBe UniversalStatus.FATAL_ERROR
+    }
+
+    "map a 2005 carrying the timeOut type to STARTED" in {
+      val timedOut = ChrisResponse.Errored(Seq(govTalkError(number = Some("2005"), errorType = "timeOut", raisedBy = "Gateway")), None, Some("url"), "<x/>")
+      UniversalStatus.fromChrisResponse(timedOut, None) mustBe UniversalStatus.STARTED
+    }
+
+    "not treat a departmental error as recoverable on its own" in {
+      govTalkError(number = Some("3001"), errorType = "business", raisedBy = "Department").isRecoverable mustBe false
+    }
+
+    "not treat a timeOut error as recoverable unless it also carries code 2005" in {
+      govTalkError(number = Some("9999"), errorType = "timeOut", raisedBy = "Gateway").isRecoverable mustBe false
+    }
+
+    "treat a timeOut error carrying code 2005 as recoverable" in {
+      govTalkError(number = Some("2005"), errorType = "timeOut", raisedBy = "Gateway").isRecoverable mustBe true
+    }
+
+    "not treat a plain gateway system error as recoverable" in {
+      govTalkError(number = Some("9999"), errorType = "fatal", raisedBy = "Gateway").isRecoverable mustBe false
     }
 
     "prefer DEPARTMENTAL_ERROR over STARTED when both a 3001 business and a resettable code are present" in {

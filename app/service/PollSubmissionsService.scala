@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import java.time.{Clock, LocalDateTime}
+import java.time.{Clock, LocalDateTime, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future, duration}
 import scala.util.Try
@@ -40,6 +40,8 @@ class PollSubmissionsService @Inject() (
 )(implicit ec: ExecutionContext)
     extends ScheduledService[Either[ScheduleStatus.JobFailed, List[String]]]
     with Logging {
+
+  private val ReportZone: ZoneId = ZoneId.of("Europe/London")
 
   val jobName: String = "PollSubmissionsJob"
 
@@ -87,7 +89,7 @@ class PollSubmissionsService @Inject() (
     } yield {
       val polled = outcomes.filter(_.polled)
       logger.info(s"[$jobName] polled: ${refList(polled.map(_.submission))}")
-      logger.info(BatchPollingReport.render(outcomes, LocalDateTime.now(clock)))
+      logger.info(BatchPollingReport.render(outcomes, LocalDateTime.now(clock.withZone(ReportZone))))
       polled.map(_.submission.returnResourceRef)
     }
   }
@@ -97,6 +99,13 @@ class PollSubmissionsService @Inject() (
 
   private def pollSequentially(selected: List[SubmissionForPolling]): Future[List[PollOutcome]] =
     selected.foldLeft(Future.successful(List.empty[PollOutcome])) { (acc, submission) =>
-      acc.flatMap(outcomes => submissionService.poll(submission).map(outcomes :+ _))
+      acc.flatMap { outcomes =>
+        submissionService.poll(submission)
+          .recover { case e =>
+            logger.warn(s"[$jobName] failed to poll ${submission.returnResourceRef}, continuing: ${e.getMessage}")
+            PollOutcome(submission, polled = false, pollResult = "NOT_POLLED", newReturnStatus = submission.submissionStatus, correlationId = "")
+          }
+          .map(outcomes :+ _)
+      }
     }
 }
