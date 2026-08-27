@@ -643,4 +643,12 @@ class ChrisConnectorISpec
 
       wireMockServer.verify(postRequestedFor(urlEqualTo(submitPath)))
     }
+
+    "fall back to the configured submit path when the configured host is supplied with no path" in {
+      stubChris(200, ackBody())
+
+      connector.poll(Some(s"http://localhost:$wireMockPort"), corrId).futureValue
+
+      wireMockServer.verify(postRequestedFor(urlEqualTo(submitPath)))
+    }
   }

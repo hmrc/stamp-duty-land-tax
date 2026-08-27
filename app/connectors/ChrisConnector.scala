@@ -56,7 +56,7 @@ class ChrisConnector @Inject() (
   private def resolveTarget(endpoint: Option[String]): String =
     endpoint.map(_.trim).filter(_.nonEmpty) match
       case None => defaultPath
-      case Some(url) if url.startsWith(chrisUrl) => url
+      case Some(url) if url.startsWith(defaultPath) => url
       case Some(url) =>
         Try(URI.create(url).getPath).toOption.filter(_.nonEmpty).map(chrisUrl + _).getOrElse {
           logger.warn(s"[ChrisConnector] no usable path in ChRIS endpoint $url, using $defaultPath")
