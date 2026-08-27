@@ -524,6 +524,16 @@ final class SubmissionServiceSpec extends SpecBase {
       verify(f.envelopeBuilder)
         .submissionRequest(any[Elem], eqTo(storn), eqTo(periodEnd), eqTo(sender), eqTo(cred), any[String])
     }
+
+    "must build the envelope with an upper case correlation id" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+      val captor = ArgumentCaptor.forClass(classOf[String])
+      verify(f.envelopeBuilder)
+        .submissionRequest(any[Elem], any[String], any[LocalDate], any[SenderType], any[String], captor.capture())
+      captor.getValue.matches("[0-9A-F]{32}") mustBe true
+    }
   }
 
   "SubmissionService.submit GovTalk lock gate" - {

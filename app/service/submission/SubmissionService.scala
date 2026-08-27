@@ -640,7 +640,7 @@ class SubmissionService @Inject() (
           s"stornId=${fullReturn.stornId}, returnResourceRef=${fullReturn.returnResourceRef}, " +
           s"version=${fullReturn.returnInfo.flatMap(_.version)}")
 
-  private def newCorrelationId(): String = UUID.randomUUID().toString.replace("-", "")
+  private def newCorrelationId(): String = UUID.randomUUID().toString.replace("-", "").toUpperCase
 
   private val FormpZone: ZoneId = ZoneId.of("Europe/London")
 
