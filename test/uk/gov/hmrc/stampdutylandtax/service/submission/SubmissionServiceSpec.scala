@@ -174,7 +174,7 @@ final class SubmissionServiceSpec extends SpecBase {
     val chrisService: ChrisService                  = mock[ChrisService]
     val emailService: EmailService                  = mock[EmailService]
     val filingConnector: FilingFormpProxyConnector  = mock[FilingFormpProxyConnector]
-    val clock: Clock                                = Clock.fixed(Instant.parse("2026-07-23T12:00:00Z"), ZoneOffset.UTC)
+    val clock: Clock                                = Clock.fixed(Instant.parse("2026-07-23T11:00:00Z"), ZoneOffset.UTC)
 
     val service = new SubmissionService(envelopeBuilder, validator, connector, audit, chrisService, emailService, filingConnector, clock)
 
@@ -606,14 +606,14 @@ final class SubmissionServiceSpec extends SpecBase {
       verify(f.chrisService).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
     }
 
-    "must neither set endState nor reset when the ChRIS delete is unsuccessful" in {
+    "must still set endState and reset when the ChRIS delete is unsuccessful" in {
       val f = new Fixtures
       f.onResponse(completed(Some(utrn), Some(sentMark)))
       when(f.connector.delete(any[Option[String]], any[String])(any[HeaderCarrier]))
         .thenReturn(Future.successful(ChrisDeleteResponse.TransportError("delete boom", "<x/>")))
       f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
-      verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
-      f.protocols mustNot contain("endState")
+      verify(f.chrisService).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
+      f.protocols must contain("endState")
     }
 
     "must update the GovTalk statistics" in {
@@ -829,6 +829,35 @@ final class SubmissionServiceSpec extends SpecBase {
       f.service.submit(existing, sender, periodEnd, cred).futureValue
 
       f.submissions.head.submissionRequestDate mustBe Some("2026-07-23 10:00:00.000")
+    }
+
+    "must write the submission request date in UK local time to match the database clock" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      f.submissions.flatMap(_.submissionRequestDate).headOption.value mustBe "2026-07-23 12:00:00.000"
+    }
+
+    "must write the submission request date in the SQL timestamp format the date binder expects" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      val written = f.submissions.flatMap(_.submissionRequestDate).headOption.value
+      written must fullyMatch regex """\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}"""
+    }
+
+    "must write the accepted date in the SQL timestamp format when ChRIS supplies no AcceptedTime" in {
+      val f = new Fixtures
+      f.onResponse(completed(Some(utrn), Some(sentMark)))
+
+      f.service.submit(aReturn(), sender, periodEnd, cred).futureValue
+
+      val written = f.submissions.flatMap(_.acceptedDate).headOption.value
+      written must fullyMatch regex """\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}"""
     }
 
     "must keep the email on the submission when a return is submitted again" in {
@@ -1360,9 +1389,9 @@ final class SubmissionServiceSpec extends SpecBase {
     }
   }
 
-  "SubmissionService.poll recording the attempt before it is sent" - {
+  "SubmissionService.poll recording the attempt on response" - {
 
-    "increments the number of polls before the poll is sent" in {
+    "increments the number of polls once the response is received" in {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(pollRow()))
@@ -1370,9 +1399,9 @@ final class SubmissionServiceSpec extends SpecBase {
 
       f.service.poll(pollSubmission).futureValue.polled mustBe true
 
-      val ordered = Mockito.inOrder(f.chrisService, f.connector)
-      ordered.verify(f.chrisService).updateGovTalkStatistics(any[UpdateGovTalkStatisticsRequest])(any[HeaderCarrier])
+      val ordered = Mockito.inOrder(f.connector, f.chrisService)
       ordered.verify(f.connector).poll(any[Option[String]], any[String])(any[HeaderCarrier])
+      ordered.verify(f.chrisService).updateGovTalkStatistics(any[UpdateGovTalkStatisticsRequest])(any[HeaderCarrier])
       f.statistics.head.numberOfPolls mustBe "3"
     }
   }
@@ -1421,7 +1450,7 @@ final class SubmissionServiceSpec extends SpecBase {
       f.statuses must contain("SUBMITTED_NO_RECEIPT")
     }
 
-    "leaves GovTalk at deleteRequest when the ChRIS delete fails after a successful poll" in {
+    "still reaches endState when the ChRIS delete fails after a successful poll" in {
       val f = new Fixtures
       when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
         .thenReturn(Future.successful(pollRow()))
@@ -1432,8 +1461,8 @@ final class SubmissionServiceSpec extends SpecBase {
       f.service.poll(pollSubmission).futureValue.polled mustBe true
 
       f.statuses must contain("SUBMITTED")
-      f.protocols mustBe Seq("deleteRequest")
-      verify(f.chrisService, never()).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
+      f.protocols mustBe Seq("deleteRequest", "endState")
+      verify(f.chrisService).resetGovTalkStatus(any[ResetGovTalkStatusRequest])(any[HeaderCarrier])
       verify(f.emailService).submitEmailConfirmation(any[FullReturn], any[String], any[Option[String]])(any[HeaderCarrier])
     }
 
@@ -1445,7 +1474,7 @@ final class SubmissionServiceSpec extends SpecBase {
       when(f.audit.auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier]))
         .thenReturn(Future.failed(new RuntimeException("datastream down")))
 
-      f.service.poll(pollSubmission).futureValue
+      f.service.poll(pollSubmission).futureValue.polled mustBe true
 
       f.submissions.flatMap(_.utrn)           must contain(utrn)
       f.submissions.flatMap(_.IRMarkRecieved) must contain(pollSentIrMark)
@@ -1495,6 +1524,45 @@ final class SubmissionServiceSpec extends SpecBase {
       val ordered = Mockito.inOrder(f.chrisService, f.connector)
       ordered.verify(f.chrisService).updateSubmission(any[UpdateSubmissionRequest])(any[HeaderCarrier])
       ordered.verify(f.connector).delete(any[Option[String]], any[String])(any[HeaderCarrier])
+    }
+
+    "writes the accepted date in the SQL timestamp format when a poll completes" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(pollRow()))
+      f.onPollResponse(pollCompleted(pollSentIrMark))
+
+      f.service.poll(pollSubmission).futureValue.polled mustBe true
+
+      val written = f.submissions.flatMap(_.acceptedDate).headOption.value
+      written must fullyMatch regex """\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}"""
+    }
+
+    "leaves a departmental error at DEPARTMENTAL_ERROR when it carries no recoverable code" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(pollRow()))
+      val departmental = GovTalkError(raisedBy = "Department", number = Some("3001"), errorType = "business", text = Some("BVR failure"), location = None)
+      f.onPollResponse(ChrisResponse.Errored(Seq(departmental), Some(pollCorrId), None, "<error/>"))
+
+      f.service.poll(pollSubmission).futureValue.polled mustBe true
+
+      f.statuses.head mustBe "DEPARTMENTAL_ERROR"
+      f.statuses.last mustBe "DEPARTMENTAL_ERROR"
+    }
+
+    "still reports the poll as complete when the CIP audit fails on an error response" in {
+      val f = new Fixtures
+      when(f.chrisService.selectGovTalkStatus(any[SelectGovTalkStatusRequest])(any[HeaderCarrier]))
+        .thenReturn(Future.successful(pollRow()))
+      val fatal = GovTalkError(raisedBy = "Gateway", number = Some("9999"), errorType = "fatal", text = Some("boom"), location = None)
+      f.onPollResponse(ChrisResponse.Errored(Seq(fatal), Some(pollCorrId), None, "<error/>"))
+      when(f.audit.auditSubmission(any[String], any[String], any[String], any[FullReturn], any[ChrisResponse])(any[HeaderCarrier]))
+        .thenReturn(Future.failed(new RuntimeException("datastream down")))
+
+      f.service.poll(pollSubmission).futureValue.polled mustBe true
+
+      f.statuses.last mustBe "FATAL_ERROR"
     }
 
     "marks the submission FATAL_ERROR and sends no delete on a fatal gateway error" in {

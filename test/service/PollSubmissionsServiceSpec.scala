@@ -95,6 +95,19 @@ class PollSubmissionsServiceSpec extends AnyFreeSpec with Matchers with ScalaFut
         captor.getValue mustBe submission
       }
 
+      "carries on with the rest of the batch when one submission throws" in new Setup {
+        val healthy = submissionFor("9200002", "9600002")
+        worklist(submission, healthy)
+        when(mockSubmissionService.poll(eqTo(submission))(any()))
+          .thenReturn(Future.failed(new RuntimeException("GovTalk status unreadable")))
+        when(mockSubmissionService.poll(eqTo(healthy))(any()))
+          .thenReturn(Future.successful(outcome(healthy, polled = true)))
+
+        service.invoke.futureValue mustBe Right(List("9200002"))
+
+        verify(mockSubmissionService).poll(eqTo(healthy))(any())
+      }
+
       "does not count a submission SubmissionService declined to poll" in new Setup {
         worklist(submission)
         when(mockSubmissionService.poll(any())(any())).thenReturn(Future.successful(outcome(submission, polled = false)))

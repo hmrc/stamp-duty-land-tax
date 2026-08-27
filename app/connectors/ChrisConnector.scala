@@ -116,7 +116,7 @@ class ChrisConnector @Inject() (
   def poll(endpoint: Option[String], correlationId: String)(implicit hc: HeaderCarrier): Future[ChrisResponse] =
     val target    = resolveTarget(endpoint)
     val xmlString = XmlDecl + "\n" + pollEnvelope(correlationId).toString()
-    logger.debug(s"[ChrisConnector] POLL target=$target corrId=$correlationId")
+    logger.info(s"[ChrisConnector] POLL target=$target timeoutSeconds=${requestTimeout.toSeconds} corrId=$correlationId")
     httpClient
       .post(url"$target")
       .setHeader(
