@@ -145,12 +145,19 @@ object SdltReturnFixtures:
       registrationNumber = Some("123456789"),
       placeOfRegistration = Some("England and Wales")
     )
+    
+    val tx = baselineFreeholdTransaction.copy(
+      postTransRulingApplied    = Some("NO"),
+      postTransRulingFollowed   = Some("NO"),
+      isDependantOnFutureEvent  = Some("NO"),
+      agreedToDeferPayment      = Some("NO"),
+    )
 
     FullReturn(
       stornId = Some("1142344344"),
       returnResourceRef = Some("R1"),
       returnInfo = Some(ReturnInfo(returnID = Some("R1"))),
-      transaction = Some(baselineFreeholdTransaction),
+      transaction = Some(tx),
       taxCalculation = Some(baselineTaxCalculation),
       purchaser = Some(Seq(purchaser)),
       vendor = Some(Seq(buildVendor(1, withForenames = true))),
