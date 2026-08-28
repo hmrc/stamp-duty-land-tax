@@ -239,6 +239,21 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (atd \ "PurchaserDescription").text.trim should include("12")
     }
 
+    "omit PostTransactionRuling when no" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PostTransactionRuling") shouldBe empty
+    }
+
+    "omit isDependantOnFutureEvent when no" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "isDependantOnFutureEvent") shouldBe empty
+    }
+
+    "omit agreedToDeferPayment when no" in {
+      val atd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "agreedToDeferPayment") shouldBe empty
+    }
+
     "validate against the SDLT/6 schema" in {
       assertValid(sdlt, "sdlt-sdlt4.xml")
     }

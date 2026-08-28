@@ -458,10 +458,10 @@ object SdltReturnMapper:
         throw new IllegalArgumentException(s"Unknown MineralRights '$other'; expected yes or no")
 
   private def triggerFields(tx: Transaction): NodeSeq =
-    nonBlank(tx.postTransRulingApplied).flatMap(s => yesNo(Option(s))).map(v => <PostTransactionRuling>{v}</PostTransactionRuling>: NodeSeq).getOrElse(NodeSeq.Empty) ++
+    nonBlank(tx.postTransRulingApplied).flatMap(s => yesNo(Option(s))).filter(_.equalsIgnoreCase("yes")).map(v => <PostTransactionRuling>{v}</PostTransactionRuling>: NodeSeq).getOrElse(NodeSeq.Empty) ++
       postTransactionRulingFollowed(tx) ++
-      nonBlank(tx.isDependantOnFutureEvent).flatMap(s => yesNo(Option(s))).map(v => <ConsiderationDependentOnFutureEvents>{v}</ConsiderationDependentOnFutureEvents>: NodeSeq).getOrElse(NodeSeq.Empty) ++
-      nonBlank(tx.agreedToDeferPayment).flatMap(s => yesNo(Option(s))).map(v => <DeferredPayment>{v}</DeferredPayment>: NodeSeq).getOrElse(NodeSeq.Empty)
+      nonBlank(tx.isDependantOnFutureEvent).flatMap(s => yesNo(Option(s))).filter(_.equalsIgnoreCase("yes")).map(v => <ConsiderationDependentOnFutureEvents>{v}</ConsiderationDependentOnFutureEvents>: NodeSeq).getOrElse(NodeSeq.Empty) ++
+      nonBlank(tx.agreedToDeferPayment).flatMap(s => yesNo(Option(s))).filter(_.equalsIgnoreCase("yes")).map(v => <DeferredPayment>{v}</DeferredPayment>: NodeSeq).getOrElse(NodeSeq.Empty)
   
   private def postTransactionRulingFollowed(tx: Transaction): NodeSeq =
     nonBlank(tx.postTransRulingFollowed).flatMap { raw =>
