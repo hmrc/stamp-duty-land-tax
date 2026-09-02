@@ -15,7 +15,7 @@ All dependencies can be found in [AppDependencies.scala](https://github.com/hmrc
 Service Manager:
 - Start dependent services `sm2 --start SDLT_ALL`
 - Stop this service `sm2 --stop STAMP-DUTY-LAND-TAX`
-- Start the server locally on `port 10913` with `sbt run`
+- Start the server locally on port 10913 `sbt 'run 10913'`
 
 
 
