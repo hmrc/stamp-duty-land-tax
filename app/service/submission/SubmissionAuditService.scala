@@ -93,7 +93,8 @@ class SubmissionAuditService @Inject() (
       auditProvider = Some("mdtp"),
       auditSource   = AuditSource,
       auditType     = auditType,
-      detail        = detail
+      detail        = detail,
+      tags          = hc.toAuditTags()
     )
 
     auditConnector.sendExtendedEvent(event).flatMap {
