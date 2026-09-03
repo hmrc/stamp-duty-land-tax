@@ -427,7 +427,7 @@ class SubmissionService @Inject() (
         utrn           = resp.utrn,
         acceptedDate   = Some(resp.acceptedTime.getOrElse(nowSqlTimestamp))
       ), correlationId)
-      _ <- emailService.submitEmailConfirmation(fullReturn, resp.utrn.toString, email)
+      _ <- emailService.submitEmailConfirmation(fullReturn, resp.utrn.getOrElse(""), email)
       _       =  logger.info(s"[SubmissionService] SUCCESS branch complete returnId=${ctx.returnId} corrId=$correlationId utrn=${resp.utrn.getOrElse("-")}")
     yield acc2
 
