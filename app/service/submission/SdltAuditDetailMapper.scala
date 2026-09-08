@@ -30,6 +30,7 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
   def submissionDetail(fullReturn: FullReturn): JsObject =
     prune(
       obj(
+        "returnInfo"            -> fullReturn.returnInfo.map(returnInfoDetails),
         "transactionDetails"    -> Some(transactionDetails(fullReturn)),
         "leaseDetails"          -> fullReturn.lease.map(leaseDetails(_, fullReturn.taxCalculation)),
         "landDetails"           -> fullReturn.land.map(landDetails(_, fullReturn.returnInfo)),
@@ -40,7 +41,22 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
         "residencyDetails"      -> fullReturn.residency.map(residency)
       )
     )
-  
+
+  private def returnInfoDetails(r: ReturnInfo): JsObject =
+    prune(
+      obj(
+        "returnReference"    -> r.returnID.map(JsString.apply),
+        "storn"              -> r.storn.map(JsString.apply),
+        "version"            -> r.version.map(JsString.apply),
+        "status"             -> r.status.map(JsString.apply),
+        "declaration"        -> r.declaration.map(bool),
+        "irMarkGenerated"    -> r.IRMarkGenerated.map(bool),
+        "numberOfPurchasers" -> r.purchaserCounter.flatMap(num),
+        "numberOfVendors"    -> r.vendorCounter.flatMap(num),
+        "numberOfProperties" -> r.landCounter.flatMap(num)
+      )
+    )
+
   private def transactionDetails(fr: FullReturn): JsObject =
     val t   = fr.transaction
     val tax = fr.taxCalculation
@@ -142,7 +158,7 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
         "itemsIncludedInSale"       -> Option.when(items.nonEmpty)(JsArray(items))
       ))
     }
-  
+
   private def leaseDetails(l: Lease, tax: Option[TaxCalculation]): JsObject =
     prune(obj(
       "leaseType"              -> l.leaseType.map(JsString.apply),
@@ -215,7 +231,7 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
       "placeOfRegistration"    -> p.placeOfRegistration.map(JsString.apply)
     ))
     Option.when(o.fields.nonEmpty)(o)
-  
+
   private def agentOf(fr: FullReturn, agentType: String): Option[JsObject] =
     fr.returnAgent.flatMap(_.find(_.agentType.exists(_.equalsIgnoreCase(agentType)))).map { a =>
       prune(obj(
@@ -229,7 +245,7 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
     }
 
 
-  
+
   private def residency(r: Residency): JsObject =
     prune(obj(
       "residencyStatus"    -> r.isNonUkResidents.map(bool),
@@ -238,7 +254,7 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
     ))
 
 
-  
+
   private def address(postcode: Option[String], line1: Option[String],
                       line2: Option[String], line3: Option[String], line4: Option[String]): Option[JsObject] =
     val o = prune(obj(
@@ -262,7 +278,7 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
   private def num(s: String): Option[JsNumber] =
     scala.util.Try(BigDecimal(s.trim)).toOption.map(JsNumber.apply)
 
-  
+
   private def prune(o: JsObject): JsObject =
     JsObject(o.fields.flatMap {
       case (_, JsNull)                          => None

@@ -42,7 +42,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
   private val fullReturn: FullReturn = freeholdReturn(1, 1, 1)
 
   private val mappedDetail: JsObject = Json.obj("auditDetailKey" -> "auditDetailValue")
-  
+
   private def completed(utrn: Option[String]): ChrisResponse =
     ChrisResponse.Completed(utrn, Some(correlationId), None,Some("url"), "2026-01-02T09:00:00Z")
 
@@ -60,7 +60,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
 
   private def fatalError: GovTalkError =
     GovTalkError(raisedBy = "HMRC", number = Some("5000"), errorType = "fatal", text = Some("System failure"), location = None)
-  
+
   private def fixture(auditResult: AuditResult = AuditResult.Success)
                      (setup: Future[AuditResult] => Future[AuditResult] = identity)
   : (AuditConnector, SdltAuditDetailMapper, SubmissionAuditService) =
@@ -77,7 +77,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
     captor.getValue
 
   private implicit val hc: HeaderCarrier = HeaderCarrier()
-  
+
   "SubmissionAuditService auditSubmission" - {
 
     "on a Completed response carrying a UTRN" - {
@@ -102,7 +102,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
         verify(mapper).submissionDetail(fullReturn)
       }
     }
-    
+
     "on a Completed response with no UTRN" - {
 
       "must emit an SDLTSubmissionFailure event with failureType no_receipt" in {
@@ -116,12 +116,13 @@ final class SubmissionAuditServiceSpec extends SpecBase {
         (event.detail \ "correlationId").as[String] mustBe correlationId
       }
 
-      "must not call the detail mapper" in {
-        val (_, mapper, service) = fixture()()
+      "must call the detail mapper and nest its output under returnDetails" in {
+        val (connector, mapper, service) = fixture()()
 
         service.auditSubmission(storn, returnId, correlationId, fullReturn, completed(None)).futureValue
 
-        verify(mapper, never()).submissionDetail(any[FullReturn])
+        verify(mapper).submissionDetail(fullReturn)
+        (captureEvent(connector).detail \ "returnDetails" \ "auditDetailKey").as[String] mustBe "auditDetailValue"
       }
 
       "must not include an errors block or a failureReason when neither is present" in {
@@ -134,7 +135,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
         (detail \ "failureReason").toOption  mustBe None
       }
     }
-    
+
     "on an Errored business-reject response" - {
 
       "must emit an SDLTSubmissionFailure with failureType departmental" in {
@@ -164,7 +165,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
         (captureEvent(connector).detail \ "failureType").as[String] mustBe "fatal"
       }
     }
-    
+
     "on a TransportError response" - {
 
       "must emit an SDLTSubmissionFailure with failureType system and the message as failureReason" in {
@@ -177,7 +178,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
         (event.detail \ "failureReason").as[String] mustBe "connection reset"
       }
     }
-    
+
     "on an Acknowledged response" - {
 
       "must not send any audit event" in {
@@ -188,7 +189,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
         verify(connector, never()).sendExtendedEvent(any[ExtendedDataEvent])(any[HeaderCarrier], any[ExecutionContext])
       }
     }
-    
+
     "when the audit connector reports Success" - {
       "must complete successfully" in {
         val (_, _, service) = fixture(AuditResult.Success)()
@@ -234,7 +235,7 @@ final class SubmissionAuditServiceSpec extends SpecBase {
       }
     }
   }
-  
+
   "SubmissionAuditException" - {
 
     "must default its cause to None (and expose a null Throwable cause)" in {

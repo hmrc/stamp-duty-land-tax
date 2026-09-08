@@ -51,41 +51,49 @@ class SubmissionAuditService @Inject() (
                      (implicit hc: HeaderCarrier): Future[Unit] =
     resp match
       case ChrisResponse.Completed(Some(utrn), _, _, _, _, _) =>
-        send(AuditSuccess, successDetail(storn, utrn, fullReturn), returnId, correlationId)
+        send(AuditSuccess, successDetail(storn, utrn, fullReturn, correlationId), returnId, correlationId)
 
       case ChrisResponse.Completed(None, _, _, _, _, _) =>
         logger.warn(s"[SubmissionAuditService] success envelope with no UTRN returnId=$returnId corrId=$correlationId")
-        send(AuditFailure, failureDetail(storn, correlationId, "no_receipt", Nil, None), returnId, correlationId)
+        send(AuditFailure, failureDetail(storn, correlationId, "no_receipt", fullReturn, Nil, None), returnId, correlationId)
 
       case e: ChrisResponse.Errored =>
         val failureType = if e.isBusinessReject then "departmental" else "fatal"
-        send(AuditFailure, failureDetail(storn, correlationId, failureType, e.errors, None), returnId, correlationId)
+        send(AuditFailure, failureDetail(storn, correlationId, failureType, fullReturn, e.errors, None), returnId, correlationId)
 
       case ChrisResponse.TransportError(msg, _) =>
-        send(AuditFailure, failureDetail(storn, correlationId, "system", Nil, Some(msg)), returnId, correlationId)
+        send(AuditFailure, failureDetail(storn, correlationId, "system", fullReturn, Nil, Some(msg)), returnId, correlationId)
 
       case _: ChrisResponse.Acknowledged =>
         logger.info(s"[SubmissionAuditService] acknowledged (in flight), no terminal audit returnId=$returnId corrId=$correlationId")
         Future.unit
 
-  private def successDetail(storn: String, utrn: String, fullReturn: FullReturn): JsObject =
+  private def successDetail(storn: String,
+                            utrn: String,
+                            fullReturn: FullReturn,
+                            correlationId: String): JsObject =
     Json.obj(
-      "stampTaxesOnlineReferenceNumber"  -> storn,
+      "stampTaxesOnlineReferenceNumber" -> storn,
+      "correlationId" -> correlationId,
       "uniqueTransactionReferenceNumber" -> utrn
     ) ++ detailMapper.submissionDetail(fullReturn)
 
   private def failureDetail(storn: String,
                             correlationId: String,
                             failureType: String,
+                            fullReturn: FullReturn,
                             errors: Seq[GovTalkError],
                             systemMessage: Option[String]): JsObject =
+    val returnDetails = detailMapper.submissionDetail(fullReturn)
+
     Json.obj(
       "stampTaxesOnlineReferenceNumber" -> storn,
-      "correlationId"                   -> correlationId,
-      "failureType"                     -> failureType
+      "correlationId" -> correlationId,
+      "failureType" -> failureType
     )
       ++ (if errors.nonEmpty then Json.obj("errors" -> Json.toJson(errors)) else Json.obj())
       ++ systemMessage.fold(Json.obj())(m => Json.obj("failureReason" -> m))
+      ++ (if returnDetails.fields.nonEmpty then Json.obj("returnDetails" -> returnDetails) else Json.obj())
 
   private def send(auditType: String, detail: JsObject, returnId: String, correlationId: String)
                   (implicit hc: HeaderCarrier): Future[Unit] =
