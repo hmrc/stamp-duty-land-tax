@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package service.submission
+package uk.gov.hmrc.stampdutylandtax.service.submission
 
 import base.SpecBase
 import connectors.EmailServiceConnector
-import models.email.EmailServiceRequest
 import models.filing.{FullReturn, Purchaser, Submission}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
+import service.submission.EmailService
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future

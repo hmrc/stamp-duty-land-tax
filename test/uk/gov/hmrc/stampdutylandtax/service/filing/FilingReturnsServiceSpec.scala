@@ -56,7 +56,6 @@ final class FilingReturnsServiceSpec extends SpecBase {
     )
 
   private def mkCreateResult(
-                              stornId: String = "STORN12345",
                               returnResourceRef: String = "RRF-2024-001"
                             ): CreateReturnResult =
     CreateReturnResult(
@@ -147,12 +146,12 @@ final class FilingReturnsServiceSpec extends SpecBase {
       implicit val hc: HeaderCarrier    = HeaderCarrier()
 
       when(connector.createReturn(eqTo(request1))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("STORN11111", "RRF-2024-001")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-2024-001")))
       when(connector.createReturn(eqTo(request2))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("STORN22222", "RRF-2024-002")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-2024-002")))
 
-      service.createReturn(request1).futureValue mustBe mkCreateResult("STORN11111", "RRF-2024-001")
-      service.createReturn(request2).futureValue mustBe mkCreateResult("STORN22222", "RRF-2024-002")
+      service.createReturn(request1).futureValue mustBe mkCreateResult("RRF-2024-001")
+      service.createReturn(request2).futureValue mustBe mkCreateResult("RRF-2024-002")
 
       verify(connector).createReturn(eqTo(request1))(any[HeaderCarrier])
       verify(connector).createReturn(eqTo(request2))(any[HeaderCarrier])
@@ -179,8 +178,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle company purchaser requests" in {
       val connector                    = mock[FilingFormpProxyConnector]
-     val FPconnector                  = mock[FormpProxyConnector]
-      val service                      = new FilingReturnsService(connector, FPconnector)
+      val fpConnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, fpConnector)
       val request: CreateReturnRequest = mkCreateRequest().copy(
         purchaserIsCompany = "Y",
         surNameOrCompanyName = "ABC Property Ltd",
@@ -200,8 +199,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle minimal request with no optional fields" in {
       val connector                    = mock[FilingFormpProxyConnector]
-     val FPconnector                  = mock[FormpProxyConnector]
-      val service                      = new FilingReturnsService(connector, FPconnector)
+      val fpConnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, fpConnector)
       val request: CreateReturnRequest = mkCreateRequest().copy(
         houseNumber = None,
         addressLine2 = None,
@@ -223,8 +222,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must handle request with all optional fields populated" in {
       val connector                    = mock[FilingFormpProxyConnector]
-     val FPconnector                  = mock[FormpProxyConnector]
-      val service                      = new FilingReturnsService(connector, FPconnector)
+      val fpConnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, fpConnector)
       val request: CreateReturnRequest = mkCreateRequest().copy(
         houseNumber = Some(42),
         addressLine2 = Some("Kensington"),
@@ -280,15 +279,15 @@ final class FilingReturnsServiceSpec extends SpecBase {
       implicit val hc: HeaderCarrier    = HeaderCarrier()
 
       when(connector.createReturn(eqTo(request1))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("STORN12345", "RRF-001")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-001")))
       when(connector.createReturn(eqTo(request2))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("STORN-ABC-123", "RRF-002")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-002")))
       when(connector.createReturn(eqTo(request3))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("12345678", "RRF-003")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-003")))
 
-      service.createReturn(request1).futureValue mustBe mkCreateResult("STORN12345", "RRF-001")
-      service.createReturn(request2).futureValue mustBe mkCreateResult("STORN-ABC-123", "RRF-002")
-      service.createReturn(request3).futureValue mustBe mkCreateResult("12345678", "RRF-003")
+      service.createReturn(request1).futureValue mustBe mkCreateResult("RRF-001")
+      service.createReturn(request2).futureValue mustBe mkCreateResult("RRF-002")
+      service.createReturn(request3).futureValue mustBe mkCreateResult("RRF-003")
 
       verify(connector).createReturn(eqTo(request1))(any[HeaderCarrier])
       verify(connector).createReturn(eqTo(request2))(any[HeaderCarrier])
@@ -322,15 +321,15 @@ final class FilingReturnsServiceSpec extends SpecBase {
       implicit val hc: HeaderCarrier    = HeaderCarrier()
 
       when(connector.createReturn(eqTo(request1))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("STORN11111", "RRF-001")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-001")))
       when(connector.createReturn(eqTo(request2))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("STORN22222", "RRF-002")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-002")))
       when(connector.createReturn(eqTo(request3))(any[HeaderCarrier]))
-        .thenReturn(Future.successful(mkCreateResult("STORN33333", "RRF-003")))
+        .thenReturn(Future.successful(mkCreateResult("RRF-003")))
 
-      service.createReturn(request1).futureValue mustBe mkCreateResult("STORN11111", "RRF-001")
-      service.createReturn(request2).futureValue mustBe mkCreateResult("STORN22222", "RRF-002")
-      service.createReturn(request3).futureValue mustBe mkCreateResult("STORN33333", "RRF-003")
+      service.createReturn(request1).futureValue mustBe mkCreateResult("RRF-001")
+      service.createReturn(request2).futureValue mustBe mkCreateResult("RRF-002")
+      service.createReturn(request3).futureValue mustBe mkCreateResult("RRF-003")
 
       verify(connector, times(3)).createReturn(any[CreateReturnRequest])(any[HeaderCarrier])
       verifyNoMoreInteractions(connector)
@@ -338,8 +337,8 @@ final class FilingReturnsServiceSpec extends SpecBase {
 
     "must propagate RuntimeException from connector" in {
       val connector                    = mock[FilingFormpProxyConnector]
-     val FPconnector                  = mock[FormpProxyConnector]
-      val service                      = new FilingReturnsService(connector, FPconnector)
+      val fpConnector                  = mock[FormpProxyConnector]
+      val service                      = new FilingReturnsService(connector, fpConnector)
       val request: CreateReturnRequest = mkCreateRequest()
       val boom                         = new RuntimeException("Connection failed")
       implicit val hc: HeaderCarrier   = HeaderCarrier()

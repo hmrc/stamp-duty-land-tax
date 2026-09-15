@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.models.agent
 
-import models.agent.{CreatedAgent, UpdatePredefinedAgentRequest}
+import models.agent.UpdatePredefinedAgentRequest
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json

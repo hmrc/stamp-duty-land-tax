@@ -18,7 +18,6 @@ package service.filing
 
 import connectors.FilingFormpProxyConnector
 import models.submission.*
-import models.filing.*
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import javax.inject.{Inject, Singleton}
