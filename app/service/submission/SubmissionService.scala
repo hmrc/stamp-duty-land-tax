@@ -17,20 +17,17 @@
 package service.submission
 
 import com.google.inject.Inject
-import play.api.Logging
-import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import connectors.{ChrisConnector, EmailServiceConnector}
-import connectors.FilingFormpProxyConnector
-import models.email.EmailServiceRequest
+import connectors.{ChrisConnector, FilingFormpProxyConnector}
 import models.filing.*
 import models.polling.SubmissionForPolling
 import models.submission.*
+import play.api.Logging
 import service.PollOutcome
 import service.filing.ChrisService
+import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
-import java.time.{LocalDate, ZoneId}
-import java.time.{Clock, LocalDateTime}
 import java.time.format.DateTimeFormatter
+import java.time.{Clock, LocalDate, LocalDateTime, ZoneId}
 import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}

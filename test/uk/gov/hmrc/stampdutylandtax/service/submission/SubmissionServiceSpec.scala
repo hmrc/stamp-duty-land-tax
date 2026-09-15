@@ -18,13 +18,12 @@ package uk.gov.hmrc.stampdutylandtax.service.submission
 
 import base.SpecBase
 import connectors.{ChrisConnector, FilingFormpProxyConnector}
-import models.email.EmailServiceRequest
 import models.filing.*
 import models.polling.SubmissionForPolling
 import models.submission.*
-import org.mockito.{ArgumentCaptor, Mockito}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
+import org.mockito.{ArgumentCaptor, Mockito}
 import service.filing.ChrisService
 import service.submission.*
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}

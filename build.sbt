@@ -12,7 +12,13 @@ lazy val microservice = Project("stamp-duty-land-tax", file("."))
     dependencyOverrides ++= AppDependencies.overrides,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
-    scalacOptions += "-Wconf:src=routes/.*:s",
+    scalacOptions ++= Seq(
+      "-Xfatal-warnings",
+      "-Wconf:src=routes/.*:s",
+      "-Wconf:src=target/.*:s",
+      "-Wconf:cat=deprecation:s",
+      "-Wconf:cat=feature:s"
+    ),
   )
   .settings(CodeCoverageSettings.settings: _*)
 

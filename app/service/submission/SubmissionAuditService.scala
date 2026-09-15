@@ -17,14 +17,13 @@
 package service.submission
 
 import com.google.inject.{Inject, Singleton}
+import models.filing.*
 import play.api.Logging
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
-import models.filing.*
-import models.filing.FullReturn
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal

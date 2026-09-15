@@ -22,9 +22,9 @@ import models.filing.{FullReturn, NameOfPurchaser, Purchaser}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
-class EmailService @Inject()(emailServiceConnector: EmailServiceConnector)(implicit ec: ExecutionContext) {
+class EmailService @Inject()(emailServiceConnector: EmailServiceConnector) {
 
   def submitEmailConfirmation(fullReturn: FullReturn,
                               utrn: String,
