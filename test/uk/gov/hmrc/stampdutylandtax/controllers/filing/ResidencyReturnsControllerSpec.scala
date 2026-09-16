@@ -123,9 +123,9 @@ class ResidencyReturnsControllerSpec extends SpecBase {
       }
 
       "handle different residency flag combinations" in new BaseSetup {
-        val nonUkRequest   = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isNonUkResidents = "YES"))
-        val companyRequest = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCompany = "YES"))
-        val crownRequest   = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCrownRelief = "YES"))
+        val nonUkRequest   = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isNonUkResidents = "yes"))
+        val companyRequest = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCompany = Some("yes")))
+        val crownRequest   = testCreateResidencyRequest.copy(residency = testResidencyPayload.copy(isCrownRelief = Some("yes")))
 
         when(mockResidencyReturnsService.createResidency(any[CreateResidencyRequest])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testCreateResidencyReturn))
@@ -225,9 +225,9 @@ class ResidencyReturnsControllerSpec extends SpecBase {
       }
 
       "handle different residency flag combinations" in new BaseSetup {
-        val nonUkRequest   = testUpdateResidencyRequest.copy(residency = testResidencyPayload.copy(isNonUkResidents = "YES"))
-        val companyRequest = testUpdateResidencyRequest.copy(residency = testResidencyPayload.copy(isCompany = "YES"))
-        val crownRequest   = testUpdateResidencyRequest.copy(residency = testResidencyPayload.copy(isCrownRelief = "YES"))
+        val nonUkRequest   = testUpdateResidencyRequest.copy(residency = testResidencyPayload.copy(isNonUkResidents = "yes"))
+        val companyRequest = testUpdateResidencyRequest.copy(residency = testResidencyPayload.copy(isCompany = Some("yes")))
+        val crownRequest   = testUpdateResidencyRequest.copy(residency = testResidencyPayload.copy(isCrownRelief = Some("yes")))
 
         when(mockResidencyReturnsService.updateResidency(any[UpdateResidencyRequest])(any[HeaderCarrier]))
           .thenReturn(Future.successful(testUpdateResidencyReturn))
@@ -346,9 +346,9 @@ class ResidencyReturnsControllerSpec extends SpecBase {
     val controller = new ResidencyReturnsController(cc, mockResidencyReturnsService, fakeIdentifierAction)
 
     val testResidencyPayload: ResidencyPayload = ResidencyPayload(
-      isNonUkResidents = "NO",
-      isCompany        = "NO",
-      isCrownRelief    = "NO"
+      isNonUkResidents = "no",
+      isCompany        = Some("no"),
+      isCrownRelief    = Some("no")
     )
 
     val testCreateResidencyRequest: CreateResidencyRequest = CreateResidencyRequest(
