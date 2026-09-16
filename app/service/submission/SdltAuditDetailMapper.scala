@@ -45,7 +45,8 @@ class SdltAuditDetailMapperImpl extends SdltAuditDetailMapper:
   private def returnInfoDetails(r: ReturnInfo): JsObject =
     prune(
       obj(
-        "returnReference"    -> r.returnID.map(JsString.apply),
+        "returnReference"    -> r.returnResourceRef.map(JsString.apply),
+        "returnId"           -> r.returnID.map(JsString.apply),
         "storn"              -> r.storn.map(JsString.apply),
         "version"            -> r.version.map(JsString.apply),
         "status"             -> r.status.map(JsString.apply),

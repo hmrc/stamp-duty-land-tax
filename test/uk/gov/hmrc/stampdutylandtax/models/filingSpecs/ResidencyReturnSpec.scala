@@ -25,15 +25,15 @@ import models.filing._
 class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues with OptionValues {
 
   private val validResidencyPayloadJson = Json.obj(
-    "isNonUkResidents" -> "NO",
-    "isCompany"        -> "NO",
-    "isCrownRelief"    -> "NO"
+    "isNonUkResidents" -> "no",
+    "isCompany"        -> "no",
+    "isCrownRelief"    -> "no"
   )
 
   private val residencyPayload = ResidencyPayload(
-    isNonUkResidents = "NO",
-    isCompany        = "NO",
-    isCrownRelief    = "NO"
+    isNonUkResidents = "no",
+    isCompany        = Some("no"),
+    isCrownRelief    = Some("no")
   )
 
   private val validCreateResidencyRequestJson = Json.obj(
@@ -96,34 +96,34 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       "must deserialize valid JSON" in {
         val result = Json.fromJson[ResidencyPayload](validResidencyPayloadJson).asEither.value
 
-        result.isNonUkResidents mustBe "NO"
-        result.isCompany        mustBe "NO"
-        result.isCrownRelief    mustBe "NO"
+        result.isNonUkResidents mustBe "no"
+        result.isCompany        mustBe Some("no")
+        result.isCrownRelief    mustBe Some("no")
       }
 
       "must deserialize YES values" in {
         val json = Json.obj(
-          "isNonUkResidents" -> "YES",
-          "isCompany"        -> "YES",
-          "isCrownRelief"    -> "YES"
+          "isNonUkResidents" -> "yes",
+          "isCompany"        -> "yes",
+          "isCrownRelief"    -> "yes"
         )
         val result = Json.fromJson[ResidencyPayload](json).asEither.value
 
-        result.isNonUkResidents mustBe "YES"
-        result.isCompany        mustBe "YES"
-        result.isCrownRelief    mustBe "YES"
+        result.isNonUkResidents mustBe "yes"
+        result.isCompany        mustBe Some("yes")
+        result.isCrownRelief    mustBe Some("yes")
       }
 
       "must fail to deserialize when isNonUkResidents is missing" in {
         Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isNonUkResidents").asEither.isLeft mustBe true
       }
 
-      "must fail to deserialize when isCompany is missing" in {
-        Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCompany").asEither.isLeft mustBe true
+      "must deserialize when isCompany is missing" in {
+        Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCompany").asEither.isLeft mustBe false
       }
 
-      "must fail to deserialize when isCrownRelief is missing" in {
-        Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCrownRelief").asEither.isLeft mustBe true
+      "must deserialize when isCrownRelief is missing" in {
+        Json.fromJson[ResidencyPayload](validResidencyPayloadJson - "isCrownRelief").asEither.isLeft mustBe false
       }
 
       "must fail to deserialize when field has invalid type" in {
@@ -145,9 +145,9 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       "must serialize all fields" in {
         val json = Json.toJson(residencyPayload)
 
-        (json \ "isNonUkResidents").as[String] mustBe "NO"
-        (json \ "isCompany").as[String]        mustBe "NO"
-        (json \ "isCrownRelief").as[String]    mustBe "NO"
+        (json \ "isNonUkResidents").as[String] mustBe "no"
+        (json \ "isCompany").as[String]        mustBe "no"
+        (json \ "isCrownRelief").as[String]    mustBe "no"
       }
 
       "must produce valid JSON structure" in {
@@ -178,13 +178,13 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
       }
 
       "must support copy with modifications" in {
-        val modified = residencyPayload.copy(isNonUkResidents = "YES")
-        modified.isNonUkResidents mustBe "YES"
+        val modified = residencyPayload.copy(isNonUkResidents = "yes")
+        modified.isNonUkResidents mustBe "yes"
         modified.isCompany        mustBe residencyPayload.isCompany
       }
 
       "must not be equal when fields differ" in {
-        residencyPayload must not equal residencyPayload.copy(isCompany = "YES")
+        residencyPayload must not equal residencyPayload.copy(isCompany = Some("yes"))
       }
     }
   }
@@ -238,9 +238,9 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
         (json \ "stornId").as[String]                        mustBe "12345"
         (json \ "returnResourceRef").as[String]              mustBe "45678"
-        (json \ "residency" \ "isNonUkResidents").as[String] mustBe "NO"
-        (json \ "residency" \ "isCompany").as[String]        mustBe "NO"
-        (json \ "residency" \ "isCrownRelief").as[String]    mustBe "NO"
+        (json \ "residency" \ "isNonUkResidents").as[String] mustBe "no"
+        (json \ "residency" \ "isCompany").asOpt[String]     mustBe Some("no")
+        (json \ "residency" \ "isCrownRelief").asOpt[String] mustBe Some("no")
       }
 
       "must produce valid JSON structure" in {
@@ -415,7 +415,7 @@ class ResidencyReturnSpec extends AnyFreeSpec with Matchers with EitherValues wi
 
         (json \ "stornId").as[String]                        mustBe "12345"
         (json \ "returnResourceRef").as[String]              mustBe "45678"
-        (json \ "residency" \ "isNonUkResidents").as[String] mustBe "NO"
+        (json \ "residency" \ "isNonUkResidents").as[String] mustBe "no"
       }
 
       "must produce valid JSON structure" in {

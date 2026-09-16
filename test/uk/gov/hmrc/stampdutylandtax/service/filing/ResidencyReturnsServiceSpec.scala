@@ -29,9 +29,9 @@ import scala.concurrent.Future
 final class ResidencyReturnsServiceSpec extends SpecBase {
 
   private def mkResidencyPayload(
-                                  isNonUkResidents: String = "NO",
-                                  isCompany: String        = "NO",
-                                  isCrownRelief: String    = "NO"
+                                  isNonUkResidents: String = "no",
+                                  isCompany: Option[String]  = Some("no"),
+                                  isCrownRelief: Option[String] = Some("no")
                                 ): ResidencyPayload =
     ResidencyPayload(
       isNonUkResidents = isNonUkResidents,
@@ -169,9 +169,9 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     "must handle different residency flag combinations" in {
       val connector                              = mock[FilingFormpProxyConnector]
       val service                                = new ResidencyReturnsService(connector)
-      val nonUkRequest: CreateResidencyRequest   = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "YES"))
-      val companyRequest: CreateResidencyRequest = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isCompany = "YES"))
-      val crownRequest: CreateResidencyRequest   = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isCrownRelief = "YES"))
+      val nonUkRequest: CreateResidencyRequest   = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "yes"))
+      val companyRequest: CreateResidencyRequest = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isCompany = Some("yes")))
+      val crownRequest: CreateResidencyRequest   = mkCreateResidencyRequest().copy(residency = mkResidencyPayload(isCrownRelief = Some("yes")))
       implicit val hc: HeaderCarrier             = HeaderCarrier()
 
       when(connector.createResidency(any[CreateResidencyRequest])(any[HeaderCarrier]))
@@ -316,9 +316,9 @@ final class ResidencyReturnsServiceSpec extends SpecBase {
     "must handle different residency flag combinations" in {
       val connector                              = mock[FilingFormpProxyConnector]
       val service                                = new ResidencyReturnsService(connector)
-      val nonUkRequest: UpdateResidencyRequest   = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "YES"))
-      val companyRequest: UpdateResidencyRequest = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isCompany = "YES"))
-      val crownRequest: UpdateResidencyRequest   = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isCrownRelief = "YES"))
+      val nonUkRequest: UpdateResidencyRequest   = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isNonUkResidents = "yes"))
+      val companyRequest: UpdateResidencyRequest = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isCompany = Some("yes")))
+      val crownRequest: UpdateResidencyRequest   = mkUpdateResidencyRequest().copy(residency = mkResidencyPayload(isCrownRelief = Some("yes")))
       implicit val hc: HeaderCarrier             = HeaderCarrier()
 
       when(connector.updateResidency(any[UpdateResidencyRequest])(any[HeaderCarrier]))

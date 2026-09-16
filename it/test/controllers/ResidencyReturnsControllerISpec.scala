@@ -60,9 +60,9 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             stornId = "storn",
             returnResourceRef = "ref",
             residency = ResidencyPayload(
-              isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isNonUkResidents = "no",
+              isCompany        = Some("no"),
+              isCrownRelief    = Some("no")
             )
           )
         )
@@ -82,9 +82,9 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             stornId = "storn",
             returnResourceRef = "ref",
             residency = ResidencyPayload(
-              isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isNonUkResidents = "no",
+              isCompany        = Some("no"),
+              isCrownRelief    = Some("no")
             )
           )
         )
@@ -107,9 +107,9 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             stornId = "storn",
             returnResourceRef = "ref",
             residency = ResidencyPayload(
-              isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isNonUkResidents = "no",
+              isCompany        = Some("no"),
+              isCrownRelief    = Some("no")
             )
           )
         )
@@ -129,9 +129,9 @@ class ResidencyReturnsControllerISpec extends BaseSpec
             stornId = "storn",
             returnResourceRef = "ref",
             residency = ResidencyPayload(
-              isNonUkResidents = "NO",
-              isCompany        = "NO",
-              isCrownRelief    = "NO"
+              isNonUkResidents = "no",
+              isCompany        = Some("no"),
+              isCrownRelief    = Some("no")
             )
           )
         )

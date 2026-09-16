@@ -2318,9 +2318,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stornId = stornId,
       returnResourceRef = returnResourceRef,
       residency = ResidencyPayload(
-        isNonUkResidents = "NO",
-        isCompany = "NO",
-        isCrownRelief = "NO"
+        isNonUkResidents = "no",
+        isCompany = Some("no"),
+        isCrownRelief = Some("no")
       )
     )
 
@@ -2370,9 +2370,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "YES"))
-      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = "YES"))
-      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
+      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "yes"))
+      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = Some("yes")))
+      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = Some("yes")))
 
       connector.createResidency(nonUkPayload).futureValue.created mustBe true
       connector.createResidency(companyPayload).futureValue.created mustBe true
@@ -2418,9 +2418,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
       stornId = stornId,
       returnResourceRef = returnResourceRef,
       residency = ResidencyPayload(
-        isNonUkResidents = "NO",
-        isCompany = "NO",
-        isCrownRelief = "NO"
+        isNonUkResidents = "no",
+        isCompany = Some("no"),
+        isCrownRelief = Some("no")
       )
     )
 
@@ -2452,9 +2452,9 @@ class FilingFormpProxyConnectorISpec extends AnyWordSpec
           )
       )
 
-      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "YES"))
-      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = "YES"))
-      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = "YES"))
+      val nonUkPayload = payload.copy(residency = payload.residency.copy(isNonUkResidents = "yes"))
+      val companyPayload = payload.copy(residency = payload.residency.copy(isCompany = Some("yes")))
+      val crownPayload = payload.copy(residency = payload.residency.copy(isCrownRelief = Some("yes")))
 
       connector.updateResidency(nonUkPayload).futureValue.updated mustBe true
       connector.updateResidency(companyPayload).futureValue.updated mustBe true
