@@ -48,6 +48,7 @@ class EmailServiceConnector @Inject()(http: HttpClientV2,
         case response if response.status == ACCEPTED => ()
         case response =>
           logger.error(s"[EmailServiceConnector][submitEmailConfirmation]: unexpected status ${response.status}")
+          logger.debug(s"[EmailServiceConnector][submitEmailConfirmation]: response body: ${response.body}")
       }
       .recover {
         case e: Throwable =>
