@@ -19,9 +19,9 @@ package models.email
 import play.api.libs.json.{Json, OFormat}
 
 case class EmailServiceRequest(
-                                     to: String,
+                                     to: Seq[String],
                                      templateId: String,
-                                     templateParameters: Map[String, String]
+                                     parameters: Map[String, String]
                                    )
 
 object EmailServiceRequest {

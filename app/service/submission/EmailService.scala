@@ -39,9 +39,9 @@ class EmailService @Inject()(emailServiceConnector: EmailServiceConnector) {
     (email, email2) match {
       case (Some(email1), _) =>
         val emailRequest = EmailServiceRequest(
-          to = email1,
+          to = Seq(email1),
           templateId = "sdlt_submission_confirmation",
-          templateParameters = Map(
+          parameters = Map(
             "purchaserName" -> purchaserName,
             "utrn" -> utrn
           )
@@ -50,9 +50,9 @@ class EmailService @Inject()(emailServiceConnector: EmailServiceConnector) {
 
       case (None, Some(fullReturnEmail)) =>
         val emailRequest = EmailServiceRequest(
-          to = fullReturnEmail,
+          to = Seq(fullReturnEmail),
           templateId = "sdlt_submission_confirmation",
-          templateParameters = Map(
+          parameters = Map(
             "purchaserName" -> purchaserName,
             "utrn" -> utrn
           )
