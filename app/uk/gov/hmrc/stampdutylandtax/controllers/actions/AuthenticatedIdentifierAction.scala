@@ -18,7 +18,6 @@ package uk.gov.hmrc.stampdutylandtax.controllers.actions
 
 import com.google.inject.Inject
 import models.auth.IdentifierRequest
-import play.api.Logging
 import play.api.mvc.*
 import play.api.mvc.Results.Forbidden
 import uk.gov.hmrc.auth.core.*
@@ -27,6 +26,7 @@ import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import utils.LoggingUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,7 +34,7 @@ class AuthenticatedIdentifierAction @Inject()(
                                                override val authConnector: AuthConnector,
                                                val parser: BodyParsers.Default
                                              )
-                                             (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with Logging {
+                                             (implicit val executionContext: ExecutionContext) extends IdentifierAction with AuthorisedFunctions with LoggingUtil {
 
   private val orgEnrollment: String = "IR-SDLT-ORG"
   private val agentEnrollment: String = "IR-SDLT-AGENT"
@@ -43,6 +43,7 @@ class AuthenticatedIdentifierAction @Inject()(
   override def invokeBlock[A](request: Request[A],
                               block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
     given hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given req: Request[A] = request
 
     authorised()
       .retrieve(
@@ -65,7 +66,7 @@ class AuthenticatedIdentifierAction @Inject()(
 
       }.recoverWith {
         case ex =>
-          logger.error(s"[AuthenticatedIdentifierAction][authorised] - Authentication failed: ${ex.getCause}-${ex.getMessage}")
+          errorLog(s"[AuthenticatedIdentifierAction][authorised] - Authentication failed: ${ex.getCause}-${ex.getMessage}")
           Future.successful(Forbidden)
       }
   }

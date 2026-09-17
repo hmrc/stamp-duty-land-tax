@@ -17,12 +17,12 @@
 package connectors
 
 import com.google.inject.Inject
-import play.api.Logging
 import play.api.libs.ws.DefaultBodyWritables.writeableOf_String
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import models.filing.*
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.LoggingUtil
 
 import scala.concurrent.duration.*
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,7 +40,7 @@ class ChrisConnector @Inject() (
                                  httpClient: HttpClientV2,
                                  appConfig: ServicesConfig
                                )(implicit ec: ExecutionContext)
-  extends Logging:
+  extends LoggingUtil:
 
   private val chrisUrl: String   = appConfig.baseUrl("chris")
   private val submitPath: String = chrisUrl + appConfig.getConfString("chris.submit-url", "/ChRIS/SDLT/Filing/sync/SDLT")
@@ -80,7 +80,8 @@ class ChrisConnector @Inject() (
       if stubMode then returnResourceRef.map(_.trim).filter(_.nonEmpty).map(withResourceRefKey(envelope, _)).getOrElse(envelope)
       else envelope
     val xmlString = XmlDecl + "\n" + toSend.toString()
-    logger.info(s"[ChrisConnector] SUBMIT target=$target corrId=$correlationId stubMode=$stubMode ref=${returnResourceRef.getOrElse("-")} xml=$xmlString")
+    logger.debug(s"[ChrisConnector] SUBMIT target=$target corrId=$correlationId stubMode=$stubMode ref=${returnResourceRef.getOrElse("-")} xml=$xmlString")
+    logger.info(s"[ChrisConnector] SUBMIT target=$target corrId=$correlationId stubMode=$stubMode ref=${returnResourceRef.getOrElse("-")}")
     httpClient
       .post(url"$target")
       .setHeader("Content-Type" -> "application/xml", "Accept" -> "application/xml", "CorrelationId" -> correlationId)
@@ -88,12 +89,15 @@ class ChrisConnector @Inject() (
       .transform(_.withRequestTimeout(requestTimeout))
       .execute[HttpResponse]
       .map { resp =>
+        given HttpResponse = resp
         if is2xx(resp.status) then parse(resp.body)
         else if RetryableHttpStatuses.contains(resp.status) then
-          logger.warn(s"[ChrisConnector] transient NON-2xx (retryable -> STARTED) corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          logger.debug(s"[ChrisConnector] transient NON-2xx (retryable -> STARTED) corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          warnConnectorLog(s"[ChrisConnector] transient NON-2xx (retryable -> STARTED) corrId=$correlationId status=${resp.status}")
           ChrisResponse.Errored(Seq(retryableHttp(resp.status)), Some(correlationId), None, resp.body)
         else
-          logger.error(s"[ChrisConnector] NON-2xx (fatal) corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          logger.debug(s"[ChrisConnector] NON-2xx (fatal) corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          errorConnectorLog(s"[ChrisConnector] NON-2xx (fatal) corrId=$correlationId status=${resp.status}")
           ChrisResponse.TransportError(s"NON-2xx status=${resp.status}")
       }
       .recover {
@@ -128,12 +132,15 @@ class ChrisConnector @Inject() (
       .transform(_.withRequestTimeout(requestTimeout))
       .execute[HttpResponse]
       .map { resp =>
+        given HttpResponse = resp
         if is2xx(resp.status) then parse(resp.body)
         else if RetryableHttpStatuses.contains(resp.status) then
-          logger.warn(s"[ChrisConnector] POLL non-2xx, retrying next cycle corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          logger.debug(s"[ChrisConnector] POLL non-2xx, retrying next cycle corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          warnConnectorLog(s"[ChrisConnector] POLL non-2xx, retrying next cycle corrId=$correlationId status=${resp.status}")
           ChrisResponse.TransportError(s"transient HTTP ${resp.status}")
         else
-          logger.error(s"[ChrisConnector] POLL NON-2xx corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          logger.debug(s"[ChrisConnector] POLL NON-2xx corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          errorConnectorLog(s"[ChrisConnector] POLL NON-2xx corrId=$correlationId status=${resp.status}")
           ChrisResponse.TransportError(s"NON-2xx status=${resp.status}")
       }
       .recover {
@@ -182,9 +189,11 @@ class ChrisConnector @Inject() (
       .transform(_.withRequestTimeout(requestTimeout))
       .execute[HttpResponse]
       .map { resp =>
+        given HttpResponse = resp
         if is2xx(resp.status) then parseDelete(resp.body)
         else
-          logger.error(s"[ChrisConnector] DELETE NON-2xx corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          logger.debug(s"[ChrisConnector] DELETE NON-2xx corrId=$correlationId status=${resp.status} body:\n${resp.body}")
+          errorConnectorLog(s"[ChrisConnector] DELETE NON-2xx corrId=$correlationId status=${resp.status}")
           ChrisDeleteResponse.TransportError(s"NON-2xx status=${resp.status}", resp.body)
       }
       .recover {
@@ -218,7 +227,7 @@ class ChrisConnector @Inject() (
       <Body/>
     </GovTalkMessage>
 
-  private def parseDelete(body: String): ChrisDeleteResponse =
+  private def parseDelete(body: String)(implicit response: HttpResponse): ChrisDeleteResponse =
     try
       val xml       = XML.loadString(body)
       val qualifier = text(xml, "MessageDetails", "Qualifier").toLowerCase
@@ -235,7 +244,7 @@ class ChrisConnector @Inject() (
           else ChrisDeleteResponse.Errored(errors, corrId, body)
 
         case other =>
-          logger.error(s"[ChrisConnector] Unexpected GovTalk qualifier/function for DELETE $other")
+          errorConnectorLog(s"[ChrisConnector] Unexpected GovTalk qualifier/function for DELETE $other")
           ChrisDeleteResponse.TransportError(s"Unexpected GovTalk message: $other", body)
     catch
       case NonFatal(e) =>
@@ -275,7 +284,7 @@ class ChrisConnector @Inject() (
     val m = Option(e.getMessage).getOrElse("").toLowerCase
     m.contains("timeout") || m.contains("timed out") || m.contains("request timeout")
 
-  private def parse(body: String): ChrisResponse =
+  private def parse(body: String)(implicit response: HttpResponse): ChrisResponse =
     try
       val xml = XML.loadString(body)
       val qualifier = text(xml, "MessageDetails", "Qualifier").toLowerCase
@@ -284,27 +293,31 @@ class ChrisConnector @Inject() (
 
       (qualifier, function) match
         case ("response", "submit") =>
-          logger.info("[ChrisConnector][parse] response submit" + body + xml)
+          logger.debug("[ChrisConnector][parse] response submit" + body + xml)
+          infoConnectorLog(s"[ChrisConnector][parse] response submit corrId=${corrId.getOrElse("-")}")
           val irMark = extractIrMark(xml)
           val accepted = extractAcceptedTime(xml)
           if irMark.isEmpty then
-            logger.warn(s"[ChrisConnector] no IRmark in response corrId=${corrId.getOrElse("-")}")
+            warnConnectorLog(s"[ChrisConnector] no IRmark in response corrId=${corrId.getOrElse("-")}")
           else
-            logger.info(s"[ChrisConnector] IRmark source=${irMarkSource(xml)} corrId=${corrId.getOrElse("-")}")
+            infoConnectorLog(s"[ChrisConnector] IRmark source=${irMarkSource(xml)} corrId=${corrId.getOrElse("-")}")
           if accepted.isEmpty then
-            logger.info(s"[ChrisConnector] no AcceptedTime in response, using current time corrId=${corrId.getOrElse("-")}")
+            infoConnectorLog(s"[ChrisConnector] no AcceptedTime in response, using current time corrId=${corrId.getOrElse("-")}")
           ChrisResponse.Completed(extractUtrn(xml), irMark, corrId, responseEndPoint(xml), body, accepted)
 
         case ("error", _) =>
-          logger.info("[ChrisConnector][parse] response error" + body + xml)
+          logger.debug("[ChrisConnector][parse] response error" + body + xml)
+          infoConnectorLog(s"[ChrisConnector][parse] response error corrId=${corrId.getOrElse("-")}")
           ChrisResponse.Errored(parseErrors(xml), corrId, responseEndPoint(xml), body)
 
         case ("acknowledgement", _) =>
-          logger.info("[ChrisConnector][parse] response acknowledgement" + body + xml)
+          logger.debug("[ChrisConnector][parse] response acknowledgement" + body + xml)
+          infoConnectorLog(s"[ChrisConnector][parse] response acknowledgement corrId=${corrId.getOrElse("-")}")
           ChrisResponse.Acknowledged(corrId, pollInterval(xml), responseEndPoint(xml), body, extractAcceptedTime(xml))
 
         case other =>
-          logger.error(s"[ChrisConnector] Unexpected GovTalk qualifier/function $other" + xml)
+          logger.debug(s"[ChrisConnector] Unexpected GovTalk qualifier/function $other" + xml)
+          errorConnectorLog(s"[ChrisConnector] Unexpected GovTalk qualifier/function $other")
           ChrisResponse.TransportError(s"Unexpected GovTalk message: $other")
     catch
       case NonFatal(e) =>

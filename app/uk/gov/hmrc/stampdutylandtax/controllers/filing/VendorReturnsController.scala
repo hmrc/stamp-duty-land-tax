@@ -17,12 +17,12 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing.{CreateVendorRequest, DeleteVendorRequest, UpdateVendorRequest}
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.filing.VendorReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +32,7 @@ class VendorReturnsController @Inject()(
                                          cc: ControllerComponents,
                                          service: VendorReturnsService,
                                          auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
   
   def createVendor(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
@@ -47,7 +47,7 @@ class VendorReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createVendor] failed", t)
+              errorLog("[createVendor] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -66,7 +66,7 @@ class VendorReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updateVendor] failed", t)
+              errorLog("[updateVendor] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -85,7 +85,7 @@ class VendorReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[deleteVendor] failed", t)
+              errorLog("[deleteVendor] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )

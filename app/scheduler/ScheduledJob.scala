@@ -18,13 +18,14 @@ package scheduler
 
 import org.apache.pekko.actor.{ActorRef, ActorSystem}
 import org.apache.pekko.extension.quartz.QuartzSchedulerExtension
+import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import play.api.{Configuration, Logging}
 import scheduler.SchedulingActor.ScheduledMessage
+import utils.LoggingUtil
 
 import scala.concurrent.Future
 
-trait ScheduledJob extends Logging {
+trait ScheduledJob extends LoggingUtil {
 
   val scheduledMessage: ScheduledMessage[?]
   val config: Configuration
@@ -35,13 +36,13 @@ trait ScheduledJob extends Logging {
   lazy val scheduler: QuartzSchedulerExtension = QuartzSchedulerExtension(actorSystem)
   lazy val schedulingActorRef: ActorRef        = actorSystem.actorOf(SchedulingActor.props)
 
-  lazy val enabled: Boolean            = config.getOptional[Boolean](s"schedules.$jobName.enabled").getOrElse(false)
+  lazy val jobEnabled: Boolean          = config.getOptional[Boolean](s"schedules.$jobName.enabled").getOrElse(false)
   lazy val description: Option[String] = config.getOptional[String](s"schedules.$jobName.description")
   lazy val expression: String =
     config.getOptional[String](s"schedules.$jobName.expression").map(_.replaceAll("_", " ")).getOrElse("")
 
   lazy val schedule: Unit =
-    (enabled, expression.nonEmpty) match {
+    (jobEnabled, expression.nonEmpty) match {
       case (true, true) =>
         scheduler.createSchedule(jobName, description, expression)
         scheduler.schedule(jobName, schedulingActorRef, scheduledMessage)

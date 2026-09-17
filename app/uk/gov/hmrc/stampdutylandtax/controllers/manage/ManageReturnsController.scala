@@ -17,12 +17,12 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.manage
 
 import models.manage.SdltReturnRecordRequest
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.ManageReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +32,7 @@ class ManageReturnsController @Inject()(
                                          cc: ControllerComponents,
                                          service: ManageReturnsService,
                                          auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
 
   def getReturns: Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
@@ -47,7 +47,7 @@ class ManageReturnsController @Inject()(
                 Ok(Json.toJson(result))
               }
               .recover { case t =>
-                logger.error("[ManageReturnsController][getReturns] failed", t)
+                errorLog("[ManageReturnsController][getReturns] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )

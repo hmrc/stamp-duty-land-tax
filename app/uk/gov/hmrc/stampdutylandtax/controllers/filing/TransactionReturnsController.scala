@@ -17,12 +17,12 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing.UpdateTransactionRequest
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.filing.TransactionReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +32,7 @@ class TransactionReturnsController @Inject()(
                                               cc:      ControllerComponents,
                                               service: TransactionReturnsService,
                                               auth:    IdentifierAction
-                                            )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                            )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
 
   def updateTransaction(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
@@ -47,7 +47,7 @@ class TransactionReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updateTransaction] failed", t)
+              errorLog("[updateTransaction] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )

@@ -20,13 +20,13 @@ import models.agent.*
 import models.manage.{SdltReturnRecordRequest, SdltReturnRecordResponse}
 import models.polling.SubmissionsForPollingResponse
 import models.purge.{DeleteReturnRequest, DeleteReturnResponse, GetReturnsForPurgeRequest, ReturnsForPurgeResponse}
-import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.LoggingUtil
 
 import java.net.URL
 import javax.inject.Inject
@@ -35,7 +35,7 @@ import scala.util.control.NonFatal
 
 class FormpProxyConnector @Inject()(http: HttpClientV2,
                                     config: ServicesConfig)
-                                   (implicit ec: ExecutionContext) extends Logging {
+                                   (implicit ec: ExecutionContext) extends LoggingUtil {
 
   private val stubPath = config.baseUrl("stamp-duty-land-tax-stub") + "/stamp-duty-land-tax-stub"
   private val formpPath = config.baseUrl("formp-proxy") + "/formp-proxy"
@@ -109,7 +109,8 @@ class FormpProxyConnector @Inject()(http: HttpClientV2,
           logger.error(s"[FormpProxyConnector][updatePredefinedAgent]: Upstream error - ${e.getMessage}")
           throw e
         case e: Throwable =>
-          logger.error(s"[FormpProxyConnector][UpdateAgent]: ${e.getMessage} the payload is:\n \n ${Json.toJson(updateAgentDetails)}")
+          logger.debug(s"[FormpProxyConnector][UpdateAgent]: ${e.getMessage} the payload is:\n \n ${Json.toJson(updateAgentDetails)}")
+          logger.error(s"[FormpProxyConnector][UpdateAgent]: ${e.getMessage}")
           throw new RuntimeException(e.getMessage)
       }
 

@@ -17,12 +17,12 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing.*
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.filing.PurchaserReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +32,7 @@ class PurchaserReturnsController @Inject()(
                                          cc: ControllerComponents,
                                          service: PurchaserReturnsService,
                                          auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
   
   def createPurchaser(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
@@ -47,7 +47,7 @@ class PurchaserReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createPurchaser] failed", t)
+              errorLog("[createPurchaser] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -66,7 +66,7 @@ class PurchaserReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updatePurchaser] failed", t)
+              errorLog("[updatePurchaser] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -85,7 +85,7 @@ class PurchaserReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[deletePurchaser] failed", t)
+              errorLog("[deletePurchaser] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -104,7 +104,7 @@ class PurchaserReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createCompanyDetails] failed", t)
+              errorLog("[createCompanyDetails] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -123,7 +123,7 @@ class PurchaserReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updateCompanyDetails] failed", t)
+              errorLog("[updateCompanyDetails] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -142,7 +142,7 @@ class PurchaserReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[deleteCompanyDetails] failed", t)
+              errorLog("[deleteCompanyDetails] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
