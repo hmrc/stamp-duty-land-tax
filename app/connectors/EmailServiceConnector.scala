@@ -18,7 +18,6 @@ package connectors
 
 import models.email.EmailServiceRequest
 import models.email.EmailServiceRequest.format
-import play.api.Logging
 import play.api.http.Status.ACCEPTED
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
@@ -26,6 +25,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, StringContextOps}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.LoggingUtil
 
 import java.net.URL
 import javax.inject.Inject
@@ -33,7 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class EmailServiceConnector @Inject()(http: HttpClientV2,
                                       config: ServicesConfig)
-                                     (implicit ec: ExecutionContext) extends Logging {
+                                     (implicit ec: ExecutionContext) extends LoggingUtil {
 
   private val baseUrl = config.baseUrl("email")
 
@@ -47,7 +47,7 @@ class EmailServiceConnector @Inject()(http: HttpClientV2,
       .map {
         case response if response.status == ACCEPTED => ()
         case response =>
-          logger.error(s"[EmailServiceConnector][submitEmailConfirmation]: unexpected status ${response.status}")
+          errorConnectorLog(s"[EmailServiceConnector][submitEmailConfirmation]: unexpected status ${response.status}")(response)
           logger.debug(s"[EmailServiceConnector][submitEmailConfirmation]: response body: ${response.body}")
       }
       .recover {

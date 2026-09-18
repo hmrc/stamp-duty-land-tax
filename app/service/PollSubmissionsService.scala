@@ -18,13 +18,13 @@ package service
 
 import connectors.FormpProxyConnector
 import models.polling.SubmissionForPolling
-import play.api.Logging
 import scheduler.ScheduleStatus.{FailedToPollSubmissions, MongoUnlockException}
 import scheduler.{MongoLockKeys, ScheduleStatus, ScheduledService}
 import service.submission.SubmissionService
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.LoggingUtil
 
 import java.time.{Clock, LocalDateTime, ZoneId}
 import javax.inject.Inject
@@ -39,7 +39,7 @@ class PollSubmissionsService @Inject() (
   clock: Clock
 )(implicit ec: ExecutionContext)
     extends ScheduledService[Either[ScheduleStatus.JobFailed, List[String]]]
-    with Logging {
+    with LoggingUtil {
 
   private val ReportZone: ZoneId = ZoneId.of("Europe/London")
 

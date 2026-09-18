@@ -17,12 +17,12 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing.{CreateLandRequest, DeleteLandRequest, UpdateLandRequest}
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.filing.FilingLandService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +32,7 @@ class LandReturnsController @Inject()(
                                        cc: ControllerComponents,
                                        service: FilingLandService,
                                        auth: IdentifierAction
-                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
 
   def createLand(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
@@ -47,7 +47,7 @@ class LandReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createLand] failed", t)
+              errorLog("[createLand] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -66,7 +66,7 @@ class LandReturnsController @Inject()(
               Ok(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updateLand] failed", t)
+              errorLog("[updateLand] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -85,7 +85,7 @@ class LandReturnsController @Inject()(
               Ok(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[deleteLand] failed", t)
+              errorLog("[deleteLand] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )

@@ -18,12 +18,12 @@ package service
 
 import connectors.FormpProxyConnector
 import models.purge.{DeleteReturnRequest, GetReturnsForPurgeRequest, ReturnForPurge}
-import play.api.Logging
 import scheduler.ScheduleStatus.{FailedToPurgeReturns, MongoUnlockException}
 import scheduler.{MongoLockKeys, ScheduleStatus, ScheduledService}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.mongo.lock.{LockService, MongoLockRepository}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.LoggingUtil
 
 import java.time.{Clock, LocalDate}
 import javax.inject.Inject
@@ -37,7 +37,7 @@ class PurgeReturnsService @Inject() (
   clock: Clock
 )(implicit ec: ExecutionContext)
     extends ScheduledService[Either[ScheduleStatus.JobFailed, List[String]]]
-    with Logging {
+    with LoggingUtil {
 
   val jobName: String = "PurgeReturnsJob"
 

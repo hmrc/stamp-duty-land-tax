@@ -18,12 +18,12 @@ package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing.{CreateReturnRequest, GetReturnByRefRequest, UpdateReturnRequest}
 import models.purge.DeleteReturnRequest
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.filing.FilingReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,7 +33,7 @@ class FilingReturnsController @Inject()(
                                          cc: ControllerComponents,
                                          service: FilingReturnsService,
                                          auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
 
   def createReturn(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
@@ -48,7 +48,7 @@ class FilingReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createReturn] failed", t)
+              errorLog("[createReturn] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -67,7 +67,7 @@ class FilingReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[deleteReturn] failed", t)
+              errorLog("[deleteReturn] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -87,7 +87,7 @@ class FilingReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createReturn] failed", t)
+              errorLog("[createReturn] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -106,7 +106,7 @@ class FilingReturnsController @Inject()(
               Ok(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updateReturnInfo] failed", t)
+              errorLog("[updateReturnInfo] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )

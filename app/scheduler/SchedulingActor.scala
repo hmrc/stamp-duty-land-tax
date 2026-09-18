@@ -17,11 +17,11 @@
 package scheduler
 
 import org.apache.pekko.actor.{Actor, ActorLogging, Props}
-import play.api.Logging
 import scheduler.SchedulingActor.*
 import service.{PollSubmissionsService, PurgeReturnsService}
+import utils.LoggingUtil
 
-class SchedulingActor extends Actor with ActorLogging with Logging {
+class SchedulingActor extends Actor with ActorLogging with LoggingUtil {
 
   override def receive: Receive = {
     case message: ScheduledMessage[?] =>

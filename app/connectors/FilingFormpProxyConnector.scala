@@ -18,13 +18,13 @@ package connectors
 
 import models.filing.*
 import models.submission.*
-import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.*
 import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.{HttpClientV2, RequestBuilder}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse, StringContextOps, UpstreamErrorResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.LoggingUtil
 
 import java.net.URL
 import javax.inject.Inject
@@ -32,7 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
                                           config: ServicesConfig)
-                                         (implicit ec: ExecutionContext) extends Logging {
+                                         (implicit ec: ExecutionContext) extends LoggingUtil {
 
   private val formpPath = config.baseUrl("formp-proxy") + "/formp-proxy"
   private val stubPath = config.baseUrl("stamp-duty-land-tax-stub") + "/stamp-duty-land-tax-stub"
@@ -439,7 +439,8 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
           logger.debug(s"[FormpProxyConnector][lockReturn]: OK status=${response.status} storn=${lockReturnRequest.storn} returnRef=${lockReturnRequest.returnResourceRef}")
           Right(LockReturnResponse(success = true))
         case Right(response) =>
-          logger.warn(s"[FormpProxyConnector][lockReturn]: Unexpected non-2xx in Right branch - ${response.status}")
+          given HttpResponse = response
+          warnConnectorLog(s"[FormpProxyConnector][lockReturn]: Unexpected non-2xx in Right branch - ${response.status}")
           Left(UpstreamErrorResponse(s"Unexpected status ${response.status}", response.status))
         case Left(error) =>
           logger.warn(s"[FormpProxyConnector][lockReturn]: Upstream error (likely version conflict) - ${error.statusCode} ${error.message}")
@@ -468,7 +469,8 @@ class FilingFormpProxyConnector @Inject()(http: HttpClientV2,
               logger.debug(s"[FormpProxyConnector][createSubmission]: OK status=${response.status} storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef} submissionId=$id")
               CreateSubmissionReturn(success = true, submissionId = Some(id))
             case None =>
-              logger.error(s"[FormpProxyConnector][createSubmission]: ${response.status} but no submissionId in body storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef} body=${response.body}")
+              logger.debug(s"[FormpProxyConnector][createSubmission]: ${response.status} but no submissionId in body storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef} body=${response.body}")
+              errorConnectorLog(s"[FormpProxyConnector][createSubmission]: ${response.status} but no submissionId in body storn=${createSubmissionRequest.storn} returnRef=${createSubmissionRequest.returnResourceRef}")(response)
               throw new RuntimeException(s"createSubmission returned ${response.status} without a submissionId for return ${createSubmissionRequest.returnResourceRef}")
           }
         } else {

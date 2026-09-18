@@ -17,12 +17,12 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing._
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.filing.LeaseReturnsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +32,7 @@ class LeaseReturnsController @Inject()(
                                         cc: ControllerComponents,
                                         service: LeaseReturnsService,
                                         auth: IdentifierAction
-                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                     )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
 
   def createLease(): Action[JsValue] = auth.async(parse.json) { implicit request =>
     request.body
@@ -47,7 +47,7 @@ class LeaseReturnsController @Inject()(
               Created(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[createLease] failed", t)
+              errorLog("[createLease] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -66,7 +66,7 @@ class LeaseReturnsController @Inject()(
               Ok(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[updateLease] failed", t)
+              errorLog("[updateLease] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -85,7 +85,7 @@ class LeaseReturnsController @Inject()(
               Ok(Json.toJson(result))
             }
             .recover { case t =>
-              logger.error("[deleteLease] failed", t)
+              errorLog("[deleteLease] failed", t)
               InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )

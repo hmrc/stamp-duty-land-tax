@@ -17,12 +17,12 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
 import models.filing.*
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import service.filing.ReturnAgentService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,7 +32,7 @@ class ReturnAgentController @Inject()(
                                          cc: ControllerComponents,
                                          service: ReturnAgentService,
                                          auth: IdentifierAction
-                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                       )(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
 
   def createReturnAgent(): Action[JsValue] = auth.async(parse.json) { implicit request =>
       request.body
@@ -47,7 +47,7 @@ class ReturnAgentController @Inject()(
                 Created(Json.toJson(result))
               }
               .recover { case t =>
-                logger.error("[createReturnAgent] failed", t)
+                errorLog("[createReturnAgent] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )
@@ -66,7 +66,7 @@ class ReturnAgentController @Inject()(
                 Created(Json.toJson(result))
               }
               .recover { case t =>
-                logger.error("[updateReturnAgent] failed", t)
+                errorLog("[updateReturnAgent] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )
@@ -85,7 +85,7 @@ class ReturnAgentController @Inject()(
                 Created(Json.toJson(result))
               }
               .recover { case t =>
-                logger.error("[deleteReturnAgent] failed", t)
+                errorLog("[deleteReturnAgent] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
               }
         )

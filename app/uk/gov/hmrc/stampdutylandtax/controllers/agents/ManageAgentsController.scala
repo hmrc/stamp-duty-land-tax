@@ -17,13 +17,13 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
 import models.agent.*
-import play.api.Logging
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import service.ManageAgentsService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
+import utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,7 +33,7 @@ class ManageAgentsController @Inject()(
   cc: ControllerComponents,
   service: ManageAgentsService,
   auth: IdentifierAction
-)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+)(implicit ec: ExecutionContext) extends BackendController(cc) with LoggingUtil {
 
   def getSdltOrganisation(storn: String): Action[AnyContent] = auth.async { implicit request =>
     service.getSdltOrganisation(storn) map { sdltOrganisation =>
@@ -44,7 +44,7 @@ class ManageAgentsController @Inject()(
       case u: UpstreamErrorResponse =>
         Status(u.statusCode)(Json.obj("message" -> u.message))
       case t: Throwable =>
-        logger.error("[ManageAgentsController][getSdltOrganisation] failed", t)
+        errorLog("[ManageAgentsController][getSdltOrganisation] failed", t)
         InternalServerError(Json.obj("message" -> "Unexpected error"))
     }
   }
@@ -65,7 +65,7 @@ class ManageAgentsController @Inject()(
               case u: UpstreamErrorResponse =>
                 Status(u.statusCode)(Json.obj("message" -> u.message))
               case t: Throwable =>
-                logger.error("[ManageAgentsController][deletePredefinedAgent] failed", t)
+                errorLog("[ManageAgentsController][deletePredefinedAgent] failed", t)
                 InternalServerError(Json.obj("message" -> "Unexpected error"))
             }
       )
@@ -83,7 +83,7 @@ class ManageAgentsController @Inject()(
           case u: UpstreamErrorResponse =>
             Status(u.statusCode)(Json.obj("message" -> u.message))
           case t: Throwable =>
-            logger.error("[ManageAgentsController][submitAgentDetails] failed", t)
+            errorLog("[ManageAgentsController][submitAgentDetails] failed", t)
             InternalServerError(Json.obj("message" -> "Unexpected error"))
         }
     )
@@ -101,7 +101,7 @@ class ManageAgentsController @Inject()(
           case u: UpstreamErrorResponse =>
             Status(u.statusCode)(Json.obj("message" -> u.message))
           case t: Throwable =>
-            logger.error("[ManageAgentsController][updateAgentDetails] failed", t)
+            errorLog("[ManageAgentsController][updateAgentDetails] failed", t)
             InternalServerError(Json.obj("message" -> "Unexpected error"))
         }
     )

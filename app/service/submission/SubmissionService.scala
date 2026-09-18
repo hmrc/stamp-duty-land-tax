@@ -21,10 +21,10 @@ import connectors.{ChrisConnector, FilingFormpProxyConnector}
 import models.filing.*
 import models.polling.SubmissionForPolling
 import models.submission.*
-import play.api.Logging
 import service.PollOutcome
 import service.filing.ChrisService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
+import utils.LoggingUtil
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, LocalDate, LocalDateTime, ZoneId}
@@ -58,7 +58,7 @@ class SubmissionService @Inject() (
                                     filingConnector: FilingFormpProxyConnector,
                                     clock: Clock
                                   )(implicit ec: ExecutionContext)
-  extends Logging:
+  extends LoggingUtil:
 
   def submit(fullReturn: FullReturn,
              sender: SenderType,
@@ -152,7 +152,8 @@ class SubmissionService @Inject() (
                                   (implicit hc: HeaderCarrier): Future[Option[String]] =
     selectGovTalkStatus(ctx).flatMap {
       case Some(existing) =>
-        logger.info(s"[SubmissionService] GovTalk Status row FOUND formResultId=${ctx.formResultId} corrId=$correlationId protocolStatus=${existing.protocolStatus.getOrElse("-")} storedGatewayUrl=${existing.gatewayUrl.getOrElse("-")} row=$existing")
+        logger.debug(s"[SubmissionService] GovTalk Status row FOUND formResultId=${ctx.formResultId} corrId=$correlationId row=$existing")
+        logger.info(s"[SubmissionService] GovTalk Status row FOUND formResultId=${ctx.formResultId} corrId=$correlationId protocolStatus=${existing.protocolStatus.getOrElse("-")} storedGatewayUrl=${existing.gatewayUrl.getOrElse("-")}")
         existing.protocolStatus match
           case Some(status) if status.nonEmpty =>
             val storedUrl = existing.gatewayUrl.map(_.trim).filter(_.nonEmpty)

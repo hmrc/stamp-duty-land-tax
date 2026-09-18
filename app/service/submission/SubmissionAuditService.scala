@@ -18,12 +18,12 @@ package service.submission
 
 import com.google.inject.{Inject, Singleton}
 import models.filing.*
-import play.api.Logging
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.AuditExtensions.auditHeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
+import utils.LoggingUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -36,7 +36,7 @@ class SubmissionAuditService @Inject() (
                                          auditConnector: AuditConnector,
                                          detailMapper: SdltAuditDetailMapper
                                        )(implicit ec: ExecutionContext)
-  extends Logging:
+  extends LoggingUtil:
 
   private val AuditSource  = "stamp-duty-land-tax"
   private val AuditSuccess = "SDLTSubmissionSuccess"

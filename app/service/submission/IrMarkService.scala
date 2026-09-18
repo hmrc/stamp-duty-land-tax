@@ -23,7 +23,7 @@ import org.apache.xml.security.signature.XMLSignatureInput
 import org.apache.xml.security.transforms.Transforms
 import org.apache.xml.security.transforms.params.XPathContainer
 import org.w3c.dom.Document
-import play.api.Logging
+import utils.LoggingUtil
 
 import java.io.ByteArrayInputStream
 import java.security.MessageDigest
@@ -32,7 +32,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import scala.xml.{Elem, Node}
 
 @Singleton
-class IrMarkService extends Logging:
+class IrMarkService extends LoggingUtil:
 
   Init.init()
 
