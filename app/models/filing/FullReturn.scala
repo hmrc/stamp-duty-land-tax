@@ -442,7 +442,7 @@ case class FullReturn(
                              lease: Option[Lease] = None,
                              taxCalculation: Option[TaxCalculation] = None,
                              submission: Option[Submission] = None,
-                             submissionErrorDetails: Option[SubmissionErrorDetails] = None,
+                             submissionErrorDetails: Option[Seq[SubmissionErrorDetails]] = None,
                              residency: Option[Residency] = None
                            )
 
