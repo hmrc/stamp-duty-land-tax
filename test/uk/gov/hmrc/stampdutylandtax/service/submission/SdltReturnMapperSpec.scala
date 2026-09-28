@@ -145,8 +145,8 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (purchaser \ "AgentDetails" \ "Name").text.trim shouldBe "Agent Smith"
     }
 
-    "emit Residency flags when residency block is present" in {
-      val pd = sdlt \\ "PurchaserDetails"
+    "emit Residency flags when residency block is present on a residential return" in {
+      val pd = SdltReturnMapper.toSdltElement(withMainLandType(richFreeholdReturn(), "01")) \\ "PurchaserDetails"
       (pd \ "ResidencyStatus").text.trim     shouldBe "no"
       (pd \ "CloseCompanyStatus").text.trim  shouldBe "no"
       (pd \ "CrownEmployeeRelief").text.trim shouldBe "no"
@@ -558,8 +558,9 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
 
   "Mapper CloseCompanyStatus handling (rule 418: AS-IS sends no when left blank)" should {
 
+    // Residency only applies to residential land, so pin the main land to 01 for these tests.
     def withResidency(residency: Option[Residency]): Elem =
-      SdltReturnMapper.toSdltElement(freeholdReturn(1, 1, 1).copy(residency = residency))
+      SdltReturnMapper.toSdltElement(withMainLandType(freeholdReturn(1, 1, 1), "01").copy(residency = residency))
 
     def residency(closeCompany: Option[String]): Residency =
       Residency(
@@ -593,6 +594,94 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
 
     "validate against the SDLT/6 schema with the defaulted value" in {
       assertValid(withResidency(Some(residency(None))), "sdlt-close-company-default.xml")
+    }
+  }
+
+  "Mapper residency block by main land property type (rules 418/420)" should {
+
+    val answered = Residency(
+      residencyID      = Some("R1"),
+      isNonUkResidents = Some("no"),
+      isCloseCompany   = Some("no"),
+      isCrownRelief    = Some("no")
+    )
+
+    def withType(propertyType: String, residency: Option[Residency] = Some(answered)): Elem =
+      SdltReturnMapper.toSdltElement(withMainLandType(freeholdReturn(1, 1, 1), propertyType).copy(residency = residency))
+
+    "send the residency block for residential (01) and additional residential (04)" in {
+      Seq("01", "04").foreach { t =>
+        val pd = withType(t) \\ "PurchaserDetails"
+        (pd \ "ResidencyStatus").map(_.text.trim)     shouldBe Seq("no")
+        (pd \ "CloseCompanyStatus").map(_.text.trim)  shouldBe Seq("no")
+        (pd \ "CrownEmployeeRelief").map(_.text.trim) shouldBe Seq("no")
+      }
+    }
+
+    "leave the whole residency block out for mixed (02) and non-residential (03), even when answered" in {
+      Seq("02", "03").foreach { t =>
+        val pd = withType(t) \\ "PurchaserDetails"
+        (pd \ "ResidencyStatus")     shouldBe empty
+        (pd \ "CloseCompanyStatus")  shouldBe empty
+        (pd \ "CrownEmployeeRelief") shouldBe empty
+      }
+    }
+
+    "not default CloseCompanyStatus to no for mixed or non-residential" in {
+      Seq("02", "03").foreach { t =>
+        (withType(t, residency = None) \\ "PurchaserDetails" \ "CloseCompanyStatus") shouldBe empty
+      }
+    }
+
+    "go by the main land, not the first land in the list" in {
+      val base  = freeholdReturn(1, 1, 2)
+      val lands = base.land.getOrElse(Nil)
+      val main  = lands.head.copy(landID = Some("L-MAIN"), propertyType = Some("02"))
+      val other = lands(1).copy(landID = Some("L-OTHER"), propertyType = Some("01"))
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(base, land = Some("L-MAIN")).copy(land = Some(Seq(other, main)), residency = Some(answered))
+      )
+      (sdlt \\ "PurchaserDetails" \ "CloseCompanyStatus") shouldBe empty
+    }
+
+    "validate against the SDLT/6 schema for a mixed property" in {
+      assertValid(withType("02"), "sdlt-residency-mixed.xml")
+    }
+  }
+
+  "Mapper Consideration by transaction type (rules 34/40)" should {
+
+    def consideredReturn(description: String): FullReturn =
+      val base = if description == "L" || description == "A" then leaseReturn(1, 1, 1) else freeholdReturn(1, 1, 1)
+      base.copy(transaction = Some(base.transaction.getOrElse(Transaction()).copy(
+        transactionDescription    = Some(description),
+        newTransactionDescription = Some(description),
+        totalConsideration        = Some("2000000.00"),
+        considerationCash         = Some("yes"),
+        considerationContingent   = Some("yes")
+      )))
+
+    "send Consideration with TotalConsideration and FormCodes for F, O and A" in {
+      Seq("F", "O", "A").foreach { d =>
+        val c = SdltReturnMapper.toSdltElement(consideredReturn(d)) \\ "TaxCalculation" \ "Consideration"
+        withClue(s"transaction type $d: ") {
+          (c \ "TotalConsideration").text.trim shouldBe "2000000.00"
+          (c \ "FormCode").map(_.text.trim)    shouldBe Seq("30", "39")
+        }
+      }
+    }
+
+    "leave Consideration out for a grant of lease (L)" in {
+      (SdltReturnMapper.toSdltElement(consideredReturn("L")) \\ "TaxCalculation" \ "Consideration") shouldBe empty
+    }
+
+    "put Consideration straight after ClaimingRelief for an assignment (A)" in {
+      val kids = labels((SdltReturnMapper.toSdltElement(consideredReturn("A")) \\ "TaxCalculation").head)
+      kids.indexOf("Consideration") shouldBe kids.indexOf("ClaimingRelief") + 1
+    }
+
+    "validate against the SDLT/6 schema for an assignment (A) with consideration" in {
+      assertValid(SdltReturnMapper.toSdltElement(consideredReturn("A")), "sdlt-assignment-consideration.xml")
     }
   }
 
@@ -688,14 +777,18 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (sdlt4Ld \ "TotalNPVtax")                shouldBe empty
     }
 
-    "for an assignment of lease (A), keep the real figures on SDLT1" in {
+    "for an assignment of lease (A), keep the real rent, VAT, premium and NPV on SDLT1" in {
       val ld = assignment \\ "LandDetail" \ "LeaseDetails"
       (ld \ "StartingRent" \ "RentPayable").text.trim shouldBe "450.00"
       (ld \ "StartingRent" \ "VATamount").text.trim   shouldBe "75.00"
       (ld \ "PremiumPaid").text.trim                  shouldBe "2000000.00"
       (ld \ "NetPresentValue").text.trim              shouldBe "1897.00"
-      (ld \ "TotalPremiumTax").text.trim              shouldBe "191250.00"
-      (ld \ "TotalNPVtax").text.trim                  shouldBe "37.00"
+    }
+
+    "for an assignment of lease (A), leave SDLT1 boxes 24 and 25 blank (rules 81/83)" in {
+      val ld = assignment \\ "LandDetail" \ "LeaseDetails"
+      (ld \ "TotalPremiumTax") shouldBe empty
+      (ld \ "TotalNPVtax")     shouldBe empty
     }
 
     "for an assignment of lease (A), still keep the SDLT4 rent end date and later rent known" in {
@@ -1339,6 +1432,15 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       mainVendorID    = vendor.orElse(info.mainVendorID),
       mainLandID      = land.orElse(info.mainLandID)
     )))
+
+  /** Sets the property type on the land the mapper treats as main (mainLandID, or the first land). */
+  private def withMainLandType(fr: FullReturn, propertyType: String): FullReturn =
+    val lands  = fr.land.getOrElse(Nil)
+    val mainId = fr.returnInfo.flatMap(_.mainLandID)
+    val mainIx = mainId.map(id => lands.indexWhere(_.landID.contains(id))).filter(_ >= 0).getOrElse(0)
+    fr.copy(land = Some(lands.zipWithIndex.map { (l, i) =>
+      if i == mainIx then l.copy(propertyType = Some(propertyType)) else l
+    }))
 
   /** Takes the fixture's first two lands and gives them recognisable ids and addresses. */
   private def mainAndSecondLand(fr: FullReturn): (Land, Land) =

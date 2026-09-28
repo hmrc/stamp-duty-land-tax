@@ -39,7 +39,7 @@ object SdltReturnMapper:
 
   private def buildFreehold(fr: FullReturn): Elem =
     <SDLT xmlns={SdltNs}>
-      {transactionDetails(fr, leased = false)}
+      {transactionDetails(fr)}
       {landDetail(fr, leased = false)}
       {vendorDetails(fr)}
       {purchaserDetails(fr)}
@@ -49,7 +49,7 @@ object SdltReturnMapper:
 
   private def buildLease(fr: FullReturn): Elem =
     <SDLT xmlns={SdltNs}>
-      {transactionDetails(fr, leased = true)}
+      {transactionDetails(fr)}
       {landDetail(fr, leased = true)}
       {vendorDetails(fr)}
       {purchaserDetails(fr)}
@@ -61,7 +61,7 @@ object SdltReturnMapper:
 
   private def buildAssignment(fr: FullReturn): Elem = buildLease(fr)
 
-  private def transactionDetails(fr: FullReturn, leased: Boolean): Elem =
+  private def transactionDetails(fr: FullReturn): Elem =
     val tx = fr.transaction.getOrElse(emptyTransaction)
     <TransactionDetails>
       <TransactionDescription>{transactionDescription(fr)}</TransactionDescription>
@@ -70,7 +70,7 @@ object SdltReturnMapper:
       {contractDate(tx)}
       {landExchanged(tx)}
       <PursuantToOption>{yesNo(tx.isPursuantToPreviousOption).getOrElse("no")}</PursuantToOption>
-      {taxCalculation(fr, leased)}
+      {taxCalculation(fr)}
     </TransactionDetails>
 
   private def restrictionsAffecting(tx: Transaction): Elem =
@@ -93,15 +93,15 @@ object SdltReturnMapper:
     val lines = Seq(tx.exchangedLandAddress1, tx.exchangedLandAddress2, tx.exchangedLandAddress3, tx.exchangedLandAddress4).flatMap(nonBlank)
     if lines.isEmpty && isBlank(tx.exchangedLandPostcode) && isBlank(tx.exchangedLandHouseNumber) then None
     else Some(<Address>{addressBody(tx.exchangedLandPostcode, tx.exchangedLandHouseNumber, lines)}</Address>)
-
-  private def taxCalculation(fr: FullReturn, leased: Boolean): Elem =
+  
+  private def taxCalculation(fr: FullReturn): Elem =
     val tx          = fr.transaction.getOrElse(emptyTransaction)
     val taxCalc     = fr.taxCalculation
     val amountPaid  = taxCalc.flatMap(t => moneyFromString(t.amountPaid)).getOrElse(ZeroMoney)
     val includesPen = taxCalc.flatMap(t => yesNo(t.includesPenalty)).getOrElse("no")
     <TaxCalculation>
       {claimingRelief(tx)}
-      {if leased then NodeSeq.Empty else consideration(tx)}
+      {if isGrantOfLease(fr) then NodeSeq.Empty else consideration(tx)}
       {linkedTransaction(tx)}
       <TotalDue>{taxCalc.flatMap(t => moneyFromString(t.taxDue)).getOrElse(ZeroMoney)}</TotalDue>
       <AmountPaid IncludesPenalties={includesPen}>{amountPaid}</AmountPaid>
@@ -174,7 +174,7 @@ object SdltReturnMapper:
   private def leaseDetails(fr: FullReturn, sdlt4: Boolean): NodeSeq =
     fr.lease.map { lease =>
       val taxCalc = fr.taxCalculation
-      val grant   = transactionDescription(fr) == "L"
+      val grant   = isGrantOfLease(fr)
 
       def sdlt4Amount(real: => Option[String]): Option[String] =
         if !sdlt4 then real
@@ -185,8 +185,8 @@ object SdltReturnMapper:
       val vatAmount       = sdlt4Amount(moneyFromString(lease.VATAmount))
       val premiumPaid     = sdlt4Amount(moneyFromString(lease.totalPremiumPayable))
       val netPresentValue = sdlt4Amount(moneyFromString(lease.netPresentValue))
-      val totalPremiumTax = sdlt4Amount(Some(taxCalc.flatMap(t => moneyFromString(t.taxDuePremium)).getOrElse(ZeroMoney)))
-      val totalNpvTax     = sdlt4Amount(Some(taxCalc.flatMap(t => moneyFromString(t.taxDueNPV)).getOrElse(ZeroMoney)))
+      val totalPremiumTax = sdlt4Amount(Option.when(grant)(taxCalc.flatMap(t => moneyFromString(t.taxDuePremium)).getOrElse(ZeroMoney)))
+      val totalNpvTax     = sdlt4Amount(Option.when(grant)(taxCalc.flatMap(t => moneyFromString(t.taxDueNPV)).getOrElse(ZeroMoney)))
 
       <LeaseDetails>
         {nonBlank(lease.leaseType).map(t => <LeaseType>{t}</LeaseType>: NodeSeq).getOrElse(NodeSeq.Empty)}
@@ -255,14 +255,12 @@ object SdltReturnMapper:
   private def orderedVendors(fr: FullReturn): Seq[Vendor] =
     mainFirst(fr.vendor.getOrElse(Nil), fr.returnInfo.flatMap(_.mainVendorID), _.vendorID)
 
-  // Rule 400: the main purchaser's ID (NINO / DOB / registration number + place) must be the one sent.
   private def orderedPurchasers(fr: FullReturn): Seq[Purchaser] =
     mainFirst(fr.purchaser.getOrElse(Nil), fr.returnInfo.flatMap(_.mainPurchaserID), _.purchaserID)
 
   private def mainPurchaser(fr: FullReturn): Option[Purchaser] =
     orderedPurchasers(fr).headOption
 
-  // SDLT1 box 28 must be the main land; the rest go to AdditionalProperty (freehold) or SDLT4 (lease).
   private def orderedLands(fr: FullReturn): Seq[Land] =
     mainFirst(fr.land.getOrElse(Nil), fr.returnInfo.flatMap(_.mainLandID), _.landID)
 
@@ -333,13 +331,13 @@ object SdltReturnMapper:
     val additional = purchasers.lift(1)
     val sdlt2      = purchasers.drop(2)
     val residency  = fr.residency
-    // AS-IS: individuals leave close company status blank and the ChRIS payload sends "no". Rule 418.
+    val residential = isResidential(fr)
     val closeCompanyStatus = residency.flatMap(r => yesNo(r.isCloseCompany)).getOrElse("no")
     <PurchaserDetails>
       <NumberOfPurchasers>{purchasers.size.max(1)}</NumberOfPurchasers>
-      {residency.flatMap(r => yesNo(r.isNonUkResidents)).map(v => <ResidencyStatus>{v}</ResidencyStatus>: NodeSeq).getOrElse(NodeSeq.Empty)}
-      <CloseCompanyStatus>{closeCompanyStatus}</CloseCompanyStatus>
-      {residency.flatMap(r => yesNo(r.isCrownRelief)).map(v => <CrownEmployeeRelief>{v}</CrownEmployeeRelief>: NodeSeq).getOrElse(NodeSeq.Empty)}
+      {if residential then residency.flatMap(r => yesNo(r.isNonUkResidents)).map(v => <ResidencyStatus>{v}</ResidencyStatus>: NodeSeq).getOrElse(NodeSeq.Empty) else NodeSeq.Empty}
+      {if residential then <CloseCompanyStatus>{closeCompanyStatus}</CloseCompanyStatus>: NodeSeq else NodeSeq.Empty}
+      {if residential then residency.flatMap(r => yesNo(r.isCrownRelief)).map(v => <CrownEmployeeRelief>{v}</CrownEmployeeRelief>: NodeSeq).getOrElse(NodeSeq.Empty) else NodeSeq.Empty}
       {primaryPurchaser(primary, fr)}
       {additional.map(additionalPurchaser).getOrElse(NodeSeq.Empty)}
       {sdlt2.flatMap(sdlt2Purchaser)}
@@ -484,7 +482,6 @@ object SdltReturnMapper:
       case Some(v) if v.equalsIgnoreCase("no")  => NodeSeq.Empty
       case Some(other)                          =>
         throw new IllegalArgumentException(s"Unknown MineralRights '$other'; expected yes or no")
-
   
   private def triggerFields(tx: Transaction): NodeSeq =
     val contingent = isYes(tx.isDependantOnFutureEvent)
@@ -609,6 +606,14 @@ object SdltReturnMapper:
 
   private def transactionDescription(fr: FullReturn): String =
     fr.transaction.flatMap(_.transactionDescription).map(_.trim.toUpperCase).getOrElse("F")
+
+  private def isGrantOfLease(fr: FullReturn): Boolean =
+    transactionDescription(fr) == "L"
+
+  private def isResidential(fr: FullReturn): Boolean =
+    orderedLands(fr).headOption.flatMap(l => nonBlank(l.propertyType)).map(_.trim).getOrElse("01") match
+      case "01" | "04" => true
+      case _           => false
 
   private def emptyTransaction: Transaction       = Transaction()
   private def emptyLand: Land                     = Land()
