@@ -497,10 +497,36 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (sdlt \\ "DeferredPayment")                      shouldBe empty
     }
 
-    "still send DeferredPayment = yes when deferral is yes without a contingent answer" in {
+    "omit both when contingent is no, even if deferral is yes" in {
+      val sdlt = withContingentAndDeferred(Some("NO"), Some("YES"))
+      (sdlt \\ "ConsiderationDependentOnFutureEvents") shouldBe empty
+      (sdlt \\ "DeferredPayment")                      shouldBe empty
+    }
+
+    "omit both when contingent was never answered, even if deferral is yes" in {
       val sdlt = withContingentAndDeferred(None, Some("YES"))
       (sdlt \\ "ConsiderationDependentOnFutureEvents") shouldBe empty
-      (sdlt \\ "DeferredPayment").text.trim            shouldBe "yes"
+      (sdlt \\ "DeferredPayment")                      shouldBe empty
+    }
+
+    "not trigger an SDLT4 on deferral alone" in {
+      val tx = baselineFreeholdTransaction.copy(
+        isDependantOnFutureEvent = Some("NO"),
+        agreedToDeferPayment     = Some("YES"),
+        postTransRulingApplied   = Some("NO"),
+        usedAsFactory = None, usedAsHotel = None, usedAsIndustrial = None, usedAsOffice = None,
+        usedAsOther   = None, usedAsShop  = None, usedAsWarehouse  = None
+      )
+      val base = freeholdReturn(1, 1, 1)
+      val sdlt = SdltReturnMapper.toSdltElement(
+        base.copy(
+          transaction    = Some(tx),
+          companyDetails = None,
+          purchaser      = base.purchaser.map(_.map(_.copy(registrationNumber = None, placeOfRegistration = None)))
+        )
+      )
+      (sdlt \\ "SDLT4Count").text.trim shouldBe "0"
+      (sdlt \\ "SDLT4")                shouldBe empty
     }
 
     "omit DeferredPayment when contingent is yes but deferral was never answered (frontend must require it)" in {
@@ -573,7 +599,7 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
   "Mapper SDLT1 and SDLT4 lease premium, NPV and tax figures (rules 303/307)" should {
 
     val base = leaseReturn(vendors = 1, purchasers = 1, lands = 2)
-    val sdlt = SdltReturnMapper.toSdltElement(
+    val grantReturn: FullReturn =
       base.copy(
         lease = base.lease.map(_.copy(
           totalPremiumPayable = Some("2000000.00"),
@@ -585,6 +611,12 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
           base.taxCalculation.getOrElse(TaxCalculation()).copy(taxDuePremium = Some("191250"), taxDueNPV = Some("37"))
         )
       )
+    val sdlt = SdltReturnMapper.toSdltElement(grantReturn)
+    val assignment = SdltReturnMapper.toSdltElement(
+      grantReturn.copy(transaction = Some(grantReturn.transaction.getOrElse(Transaction()).copy(
+        transactionDescription    = Some("A"),
+        newTransactionDescription = Some("A")
+      )))
     )
 
     "format whole-pound tax figures to the schema's two decimal places on SDLT1" in {
@@ -645,20 +677,36 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (rent \ "VATamount").map(_.text.trim)   shouldBe Seq("0.00")
     }
 
-    "zero RentPayable but keep the real VATamount on SDLT4 for an assignment of lease (A)" in {
-      val assignment = SdltReturnMapper.toSdltElement(
-        base.copy(
-          lease       = base.lease.map(_.copy(startingRent = Some("450.00"), VATAmount = Some("75.00"))),
-          transaction = Some(base.transaction.getOrElse(Transaction()).copy(
-            transactionDescription    = Some("A"),
-            newTransactionDescription = Some("A")
-          ))
-        )
-      )
-      val rent = assignment \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
-      (rent \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
-      (rent \ "VATamount").map(_.text.trim)   shouldBe Seq("75.00")
-      (assignment \\ "LandDetail" \ "LeaseDetails" \ "StartingRent" \ "RentPayable").text.trim shouldBe "450.00"
+    "for an assignment of lease (A), zero RentPayable and omit VAT, premium, NPV and both tax totals on SDLT4" in {
+      val sdlt4Ld = assignment \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails"
+      sdlt4Ld.size shouldBe 1
+      (sdlt4Ld \ "StartingRent" \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
+      (sdlt4Ld \ "StartingRent" \ "VATamount") shouldBe empty
+      (sdlt4Ld \ "PremiumPaid")                shouldBe empty
+      (sdlt4Ld \ "NetPresentValue")            shouldBe empty
+      (sdlt4Ld \ "TotalPremiumTax")            shouldBe empty
+      (sdlt4Ld \ "TotalNPVtax")                shouldBe empty
+    }
+
+    "for an assignment of lease (A), keep the real figures on SDLT1" in {
+      val ld = assignment \\ "LandDetail" \ "LeaseDetails"
+      (ld \ "StartingRent" \ "RentPayable").text.trim shouldBe "450.00"
+      (ld \ "StartingRent" \ "VATamount").text.trim   shouldBe "75.00"
+      (ld \ "PremiumPaid").text.trim                  shouldBe "2000000.00"
+      (ld \ "NetPresentValue").text.trim              shouldBe "1897.00"
+      (ld \ "TotalPremiumTax").text.trim              shouldBe "191250.00"
+      (ld \ "TotalNPVtax").text.trim                  shouldBe "37.00"
+    }
+
+    "for an assignment of lease (A), still keep the SDLT4 rent end date and later rent known" in {
+      val sdlt1Rent = assignment \\ "LandDetail" \ "LeaseDetails" \ "StartingRent"
+      val sdlt4Rent = assignment \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (sdlt4Rent \ "EndDate").text.trim        shouldBe (sdlt1Rent \ "EndDate").text.trim
+      (sdlt4Rent \ "LaterRentKnown").text.trim shouldBe (sdlt1Rent \ "LaterRentKnown").text.trim
+    }
+
+    "validate against the SDLT/6 schema for an assignment of lease (A)" in {
+      assertValid(assignment, "sdlt-assignment-lease.xml")
     }
 
     "end every LeaseDetails with TotalPremiumTax then TotalNPVtax" in {
