@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,8 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       val pd = SdltReturnMapper.toSdltElement(withMainLandType(richFreeholdReturn(), "01")) \\ "PurchaserDetails"
       (pd \ "ResidencyStatus").text.trim     shouldBe "no"
       (pd \ "CloseCompanyStatus").text.trim  shouldBe "no"
-      (pd \ "CrownEmployeeRelief").text.trim shouldBe "no"
+      // Only sent when the purchasers are non-UK resident (AS-IS).
+      (pd \ "CrownEmployeeRelief") shouldBe empty
     }
 
     "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-rich.xml") }
@@ -287,7 +288,8 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (atd1 \ "PurchaserCompanyDetails") shouldBe empty
     }
 
-    "carry the STRIPPED AdditionalTransactionDetails on SDLT4 #2: trigger fields but no TotalConsideration / PurchaserCompanyDetails" in {
+    "carry the STRIPPED AdditionalTransactionDetails on SDLT4 #2: PropertyUse and trigger fields but no TotalConsideration / PurchaserCompanyDetails" in {
+      val atd1 = (sdlt \\ "SDLT4").head \ "AdditionalTransactionDetails"
       val atd2 = (sdlt \\ "SDLT4")(1) \ "AdditionalTransactionDetails"
 
       (atd2 \ "PostTransactionRuling").text.trim                shouldBe "yes"
@@ -295,7 +297,7 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (atd2 \ "ConsiderationDependentOnFutureEvents").text.trim shouldBe "yes"
       (atd2 \ "DeferredPayment").text.trim                      shouldBe "yes"
       (atd2 \ "TotalConsideration")     shouldBe empty
-      (atd2 \ "PropertyUse")            shouldBe empty
+      (atd2 \ "PropertyUse").map(labels) shouldBe (atd1 \ "PropertyUse").map(labels)
       (atd2 \ "PurchaserCompanyDetails") shouldBe empty
     }
 
@@ -509,24 +511,11 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (sdlt \\ "DeferredPayment")                      shouldBe empty
     }
 
-    "not trigger an SDLT4 on deferral alone" in {
-      val tx = baselineFreeholdTransaction.copy(
-        isDependantOnFutureEvent = Some("NO"),
-        agreedToDeferPayment     = Some("YES"),
-        postTransRulingApplied   = Some("NO"),
-        usedAsFactory = None, usedAsHotel = None, usedAsIndustrial = None, usedAsOffice = None,
-        usedAsOther   = None, usedAsShop  = None, usedAsWarehouse  = None
-      )
-      val base = freeholdReturn(1, 1, 1)
-      val sdlt = SdltReturnMapper.toSdltElement(
-        base.copy(
-          transaction    = Some(tx),
-          companyDetails = None,
-          purchaser      = base.purchaser.map(_.map(_.copy(registrationNumber = None, placeOfRegistration = None)))
-        )
-      )
-      (sdlt \\ "SDLT4Count").text.trim shouldBe "0"
-      (sdlt \\ "SDLT4")                shouldBe empty
+    "still trigger an SDLT4 on deferral alone, as the AS-IS does, but without sending DeferredPayment" in {
+      val sdlt = SdltReturnMapper.toSdltElement(untriggeredFreehold(_.copy(isDependantOnFutureEvent = Some("NO"), agreedToDeferPayment = Some("YES"))))
+      (sdlt \\ "SDLT4Count").text.trim shouldBe "1"
+      (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails").size shouldBe 1
+      (sdlt \\ "DeferredPayment") shouldBe empty
     }
 
     "omit DeferredPayment when contingent is yes but deferral was never answered (frontend must require it)" in {
@@ -562,10 +551,10 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     def withResidency(residency: Option[Residency]): Elem =
       SdltReturnMapper.toSdltElement(withMainLandType(freeholdReturn(1, 1, 1), "01").copy(residency = residency))
 
-    def residency(closeCompany: Option[String]): Residency =
+    def residency(closeCompany: Option[String], nonUk: String = "no"): Residency =
       Residency(
         residencyID      = Some("R1"),
-        isNonUkResidents = Some("no"),
+        isNonUkResidents = Some(nonUk),
         isCloseCompany   = closeCompany,
         isCrownRelief    = Some("no")
       )
@@ -574,8 +563,11 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (withResidency(Some(residency(None))) \\ "PurchaserDetails" \ "CloseCompanyStatus").map(_.text.trim) shouldBe Seq("no")
     }
 
-    "default to no when there is no residency record at all" in {
-      (withResidency(None) \\ "PurchaserDetails" \ "CloseCompanyStatus").map(_.text.trim) shouldBe Seq("no")
+    "send no residency elements at all when there is no residency record (AS-IS)" in {
+      val pd = withResidency(None) \\ "PurchaserDetails"
+      (pd \ "ResidencyStatus")     shouldBe empty
+      (pd \ "CloseCompanyStatus")  shouldBe empty
+      (pd \ "CrownEmployeeRelief") shouldBe empty
     }
 
     "keep an explicit yes" in {
@@ -587,7 +579,7 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     }
 
     "sit between ResidencyStatus and CrownEmployeeRelief, as the schema requires" in {
-      val kids = labels((withResidency(Some(residency(None))) \\ "PurchaserDetails").head)
+      val kids = labels((withResidency(Some(residency(None, nonUk = "yes"))) \\ "PurchaserDetails").head)
       kids.indexOf("CloseCompanyStatus") shouldBe kids.indexOf("ResidencyStatus") + 1
       kids.indexOf("CrownEmployeeRelief") shouldBe kids.indexOf("CloseCompanyStatus") + 1
     }
@@ -597,7 +589,7 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     }
   }
 
-  "Mapper residency block by main land property type (rules 418/420)" should {
+  "Mapper residency block by property type (rules 418/420)" should {
 
     val answered = Residency(
       residencyID      = Some("R1"),
@@ -612,10 +604,15 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     "send the residency block for residential (01) and additional residential (04)" in {
       Seq("01", "04").foreach { t =>
         val pd = withType(t) \\ "PurchaserDetails"
-        (pd \ "ResidencyStatus").map(_.text.trim)     shouldBe Seq("no")
-        (pd \ "CloseCompanyStatus").map(_.text.trim)  shouldBe Seq("no")
-        (pd \ "CrownEmployeeRelief").map(_.text.trim) shouldBe Seq("no")
+        (pd \ "ResidencyStatus").map(_.text.trim)    shouldBe Seq("no")
+        (pd \ "CloseCompanyStatus").map(_.text.trim) shouldBe Seq("no")
       }
+    }
+
+    "send CrownEmployeeRelief only when the purchasers are non-UK resident" in {
+      (withType("01") \\ "PurchaserDetails" \ "CrownEmployeeRelief") shouldBe empty
+      val nonUk = withType("01", Some(answered.copy(isNonUkResidents = Some("yes"), isCrownRelief = Some("yes"))))
+      (nonUk \\ "PurchaserDetails" \ "CrownEmployeeRelief").map(_.text.trim) shouldBe Seq("yes")
     }
 
     "leave the whole residency block out for mixed (02) and non-residential (03), even when answered" in {
@@ -633,15 +630,18 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       }
     }
 
-    "go by the main land, not the first land in the list" in {
-      val base  = freeholdReturn(1, 1, 2)
-      val lands = base.land.getOrElse(Nil)
-      val main  = lands.head.copy(landID = Some("L-MAIN"), propertyType = Some("02"))
-      val other = lands(1).copy(landID = Some("L-OTHER"), propertyType = Some("01"))
-      val sdlt = SdltReturnMapper.toSdltElement(
-        withMainIds(base, land = Some("L-MAIN")).copy(land = Some(Seq(other, main)), residency = Some(answered))
-      )
-      (sdlt \\ "PurchaserDetails" \ "CloseCompanyStatus") shouldBe empty
+    def withLandTypes(types: String*): Elem =
+      val base  = freeholdReturn(1, 1, types.size)
+      val lands = base.land.getOrElse(Nil).zip(types).map((l, t) => l.copy(propertyType = Some(t)))
+      SdltReturnMapper.toSdltElement(base.copy(land = Some(lands), residency = Some(answered)))
+
+    "send the residency block when any land is residential, even if the main land is mixed (AS-IS)" in {
+      (withLandTypes("02", "01") \\ "PurchaserDetails" \ "CloseCompanyStatus").map(_.text.trim) shouldBe Seq("no")
+      (withLandTypes("03", "04") \\ "PurchaserDetails" \ "CloseCompanyStatus").map(_.text.trim) shouldBe Seq("no")
+    }
+
+    "leave the residency block out when no land is residential" in {
+      (withLandTypes("02", "03") \\ "PurchaserDetails" \ "CloseCompanyStatus") shouldBe empty
     }
 
     "validate against the SDLT/6 schema for a mixed property" in {
@@ -777,10 +777,10 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (sdlt4Ld \ "TotalNPVtax")                shouldBe empty
     }
 
-    "for an assignment of lease (A), keep the real rent, VAT, premium and NPV on SDLT1" in {
+    "for an assignment of lease (A), keep the real rent, premium and NPV on SDLT1 but leave out VAT (AS-IS)" in {
       val ld = assignment \\ "LandDetail" \ "LeaseDetails"
       (ld \ "StartingRent" \ "RentPayable").text.trim shouldBe "450.00"
-      (ld \ "StartingRent" \ "VATamount").text.trim   shouldBe "75.00"
+      (ld \ "StartingRent" \ "VATamount")             shouldBe empty
       (ld \ "PremiumPaid").text.trim                  shouldBe "2000000.00"
       (ld \ "NetPresentValue").text.trim              shouldBe "1897.00"
     }
@@ -815,6 +815,138 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     }
 
     "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-lease-tax-totals.xml") }
+  }
+
+  "Mapper RentFreePeriod padding (AS-IS)" should {
+
+    def withRentFree(period: String): Elem =
+      val base = leaseReturn(vendors = 1, purchasers = 1, lands = 2)
+      SdltReturnMapper.toSdltElement(base.copy(lease = base.lease.map(_.copy(rentFreePeriod = Some(period)))))
+
+    "pad a single digit to two on SDLT1 and SDLT4" in {
+      (withRentFree("6") \\ "LeaseDetails" \ "RentFreePeriod").map(_.text.trim) shouldBe Seq("06", "06")
+    }
+
+    "leave two digits alone" in {
+      (withRentFree("12") \\ "LeaseDetails" \ "RentFreePeriod").map(_.text.trim) shouldBe Seq("12", "12")
+    }
+
+    "validate against the SDLT/6 schema with a padded value" in {
+      assertValid(withRentFree("6"), "sdlt-rent-free-padded.xml")
+    }
+  }
+
+  "Mapper PropertyUse on every SDLT4 (AS-IS)" should {
+
+    "send the same PropertyUse on every SDLT4 of a multi-land lease" in {
+      val base = leaseReturn(vendors = 1, purchasers = 1, lands = 3)
+      val tx   = base.transaction.getOrElse(Transaction()).copy(
+        usedAsOffice = Some("yes"), usedAsShop = Some("yes"),
+        usedAsHotel = None, usedAsWarehouse = None, usedAsFactory = None, usedAsOther = None, usedAsIndustrial = None
+      )
+      val sdlt = SdltReturnMapper.toSdltElement(base.copy(transaction = Some(tx)))
+      val uses = (sdlt \\ "SDLT4").map(b => (b \ "AdditionalTransactionDetails" \ "PropertyUse").map(labels).flatten)
+      uses.size shouldBe 2
+      uses.foreach(_ shouldBe Seq("Office", "Shop"))
+      assertValid(sdlt, "sdlt-property-use-every-sdlt4.xml")
+    }
+  }
+
+  "Mapper PostTransactionRulingFollowed gating (AS-IS)" should {
+
+    "leave out both ruling elements when the ruling was not applied for, even if followed is answered" in {
+      val tx = baselineFreeholdTransaction.copy(postTransRulingApplied = Some("NO"), postTransRulingFollowed = Some("YES"))
+      val sdlt = SdltReturnMapper.toSdltElement(freeholdReturn(1, 1, 1).copy(transaction = Some(tx)))
+      (sdlt \\ "PostTransactionRuling")         shouldBe empty
+      (sdlt \\ "PostTransactionRulingFollowed") shouldBe empty
+    }
+  }
+
+  "Mapper ClaimingRelief details (AS-IS)" should {
+
+    def withRelief(claiming: String): Elem =
+      val tx = baselineFreeholdTransaction.copy(
+        claimingRelief     = Some(claiming),
+        reliefReason       = Some("27"),
+        reliefSchemeNumber = Some("SCH-1"),
+        reliefAmount       = Some("15000.00")
+      )
+      SdltReturnMapper.toSdltElement(freeholdReturn(1, 1, 1).copy(transaction = Some(tx)))
+
+    "send Reason, SchemeNumber and ChargeableAmount when claiming is yes" in {
+      val cr = withRelief("yes") \\ "ClaimingRelief"
+      (cr \@ "Claiming") shouldBe "yes"
+      labels(cr.head) shouldBe Seq("Reason", "SchemeNumber", "ChargeableAmount")
+    }
+
+    "send an empty ClaimingRelief when claiming is no, even if old relief answers remain" in {
+      val cr = withRelief("no") \\ "ClaimingRelief"
+      (cr \@ "Claiming") shouldBe "no"
+      labels(cr.head) shouldBe empty
+    }
+  }
+
+  "Mapper SDLT4 triggers on a freehold (AS-IS isSdlt4QuestionsAnswered)" should {
+
+    def sdlt4Count(fr: FullReturn): String = (SdltReturnMapper.toSdltElement(fr) \\ "SDLT4Count").text.trim
+
+    "not create an SDLT4 when nothing triggers it" in {
+      sdlt4Count(untriggeredFreehold(identity)) shouldBe "0"
+    }
+
+    "trigger on a mixed (02) or non-residential (03) main land" in {
+      sdlt4Count(withMainLandType(untriggeredFreehold(identity), "02")) shouldBe "1"
+      sdlt4Count(withMainLandType(untriggeredFreehold(identity), "03")) shouldBe "1"
+    }
+
+    "trigger on any sale-of-business inclusion" in {
+      sdlt4Count(untriggeredFreehold(_.copy(includesStock = Some("yes"))))    shouldBe "1"
+      sdlt4Count(untriggeredFreehold(_.copy(includesGoodwill = Some("yes")))) shouldBe "1"
+      sdlt4Count(untriggeredFreehold(_.copy(includesOther = Some("yes"))))    shouldBe "1"
+      sdlt4Count(untriggeredFreehold(_.copy(includesChattel = Some("yes"))))  shouldBe "1"
+    }
+
+    "trigger on a company type alone" in {
+      val fr = untriggeredFreehold(identity).copy(companyDetails = Some(CompanyDetails(companyTypeBank = Some("yes"))))
+      sdlt4Count(fr) shouldBe "1"
+    }
+
+    "not trigger on property use alone" in {
+      sdlt4Count(untriggeredFreehold(_.copy(usedAsOffice = Some("yes")))) shouldBe "0"
+    }
+  }
+
+  "Mapper company information gating (AS-IS getCompanyInformationPermitted)" should {
+
+    val individualWithCompanyDetails: FullReturn =
+      val base = companyPurchaserFreehold()
+      base.copy(purchaser = base.purchaser.map(ps => ps.headOption.map(_.copy(
+        isCompany = Some("no"), companyName = None, surname = Some("Individual"),
+        registrationNumber = Some("ID-123"), placeOfRegistration = Some("Germany")
+      )).toSeq ++ ps.drop(1)))
+
+    "leave out VAT, UTR and purchaser descriptions when the main purchaser is an individual" in {
+      val atd = SdltReturnMapper.toSdltElement(individualWithCompanyDetails) \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserVATreferenceNumber")                shouldBe empty
+      (atd \ "PurchaserCompanyDetails" \ "TaxReferenceNumber") shouldBe empty
+      (atd \ "PurchaserDescription")                        shouldBe empty
+    }
+
+    "still send the individual's other ID number and place of registration" in {
+      val pcd = SdltReturnMapper.toSdltElement(individualWithCompanyDetails) \\ "SDLT4" \ "AdditionalTransactionDetails" \ "PurchaserCompanyDetails"
+      (pcd \ "CompanyRegisteredNumber").text.trim shouldBe "ID-123"
+      (pcd \ "PlaceOfRegistration").text.trim     shouldBe "Germany"
+    }
+
+    "send VAT, UTR and purchaser descriptions when the main purchaser is a company" in {
+      val atd = SdltReturnMapper.toSdltElement(companyPurchaserFreehold()) \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "PurchaserVATreferenceNumber").size                shouldBe 1
+      (atd \ "PurchaserCompanyDetails" \ "TaxReferenceNumber").size shouldBe 1
+    }
+
+    "validate against the SDLT/6 schema for an individual with leftover company details" in {
+      assertValid(SdltReturnMapper.toSdltElement(individualWithCompanyDetails), "sdlt-individual-company-details.xml")
+    }
   }
 
   "Mapper main-first ordering (FormP does not return parties main-first)" should {
@@ -1432,6 +1564,24 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       mainVendorID    = vendor.orElse(info.mainVendorID),
       mainLandID      = land.orElse(info.mainLandID)
     )))
+
+  /**
+   * A single-land residential freehold with nothing that triggers an SDLT4, with the transaction adjusted by `f`.
+   * Clears every AS-IS SDLT4 trigger so each test switches on exactly one.
+   */
+  private def untriggeredFreehold(f: Transaction => Transaction): FullReturn =
+    val base = withMainLandType(freeholdReturn(1, 1, 1), "01")
+    val tx = baselineFreeholdTransaction.copy(
+      postTransRulingApplied = Some("NO"), isDependantOnFutureEvent = Some("NO"), agreedToDeferPayment = Some("NO"),
+      includesStock = None, includesGoodwill = None, includesOther = None, includesChattel = None,
+      usedAsFactory = None, usedAsHotel = None, usedAsIndustrial = None, usedAsOffice = None,
+      usedAsOther   = None, usedAsShop  = None, usedAsWarehouse  = None
+    )
+    base.copy(
+      transaction    = Some(f(tx)),
+      companyDetails = None,
+      purchaser      = base.purchaser.map(_.map(_.copy(registrationNumber = None, placeOfRegistration = None)))
+    )
 
   /** Sets the property type on the land the mapper treats as main (mainLandID, or the first land). */
   private def withMainLandType(fr: FullReturn, propertyType: String): FullReturn =

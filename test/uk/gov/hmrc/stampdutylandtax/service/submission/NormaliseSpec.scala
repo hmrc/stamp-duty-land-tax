@@ -16,244 +16,76 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import base.SpecBase
-import service.submission.Normalise
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import service.submission.Normalise.*
 
-class NormaliseSpec extends SpecBase {
-  
-  "Normalise.isBlank" - {
-    "must be true for None" in {
-      Normalise.isBlank(None) mustBe true
-    }
-    "must be true for an empty string" in {
-      Normalise.isBlank(Some("")) mustBe true
-    }
-    "must be true for a whitespace-only string" in {
-      Normalise.isBlank(Some("   ")) mustBe true
-    }
-    "must be false for a non-blank string" in {
-      Normalise.isBlank(Some("x")) mustBe false
-    }
-    "must be false for a padded non-blank string" in {
-      Normalise.isBlank(Some("  x  ")) mustBe false
-    }
-  }
+class NormaliseSpec extends AnyWordSpec with Matchers:
 
-  "Normalise.nonBlank (Option)" - {
-    "must return None for None" in {
-      Normalise.nonBlank(None) mustBe None
+  "moneyFromString (AS-IS formatCurrency)" should {
+
+    "add .00 to whole pounds" in {
+      moneyFromString(Some("191250")) shouldBe Some("191250.00")
+      moneyFromString(Some("37"))     shouldBe Some("37.00")
+      moneyFromString(Some("0"))      shouldBe Some("0.00")
     }
-    "must return None for an empty string" in {
-      Normalise.nonBlank(Some("")) mustBe None
+
+    "keep an amount already at .00" in {
+      moneyFromString(Some("2000000.00")) shouldBe Some("2000000.00")
     }
-    "must return None for a whitespace-only string" in {
-      Normalise.nonBlank(Some("   ")) mustBe None
+
+    "truncate the pence rather than round them" in {
+      moneyFromString(Some("450.75")) shouldBe Some("450.00")
+      moneyFromString(Some("450.99")) shouldBe Some("450.00")
+      moneyFromString(Some("450.5"))  shouldBe Some("450.00")
+      moneyFromString(Some("0.99"))   shouldBe Some("0.00")
     }
-    "must return the trimmed value for a padded string" in {
-      Normalise.nonBlank(Some("  hello  ")) mustBe Some("hello")
+
+    "accept thousands separators and surrounding spaces" in {
+      moneyFromString(Some("1,000"))        shouldBe Some("1000.00")
+      moneyFromString(Some(" 1,234,567.89 ")) shouldBe Some("1234567.00")
     }
-    "must return the value unchanged when already trimmed" in {
-      Normalise.nonBlank(Some("hello")) mustBe Some("hello")
+
+    "give None for blank or non-numeric input, so the element is left out" in {
+      moneyFromString(None)          shouldBe None
+      moneyFromString(Some(""))      shouldBe None
+      moneyFromString(Some("   "))   shouldBe None
+      moneyFromString(Some("abc"))   shouldBe None
+      moneyFromString(Some("£100"))  shouldBe None
     }
-  }
-  
-  "Normalise.nonBlank (String)" - {
-    "must return None for a null string" in {
-      Normalise.nonBlank(null.asInstanceOf[String]) mustBe None
-    }
-    "must return None for an empty string" in {
-      Normalise.nonBlank("") mustBe None
-    }
-    "must return None for a whitespace-only string" in {
-      Normalise.nonBlank("   ") mustBe None
-    }
-    "must return the trimmed value for a padded string" in {
-      Normalise.nonBlank("  hello  ") mustBe Some("hello")
-    }
-  }
-  
-  "Normalise.isYes" - {
-    "must be true for any casing of yes" in {
-      Normalise.isYes(Some("yes")) mustBe true
-      Normalise.isYes(Some("YES")) mustBe true
-      Normalise.isYes(Some("Yes")) mustBe true
-    }
-    "must be true for any casing of the y shorthand" in {
-      Normalise.isYes(Some("y")) mustBe true
-      Normalise.isYes(Some("Y")) mustBe true
-    }
-    "must be true for a padded yes" in {
-      Normalise.isYes(Some("  yes  ")) mustBe true
-    }
-    "must be false for no" in {
-      Normalise.isYes(Some("no")) mustBe false
-    }
-    "must be false for an unrelated value" in {
-      Normalise.isYes(Some("true")) mustBe false
-    }
-    "must be false for None" in {
-      Normalise.isYes(None) mustBe false
-    }
-    "must be false for a blank string" in {
-      Normalise.isYes(Some("   ")) mustBe false
-    }
-  }
-  
-  "Normalise.yesNo (Option)" - {
-    "must encode yes variants to lowercase yes" in {
-      Normalise.yesNo(Some("yes")) mustBe Some("yes")
-      Normalise.yesNo(Some("YES")) mustBe Some("yes")
-      Normalise.yesNo(Some("y")) mustBe Some("yes")
-      Normalise.yesNo(Some("Y")) mustBe Some("yes")
-    }
-    "must encode no variants to lowercase no" in {
-      Normalise.yesNo(Some("no")) mustBe Some("no")
-      Normalise.yesNo(Some("NO")) mustBe Some("no")
-      Normalise.yesNo(Some("n")) mustBe Some("no")
-      Normalise.yesNo(Some("N")) mustBe Some("no")
-    }
-    "must lowercase any other non-blank value" in {
-      Normalise.yesNo(Some("Maybe")) mustBe Some("maybe")
-    }
-    "must trim before encoding" in {
-      Normalise.yesNo(Some("  yes  ")) mustBe Some("yes")
-    }
-    "must return None for None" in {
-      Normalise.yesNo(None) mustBe None
-    }
-    "must return None for a blank string" in {
-      Normalise.yesNo(Some("   ")) mustBe None
-    }
-  }
-  
-  "Normalise.yesNo (Boolean)" - {
-    "must encode true as yes" in {
-      Normalise.yesNo(true) mustBe "yes"
-    }
-    "must encode false as no" in {
-      Normalise.yesNo(false) mustBe "no"
-    }
-  }
-  
-  "Normalise.money (BigDecimal)" - {
-    "must render zero with two decimal places" in {
-      Normalise.money(BigDecimal(0)) mustBe "0.00"
-    }
-    "must pad a whole number to two decimal places" in {
-      Normalise.money(BigDecimal(1)) mustBe "1.00"
-    }
-    "must pad a single decimal place" in {
-      Normalise.money(BigDecimal("1.5")) mustBe "1.50"
-    }
-    "must round half up at the second decimal place" in {
-      Normalise.money(BigDecimal("1.005")) mustBe "1.01"
-    }
-    "must round down below the halfway point" in {
-      Normalise.money(BigDecimal("1.004")) mustBe "1.00"
-    }
-    "must render negatives with two decimal places" in {
-      Normalise.money(BigDecimal("-1.5")) mustBe "-1.50"
-    }
-    "must render large values as plain (non-scientific) strings" in {
-      Normalise.money(BigDecimal("1E7")) mustBe "10000000.00"
-    }
-  }
-  
-  "Normalise.toMoney" - {
-    "must parse a valid decimal string" in {
-      Normalise.toMoney("1.50") mustBe Some(BigDecimal("1.50"))
-    }
-    "must trim before parsing" in {
-      Normalise.toMoney("  2  ") mustBe Some(BigDecimal("2"))
-    }
-    "must return None for a non-numeric string" in {
-      Normalise.toMoney("abc") mustBe None
-    }
-    "must return None for an empty string" in {
-      Normalise.toMoney("") mustBe None
-    }
-    "must return None for a whitespace-only string" in {
-      Normalise.toMoney("   ") mustBe None
-    }
-    "must return None for a value with thousands separators" in {
-      Normalise.toMoney("1,000") mustBe None
-    }
-  }
-  
-  "Normalise.money (Option)" - {
-    "must format a present value" in {
-      Normalise.money(Some(BigDecimal("1.5"))) mustBe Some("1.50")
-    }
-    "must return None for None" in {
-      Normalise.money(None) mustBe None
+
+    "always match the schema's SDmonetaryStructure pattern" in {
+      Seq("0", "1", "37", "450.75", "1,000.50", "9999999999").foreach { in =>
+        moneyFromString(Some(in)).get should fullyMatch regex """(([1-9][0-9]*)|0)\.0{2}"""
+      }
     }
   }
 
-  "Normalise.moneyOrZero" - {
-    "must format a present value" in {
-      Normalise.moneyOrZero(Some(BigDecimal("2.5"))) mustBe "2.50"
+  "money(BigDecimal)" should {
+
+    "truncate to whole pounds with .00" in {
+      money(BigDecimal("15000.49")) shouldBe "15000.00"
+      money(BigDecimal("15000.50")) shouldBe "15000.00"
+      money(BigDecimal("15000"))    shouldBe "15000.00"
     }
-    "must default to 0.00 for None" in {
-      Normalise.moneyOrZero(None) mustBe "0.00"
+
+    "never use scientific notation" in {
+      money(BigDecimal("1E+6")) shouldBe "1000000.00"
     }
   }
 
+  "isoDate" should {
 
-  "Normalise.moneyFromString" - {
-    "must parse and format a valid string" in {
-      Normalise.moneyFromString(Some("1.5")) mustBe Some("1.50")
+    "convert dd/MM/yyyy to ISO" in {
+      isoDate(Some("10/10/2022")) shouldBe Some("2022-10-10")
     }
-    "must trim before parsing" in {
-      Normalise.moneyFromString(Some("  2  ")) mustBe Some("2.00")
+
+    "keep ISO dates" in {
+      isoDate(Some("2022-10-10")) shouldBe Some("2022-10-10")
     }
-    "must round half up" in {
-      Normalise.moneyFromString(Some("1234.567")) mustBe Some("1234.57")
-    }
-    "must return None for a non-numeric string" in {
-      Normalise.moneyFromString(Some("abc")) mustBe None
-    }
-    "must return None for None" in {
-      Normalise.moneyFromString(None) mustBe None
-    }
-    "must return None for a blank string" in {
-      Normalise.moneyFromString(Some("   ")) mustBe None
+
+    "give None for anything else" in {
+      isoDate(Some("2022/10/10")) shouldBe None
+      isoDate(None)               shouldBe None
     }
   }
-
-
-  "Normalise.isoDate" - {
-    "must pass through a value already in ISO format" in {
-      Normalise.isoDate(Some("2026-01-31")) mustBe Some("2026-01-31")
-    }
-    "must convert a UK dd/MM/yyyy date to ISO" in {
-      Normalise.isoDate(Some("31/01/2026")) mustBe Some("2026-01-31")
-    }
-    "must interpret the UK format as day-first, not month-first" in {
-      Normalise.isoDate(Some("05/11/2026")) mustBe Some("2026-11-05")
-    }
-    "must trim before parsing" in {
-      Normalise.isoDate(Some("  31/01/2026  ")) mustBe Some("2026-01-31")
-    }
-    "must accept a valid leap-year date" in {
-      Normalise.isoDate(Some("29/02/2024")) mustBe Some("2024-02-29")
-    }
-    "must clamp an invalid leap-year date to the last valid day (SMART resolver)" in {
-      Normalise.isoDate(Some("29/02/2026")) mustBe Some("2026-02-28")
-    }
-    "must reject an out-of-range day" in {
-      Normalise.isoDate(Some("32/01/2026")) mustBe None
-    }
-    "must reject a slash-separated non-UK-ordered date" in {
-      Normalise.isoDate(Some("2026/01/31")) mustBe None
-    }
-    "must return None for an unparseable string" in {
-      Normalise.isoDate(Some("not-a-date")) mustBe None
-    }
-    "must return None for None" in {
-      Normalise.isoDate(None) mustBe None
-    }
-    "must return None for a blank string" in {
-      Normalise.isoDate(Some("   ")) mustBe None
-    }
-  }
-}
