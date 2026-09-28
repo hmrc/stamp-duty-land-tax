@@ -93,11 +93,7 @@ object SdltReturnMapper:
     val lines = Seq(tx.exchangedLandAddress1, tx.exchangedLandAddress2, tx.exchangedLandAddress3, tx.exchangedLandAddress4).flatMap(nonBlank)
     if lines.isEmpty && isBlank(tx.exchangedLandPostcode) && isBlank(tx.exchangedLandHouseNumber) then None
     else Some(<Address>{addressBody(tx.exchangedLandPostcode, tx.exchangedLandHouseNumber, lines)}</Address>)
-
-  /**
-   * Consideration (SDLT1 boxes 10-12) is sent for F, O and A, and left out only for a grant of lease (L).
-   * Rules 34/40 require box 10 > 0 and at least one box 12 code when box 2 is F, O or A.
-   */
+  
   private def taxCalculation(fr: FullReturn): Elem =
     val tx          = fr.transaction.getOrElse(emptyTransaction)
     val taxCalc     = fr.taxCalculation
@@ -174,22 +170,12 @@ object SdltReturnMapper:
       {property(first)}
       {if leased then NodeSeq.Empty else additionalLands.flatMap(additionalProperty)}
     </LandDetail>
-
-  /**
-   * SDLT1 LandDetail/LeaseDetails (sdlt4 = false) carries the real figures for the main land.
-   * SDLT4 AboutTheLease/LeaseDetails (sdlt4 = true) follows the AS-IS, since the amounts are declared once on SDLT1:
-   *   - StartingRent/RentPayable is always 0.00
-   *   - grant of lease ("L"): VATamount, PremiumPaid, NetPresentValue, TotalPremiumTax and TotalNPVtax are 0.00.
-   *     They must be present on SDLT4 for multi-property leases (rules 303/307, which only apply to "L")
-   *   - anything else (e.g. assignment "A"): those five elements are omitted
-   * SDLT1 TotalPremiumTax and TotalNPVtax (boxes 24/25) are only sent for "L": rules 81/83 reject them for F, O and A.
-   */
+  
   private def leaseDetails(fr: FullReturn, sdlt4: Boolean): NodeSeq =
     fr.lease.map { lease =>
       val taxCalc = fr.taxCalculation
       val grant   = isGrantOfLease(fr)
 
-      // For SDLT4, "L" gets 0.00 and anything else omits the element; SDLT1 always uses the real value.
       def sdlt4Amount(real: => Option[String]): Option[String] =
         if !sdlt4 then real
         else if grant then Some(ZeroMoney)
@@ -269,14 +255,12 @@ object SdltReturnMapper:
   private def orderedVendors(fr: FullReturn): Seq[Vendor] =
     mainFirst(fr.vendor.getOrElse(Nil), fr.returnInfo.flatMap(_.mainVendorID), _.vendorID)
 
-  // Rule 400: the main purchaser's ID (NINO / DOB / registration number + place) must be the one sent.
   private def orderedPurchasers(fr: FullReturn): Seq[Purchaser] =
     mainFirst(fr.purchaser.getOrElse(Nil), fr.returnInfo.flatMap(_.mainPurchaserID), _.purchaserID)
 
   private def mainPurchaser(fr: FullReturn): Option[Purchaser] =
     orderedPurchasers(fr).headOption
 
-  // SDLT1 box 28 must be the main land; the rest go to AdditionalProperty (freehold) or SDLT4 (lease).
   private def orderedLands(fr: FullReturn): Seq[Land] =
     mainFirst(fr.land.getOrElse(Nil), fr.returnInfo.flatMap(_.mainLandID), _.landID)
 
@@ -347,10 +331,7 @@ object SdltReturnMapper:
     val additional = purchasers.lift(1)
     val sdlt2      = purchasers.drop(2)
     val residency  = fr.residency
-    // Residency questions only apply to residential property (SDLT1 field 1 = 01 or 04). Rule 420 rejects
-    // CloseCompanyStatus for 02 (mixed) and 03 (non-residential), so the whole block is left out for those.
     val residential = isResidential(fr)
-    // AS-IS: individuals leave close company status blank and the ChRIS payload sends "no". Rule 418.
     val closeCompanyStatus = residency.flatMap(r => yesNo(r.isCloseCompany)).getOrElse("no")
     <PurchaserDetails>
       <NumberOfPurchasers>{purchasers.size.max(1)}</NumberOfPurchasers>
@@ -469,7 +450,6 @@ object SdltReturnMapper:
     val tx = fr.transaction.getOrElse(emptyTransaction)
     val p  = mainPurchaser(fr).getOrElse(emptyPurchaser)
     val cd = fr.companyDetails.getOrElse(emptyCompanyDetails)
-    // Deferred payment is not a trigger on its own: it is only sent when consideration is contingent.
     isYes(tx.postTransRulingApplied) ||
       isYes(tx.isDependantOnFutureEvent) ||
       Seq(tx.usedAsFactory, tx.usedAsHotel, tx.usedAsIndustrial, tx.usedAsOffice,
@@ -502,13 +482,7 @@ object SdltReturnMapper:
       case Some(v) if v.equalsIgnoreCase("no")  => NodeSeq.Empty
       case Some(other)                          =>
         throw new IllegalArgumentException(s"Unknown MineralRights '$other'; expected yes or no")
-
-
-  /**
-   * SDLT4 boxes 4 and 5 (AS-IS, rule 231):
-   *   contingent = yes -> ConsiderationDependentOnFutureEvents = yes, DeferredPayment = the user's yes/no
-   *   otherwise        -> both omitted (deferral only applies to contingent consideration)
-   */
+  
   private def triggerFields(tx: Transaction): NodeSeq =
     val contingent = isYes(tx.isDependantOnFutureEvent)
     val boxes4And5: NodeSeq =
