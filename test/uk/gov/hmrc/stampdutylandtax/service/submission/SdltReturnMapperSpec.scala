@@ -70,15 +70,16 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (firstProperty \ "PropertyType").text.trim shouldBe "02"
     }
 
-    "give every SDLT4/AboutTheLease/LeaseDetails the LeaseType M and source-driven monetary values (no force-zeroing)" in {
+    "give every SDLT4/AboutTheLease/LeaseDetails the LeaseType M and zeroed premium, NPV and tax figures (AS-IS, rules 303/307)" in {
       val leaseDetails = sdlt \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails"
       leaseDetails.size shouldBe 98
-      val first = leaseDetails.head
-      (first \ "LeaseType").text.trim       shouldBe "M"
-      (first \ "PremiumPaid").text.trim     shouldBe "50000.00"
-      (first \ "NetPresentValue").text.trim shouldBe "480000.00"
-      (first \ "TotalPremiumTax")           shouldBe empty
-      (first \ "TotalNPVtax")               shouldBe empty
+      (leaseDetails.head \ "LeaseType").text.trim shouldBe "M"
+      leaseDetails.foreach { ld =>
+        (ld \ "PremiumPaid").map(_.text.trim)     shouldBe Seq("0.00")
+        (ld \ "NetPresentValue").map(_.text.trim) shouldBe Seq("0.00")
+        (ld \ "TotalPremiumTax").map(_.text.trim) shouldBe Seq("0.00")
+        (ld \ "TotalNPVtax").map(_.text.trim)     shouldBe Seq("0.00")
+      }
     }
 
     "emit a stripped AdditionalTransactionDetails on SDLT4 blocks beyond the first (no TotalConsideration)" in {
@@ -414,14 +415,19 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "PurchaserVATreferenceNumber") shouldBe empty
     }
 
-    "emit SDLT4/AboutTheLease/LeaseDetails with source-driven monetary fields (no force-zeroing)" in {
+    "emit SDLT4/AboutTheLease/LeaseDetails with premium, NPV and tax figures zeroed (AS-IS, rules 303/307)" in {
       val ld = sdlt \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails"
       ld.size shouldBe 1
+      (ld \ "PremiumPaid").text.trim     shouldBe "0.00"
+      (ld \ "NetPresentValue").text.trim shouldBe "0.00"
+      (ld \ "TotalPremiumTax").text.trim shouldBe "0.00"
+      (ld \ "TotalNPVtax").text.trim     shouldBe "0.00"
+    }
+
+    "keep the real premium and NPV on the SDLT1 LeaseDetails" in {
+      val ld = sdlt \\ "LandDetail" \ "LeaseDetails"
       (ld \ "PremiumPaid").text.trim     shouldBe "50000.00"
       (ld \ "NetPresentValue").text.trim shouldBe "480000.00"
-      // Source data has no tax fields → omitted (schema permits absence).
-      (ld \ "TotalPremiumTax") shouldBe empty
-      (ld \ "TotalNPVtax")     shouldBe empty
     }
 
     "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-individual-lease.xml") }
@@ -461,6 +467,383 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     "omit the element for unrecognised values rather than silently mapping to 'no'" in {
       val sdlt = withRulingFollowed("garbage")
       (sdlt \\ "PostTransactionRulingFollowed") shouldBe empty
+    }
+  }
+
+  "Mapper SDLT4 box 4 / box 5 handling (rule 231: contingent consideration => deferred payment must be present)" should {
+
+    def withContingentAndDeferred(contingent: Option[String], deferred: Option[String]): Elem =
+      val tx = baselineFreeholdTransaction.copy(
+        isDependantOnFutureEvent = contingent,
+        agreedToDeferPayment     = deferred
+      )
+      SdltReturnMapper.toSdltElement(freeholdReturn(1, 1, 1).copy(transaction = Some(tx)))
+
+    "send DeferredPayment = no when contingent is yes and deferral is no" in {
+      val atd = withContingentAndDeferred(Some("YES"), Some("NO")) \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "ConsiderationDependentOnFutureEvents").text.trim shouldBe "yes"
+      (atd \ "DeferredPayment").text.trim                      shouldBe "no"
+    }
+
+    "send DeferredPayment = yes when contingent is yes and deferral is yes" in {
+      val atd = withContingentAndDeferred(Some("YES"), Some("YES")) \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "ConsiderationDependentOnFutureEvents").text.trim shouldBe "yes"
+      (atd \ "DeferredPayment").text.trim                      shouldBe "yes"
+    }
+
+    "omit both when contingent is no and deferral is no" in {
+      val sdlt = withContingentAndDeferred(Some("NO"), Some("NO"))
+      (sdlt \\ "ConsiderationDependentOnFutureEvents") shouldBe empty
+      (sdlt \\ "DeferredPayment")                      shouldBe empty
+    }
+
+    "omit both when contingent is no, even if deferral is yes" in {
+      val sdlt = withContingentAndDeferred(Some("NO"), Some("YES"))
+      (sdlt \\ "ConsiderationDependentOnFutureEvents") shouldBe empty
+      (sdlt \\ "DeferredPayment")                      shouldBe empty
+    }
+
+    "omit both when contingent was never answered, even if deferral is yes" in {
+      val sdlt = withContingentAndDeferred(None, Some("YES"))
+      (sdlt \\ "ConsiderationDependentOnFutureEvents") shouldBe empty
+      (sdlt \\ "DeferredPayment")                      shouldBe empty
+    }
+
+    "not trigger an SDLT4 on deferral alone" in {
+      val tx = baselineFreeholdTransaction.copy(
+        isDependantOnFutureEvent = Some("NO"),
+        agreedToDeferPayment     = Some("YES"),
+        postTransRulingApplied   = Some("NO"),
+        usedAsFactory = None, usedAsHotel = None, usedAsIndustrial = None, usedAsOffice = None,
+        usedAsOther   = None, usedAsShop  = None, usedAsWarehouse  = None
+      )
+      val base = freeholdReturn(1, 1, 1)
+      val sdlt = SdltReturnMapper.toSdltElement(
+        base.copy(
+          transaction    = Some(tx),
+          companyDetails = None,
+          purchaser      = base.purchaser.map(_.map(_.copy(registrationNumber = None, placeOfRegistration = None)))
+        )
+      )
+      (sdlt \\ "SDLT4Count").text.trim shouldBe "0"
+      (sdlt \\ "SDLT4")                shouldBe empty
+    }
+
+    "omit DeferredPayment when contingent is yes but deferral was never answered (frontend must require it)" in {
+      val atd = withContingentAndDeferred(Some("YES"), None) \\ "SDLT4" \ "AdditionalTransactionDetails"
+      (atd \ "ConsiderationDependentOnFutureEvents").text.trim shouldBe "yes"
+      (atd \ "DeferredPayment")                                shouldBe empty
+    }
+
+    "put DeferredPayment after ConsiderationDependentOnFutureEvents, as the schema requires" in {
+      val atd  = (withContingentAndDeferred(Some("YES"), Some("NO")) \\ "SDLT4" \ "AdditionalTransactionDetails").head
+      val kids = labels(atd)
+      kids.indexOf("DeferredPayment") shouldBe kids.indexOf("ConsiderationDependentOnFutureEvents") + 1
+    }
+
+    "carry DeferredPayment = no onto the stripped SDLT4 blocks of a multi-land lease" in {
+      val lease = leaseReturnTriggered()
+      val tx    = lease.transaction.getOrElse(Transaction()).copy(
+        isDependantOnFutureEvent = Some("YES"),
+        agreedToDeferPayment     = Some("NO")
+      )
+      val sdlt = SdltReturnMapper.toSdltElement(lease.copy(transaction = Some(tx)))
+      (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "DeferredPayment").map(_.text.trim) shouldBe Seq("no", "no")
+    }
+
+    "validate against the SDLT/6 schema with DeferredPayment = no" in {
+      assertValid(withContingentAndDeferred(Some("YES"), Some("NO")), "sdlt-deferred-no.xml")
+    }
+  }
+
+  "Mapper CloseCompanyStatus handling (rule 418: AS-IS sends no when left blank)" should {
+
+    def withResidency(residency: Option[Residency]): Elem =
+      SdltReturnMapper.toSdltElement(freeholdReturn(1, 1, 1).copy(residency = residency))
+
+    def residency(closeCompany: Option[String]): Residency =
+      Residency(
+        residencyID      = Some("R1"),
+        isNonUkResidents = Some("no"),
+        isCloseCompany   = closeCompany,
+        isCrownRelief    = Some("no")
+      )
+
+    "default to no when close company status was left blank" in {
+      (withResidency(Some(residency(None))) \\ "PurchaserDetails" \ "CloseCompanyStatus").map(_.text.trim) shouldBe Seq("no")
+    }
+
+    "default to no when there is no residency record at all" in {
+      (withResidency(None) \\ "PurchaserDetails" \ "CloseCompanyStatus").map(_.text.trim) shouldBe Seq("no")
+    }
+
+    "keep an explicit yes" in {
+      (withResidency(Some(residency(Some("YES")))) \\ "PurchaserDetails" \ "CloseCompanyStatus").text.trim shouldBe "yes"
+    }
+
+    "keep an explicit no" in {
+      (withResidency(Some(residency(Some("NO")))) \\ "PurchaserDetails" \ "CloseCompanyStatus").text.trim shouldBe "no"
+    }
+
+    "sit between ResidencyStatus and CrownEmployeeRelief, as the schema requires" in {
+      val kids = labels((withResidency(Some(residency(None))) \\ "PurchaserDetails").head)
+      kids.indexOf("CloseCompanyStatus") shouldBe kids.indexOf("ResidencyStatus") + 1
+      kids.indexOf("CrownEmployeeRelief") shouldBe kids.indexOf("CloseCompanyStatus") + 1
+    }
+
+    "validate against the SDLT/6 schema with the defaulted value" in {
+      assertValid(withResidency(Some(residency(None))), "sdlt-close-company-default.xml")
+    }
+  }
+
+  "Mapper SDLT1 and SDLT4 lease premium, NPV and tax figures (rules 303/307)" should {
+
+    val base = leaseReturn(vendors = 1, purchasers = 1, lands = 2)
+    val grantReturn: FullReturn =
+      base.copy(
+        lease = base.lease.map(_.copy(
+          totalPremiumPayable = Some("2000000.00"),
+          netPresentValue     = Some("1897.00"),
+          startingRent        = Some("450.00"),
+          VATAmount           = Some("75.00")
+        )),
+        taxCalculation = Some(
+          base.taxCalculation.getOrElse(TaxCalculation()).copy(taxDuePremium = Some("191250"), taxDueNPV = Some("37"))
+        )
+      )
+    val sdlt = SdltReturnMapper.toSdltElement(grantReturn)
+    val assignment = SdltReturnMapper.toSdltElement(
+      grantReturn.copy(transaction = Some(grantReturn.transaction.getOrElse(Transaction()).copy(
+        transactionDescription    = Some("A"),
+        newTransactionDescription = Some("A")
+      )))
+    )
+
+    "format whole-pound tax figures to the schema's two decimal places on SDLT1" in {
+      val ld = sdlt \\ "LandDetail" \ "LeaseDetails"
+      (ld \ "TotalPremiumTax").text.trim shouldBe "191250.00"
+      (ld \ "TotalNPVtax").text.trim     shouldBe "37.00"
+    }
+
+    "keep the real premium and NPV on SDLT1" in {
+      val ld = sdlt \\ "LandDetail" \ "LeaseDetails"
+      (ld \ "PremiumPaid").text.trim     shouldBe "2000000.00"
+      (ld \ "NetPresentValue").text.trim shouldBe "1897.00"
+    }
+
+    "send 0.00 for premium, NPV and both tax totals on the SDLT4 AboutTheLease/LeaseDetails, whatever the source values" in {
+      val ld = sdlt \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails"
+      ld.size shouldBe 1
+      (ld \ "PremiumPaid").text.trim     shouldBe "0.00"
+      (ld \ "NetPresentValue").text.trim shouldBe "0.00"
+      (ld \ "TotalPremiumTax").text.trim shouldBe "0.00"
+      (ld \ "TotalNPVtax").text.trim     shouldBe "0.00"
+    }
+
+    "still send the zeroed SDLT4 figures when the lease has no premium or NPV at all" in {
+      val bare = SdltReturnMapper.toSdltElement(
+        base.copy(lease = base.lease.map(_.copy(totalPremiumPayable = None, netPresentValue = None)))
+      )
+      val ld = bare \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails"
+      (ld \ "PremiumPaid").map(_.text.trim)     shouldBe Seq("0.00")
+      (ld \ "NetPresentValue").map(_.text.trim) shouldBe Seq("0.00")
+    }
+
+    "keep the real RentPayable and VATamount on SDLT1 for the main land" in {
+      val rent = sdlt \\ "LandDetail" \ "LeaseDetails" \ "StartingRent"
+      (rent \ "RentPayable").text.trim shouldBe "450.00"
+      (rent \ "VATamount").text.trim   shouldBe "75.00"
+    }
+
+    "send RentPayable and VATamount as 0.00 on SDLT4 for a grant of lease (L)" in {
+      val rent = sdlt \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (rent \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
+      (rent \ "VATamount").map(_.text.trim)   shouldBe Seq("0.00")
+    }
+
+    "keep the other SDLT4 StartingRent details (end date, later rent known) from the lease" in {
+      val sdlt1Rent = sdlt \\ "LandDetail" \ "LeaseDetails" \ "StartingRent"
+      val sdlt4Rent = sdlt \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (sdlt4Rent \ "EndDate").text.trim        shouldBe (sdlt1Rent \ "EndDate").text.trim
+      (sdlt4Rent \ "LaterRentKnown").text.trim shouldBe (sdlt1Rent \ "LaterRentKnown").text.trim
+    }
+
+    "send RentPayable as 0.00 on SDLT4 when the lease has no starting rent at all" in {
+      val bare = SdltReturnMapper.toSdltElement(
+        base.copy(lease = base.lease.map(_.copy(startingRent = None, VATAmount = None)))
+      )
+      val rent = bare \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (rent \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
+      (rent \ "VATamount").map(_.text.trim)   shouldBe Seq("0.00")
+    }
+
+    "for an assignment of lease (A), zero RentPayable and omit VAT, premium, NPV and both tax totals on SDLT4" in {
+      val sdlt4Ld = assignment \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails"
+      sdlt4Ld.size shouldBe 1
+      (sdlt4Ld \ "StartingRent" \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
+      (sdlt4Ld \ "StartingRent" \ "VATamount") shouldBe empty
+      (sdlt4Ld \ "PremiumPaid")                shouldBe empty
+      (sdlt4Ld \ "NetPresentValue")            shouldBe empty
+      (sdlt4Ld \ "TotalPremiumTax")            shouldBe empty
+      (sdlt4Ld \ "TotalNPVtax")                shouldBe empty
+    }
+
+    "for an assignment of lease (A), keep the real figures on SDLT1" in {
+      val ld = assignment \\ "LandDetail" \ "LeaseDetails"
+      (ld \ "StartingRent" \ "RentPayable").text.trim shouldBe "450.00"
+      (ld \ "StartingRent" \ "VATamount").text.trim   shouldBe "75.00"
+      (ld \ "PremiumPaid").text.trim                  shouldBe "2000000.00"
+      (ld \ "NetPresentValue").text.trim              shouldBe "1897.00"
+      (ld \ "TotalPremiumTax").text.trim              shouldBe "191250.00"
+      (ld \ "TotalNPVtax").text.trim                  shouldBe "37.00"
+    }
+
+    "for an assignment of lease (A), still keep the SDLT4 rent end date and later rent known" in {
+      val sdlt1Rent = assignment \\ "LandDetail" \ "LeaseDetails" \ "StartingRent"
+      val sdlt4Rent = assignment \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (sdlt4Rent \ "EndDate").text.trim        shouldBe (sdlt1Rent \ "EndDate").text.trim
+      (sdlt4Rent \ "LaterRentKnown").text.trim shouldBe (sdlt1Rent \ "LaterRentKnown").text.trim
+    }
+
+    "validate against the SDLT/6 schema for an assignment of lease (A)" in {
+      assertValid(assignment, "sdlt-assignment-lease.xml")
+    }
+
+    "end every LeaseDetails with TotalPremiumTax then TotalNPVtax" in {
+      (sdlt \\ "LeaseDetails").foreach { ld =>
+        labels(ld).takeRight(2) shouldBe Seq("TotalPremiumTax", "TotalNPVtax")
+      }
+    }
+
+    "default both to 0.00 when there is no tax calculation" in {
+      val noTax = SdltReturnMapper.toSdltElement(base.copy(taxCalculation = None))
+      (noTax \\ "LeaseDetails" \ "TotalPremiumTax").map(_.text.trim).distinct shouldBe Seq("0.00")
+      (noTax \\ "LeaseDetails" \ "TotalNPVtax").map(_.text.trim).distinct     shouldBe Seq("0.00")
+    }
+
+    "validate against the SDLT/6 schema" in { assertValid(sdlt, "sdlt-lease-tax-totals.xml") }
+  }
+
+  "Mapper main-first ordering (FormP does not return parties main-first)" should {
+
+    val mainPurchaser = buildPurchaser(1).copy(
+      purchaserID         = Some("P-MAIN"),
+      isCompany           = Some("no"),
+      companyName         = None,
+      surname             = Some("Main Purchaser"),
+      nino                = None,
+      dateOfBirth         = None,
+      registrationNumber  = Some("345678901"),
+      placeOfRegistration = Some("Germany")
+    )
+    val secondPurchaser = buildPurchaser(2).copy(
+      purchaserID          = Some("P-SECOND"),
+      isCompany            = Some("no"),
+      companyName          = None,
+      surname              = Some("Second Purchaser"),
+      nino                 = None,
+      dateOfBirth          = None,
+      registrationNumber   = None,
+      placeOfRegistration  = None,
+      isRepresentedByAgent = None
+    )
+
+    "put the main purchaser in SDLT1 Purchaser and the other in AdditionalPurchaser" in {
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(freeholdReturn(vendors = 1, purchasers = 2, lands = 1), purchaser = Some("P-MAIN"))
+          .copy(purchaser = Some(Seq(secondPurchaser, mainPurchaser)))
+      )
+      ((sdlt \\ "PurchaserDetails" \ "Purchaser").head \ "Name" \ "CompanyOrSurname").text.trim           shouldBe "Main Purchaser"
+      ((sdlt \\ "PurchaserDetails" \ "AdditionalPurchaser").head \ "Name" \ "CompanyOrSurname").text.trim shouldBe "Second Purchaser"
+    }
+
+    "take the SDLT4 purchaser ID from the main purchaser, not the first in the list (rule 400)" in {
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(freeholdReturn(vendors = 1, purchasers = 2, lands = 1), purchaser = Some("P-MAIN"))
+          .copy(purchaser = Some(Seq(secondPurchaser, mainPurchaser)))
+      )
+      val pcd = sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "PurchaserCompanyDetails"
+      pcd.size shouldBe 1
+      (pcd \ "CompanyRegisteredNumber").text.trim shouldBe "345678901"
+      (pcd \ "PlaceOfRegistration").text.trim     shouldBe "Germany"
+    }
+
+    "trigger SDLT4 from the main purchaser's registration on a single-land freehold with no transaction triggers" in {
+      val tx = baselineFreeholdTransaction.copy(
+        postTransRulingApplied   = Some("NO"),
+        agreedToDeferPayment     = Some("NO"),
+        isDependantOnFutureEvent = Some("NO"),
+        usedAsFactory = None, usedAsHotel = None, usedAsIndustrial = None, usedAsOffice = None,
+        usedAsOther   = None, usedAsShop  = None, usedAsWarehouse  = None
+      )
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(freeholdReturn(vendors = 1, purchasers = 2, lands = 1), purchaser = Some("P-MAIN"))
+          .copy(purchaser = Some(Seq(secondPurchaser, mainPurchaser)), transaction = Some(tx), companyDetails = None)
+      )
+      (sdlt \\ "SDLT4Count").text.trim shouldBe "1"
+      (sdlt \\ "SDLT4" \ "AdditionalTransactionDetails" \ "PurchaserCompanyDetails" \ "CompanyRegisteredNumber").text.trim shouldBe "345678901"
+    }
+
+    "keep the list order when the main purchaser id matches no one" in {
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(freeholdReturn(vendors = 1, purchasers = 2, lands = 1), purchaser = Some("does-not-exist"))
+          .copy(purchaser = Some(Seq(secondPurchaser, mainPurchaser)))
+      )
+      ((sdlt \\ "PurchaserDetails" \ "Purchaser").head \ "Name" \ "CompanyOrSurname").text.trim shouldBe "Second Purchaser"
+    }
+
+    "keep the list order when there is no main purchaser id" in {
+      val base = freeholdReturn(vendors = 1, purchasers = 2, lands = 1)
+      val sdlt = SdltReturnMapper.toSdltElement(
+        base.copy(
+          returnInfo = base.returnInfo.map(_.copy(mainPurchaserID = None)),
+          purchaser  = Some(Seq(secondPurchaser, mainPurchaser))
+        )
+      )
+      ((sdlt \\ "PurchaserDetails" \ "Purchaser").head \ "Name" \ "CompanyOrSurname").text.trim shouldBe "Second Purchaser"
+    }
+
+    "put the main vendor first and keep its agent" in {
+      val mainVendor   = buildVendor(1).copy(vendorID = Some("V-MAIN"), name = Some("Main Vendor"), isRepresentedByAgent = Some("yes"))
+      val secondVendor = buildVendor(2).copy(vendorID = Some("V-SECOND"), name = Some("Second Vendor"), isRepresentedByAgent = None)
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(freeholdReturn(vendors = 2, purchasers = 1, lands = 1), vendor = Some("V-MAIN"))
+          .copy(vendor = Some(Seq(secondVendor, mainVendor)), returnAgent = Some(Seq(agentOne)))
+      )
+      val vd = sdlt \\ "VendorDetails"
+      (vd \ "Vendor" \ "Name" \ "CompanyOrSurname").text.trim           shouldBe "Main Vendor"
+      (vd \ "AgentDetails" \ "Name").text.trim                          shouldBe "Agent One"
+      (vd \ "AdditionalVendor" \ "Name" \ "CompanyOrSurname").text.trim shouldBe "Second Vendor"
+    }
+
+    "put the main land in SDLT1 Property and the other in AdditionalProperty on a freehold" in {
+      val base          = freeholdReturn(vendors = 1, purchasers = 1, lands = 2)
+      val (main, other) = mainAndSecondLand(base)
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(base, land = Some("L-MAIN")).copy(land = Some(Seq(other, main)))
+      )
+      (sdlt \\ "LandDetail" \ "Property" \ "AddressOfLand" \ "Line").text           should include("Main Land Road")
+      (sdlt \\ "LandDetail" \ "AdditionalProperty" \ "AddressOfLand" \ "Line").text should include("Second Land Road")
+    }
+
+    "put the main land in SDLT1 Property and only the other lands in SDLT4 on a lease" in {
+      val base          = leaseReturn(vendors = 1, purchasers = 1, lands = 2)
+      val (main, other) = mainAndSecondLand(base)
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(base, land = Some("L-MAIN")).copy(land = Some(Seq(other, main)))
+      )
+      val sdlt4Lines = (sdlt \\ "SDLT4" \ "AboutTheLease" \ "Property" \ "AddressOfLand" \ "Line").text
+      (sdlt \\ "LandDetail" \ "Property" \ "AddressOfLand" \ "Line").text should include("Main Land Road")
+      sdlt4Lines should include("Second Land Road")
+      sdlt4Lines should not include "Main Land Road"
+    }
+
+    "validate against the SDLT/6 schema with a reordered purchaser list" in {
+      val sdlt = SdltReturnMapper.toSdltElement(
+        withMainIds(freeholdReturn(vendors = 1, purchasers = 2, lands = 1), purchaser = Some("P-MAIN"))
+          .copy(purchaser = Some(Seq(secondPurchaser, mainPurchaser)))
+      )
+      assertValid(sdlt, "sdlt-main-first.xml")
     }
   }
 
@@ -942,6 +1325,30 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       purchaser   = Some(Seq(buildPurchaser(1).copy(isRepresentedByAgent = Some("yes")))),
       returnAgent = Some(Seq(johnsonAndCo, agentOne))
     )
+
+  /** Sets whichever main*ID values are given on returnInfo, creating returnInfo if the fixture has none. */
+  private def withMainIds(
+                           fr: FullReturn,
+                           purchaser: Option[String] = None,
+                           vendor: Option[String]    = None,
+                           land: Option[String]      = None
+                         ): FullReturn =
+    val info = fr.returnInfo.getOrElse(ReturnInfo())
+    fr.copy(returnInfo = Some(info.copy(
+      mainPurchaserID = purchaser.orElse(info.mainPurchaserID),
+      mainVendorID    = vendor.orElse(info.mainVendorID),
+      mainLandID      = land.orElse(info.mainLandID)
+    )))
+
+  /** Takes the fixture's first two lands and gives them recognisable ids and addresses. */
+  private def mainAndSecondLand(fr: FullReturn): (Land, Land) =
+    val lands = fr.land.getOrElse(Nil)
+    val main  = lands.head.copy(landID = Some("L-MAIN"), address1 = Some("Main Land Road"))
+    val other = lands(1).copy(landID = Some("L-SECOND"), address1 = Some("Second Land Road"))
+    (main, other)
+
+  private def labels(node: scala.xml.Node): Seq[String] =
+    node.child.collect { case e: scala.xml.Elem => e.label }.toList
 
   private def certificateForEachReturn(stored: Option[String]): Elem =
     val base = freeholdReturn(1, 1, 1)
