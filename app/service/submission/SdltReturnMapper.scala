@@ -174,6 +174,8 @@ object SdltReturnMapper:
   private def leaseDetails(fr: FullReturn, sdlt4: Boolean): NodeSeq =
     fr.lease.map { lease =>
       val taxCalc = fr.taxCalculation
+      val zeroRent = sdlt4
+      val zeroVat  = sdlt4 && transactionDescription(fr) == "L"
       val premiumPaid: Option[String] =
         if sdlt4 then Some(ZeroMoney) else moneyFromString(lease.totalPremiumPayable)
       val netPresentValue: Option[String] =
@@ -187,7 +189,7 @@ object SdltReturnMapper:
         {isoDate(lease.contractStartDate).map(d => <StartDate>{d}</StartDate>: NodeSeq).getOrElse(NodeSeq.Empty)}
         {isoDate(lease.contractEndDate).map(d => <EndDate>{d}</EndDate>: NodeSeq).getOrElse(NodeSeq.Empty)}
         {nonBlank(lease.rentFreePeriod).map(p => <RentFreePeriod>{p}</RentFreePeriod>: NodeSeq).getOrElse(NodeSeq.Empty)}
-        {startingRent(lease, zeroAmounts = false)}
+        {startingRent(lease, zeroRent = zeroRent, zeroVat = zeroVat)}
         {premiumPaid.map(v => <PremiumPaid>{v}</PremiumPaid>: NodeSeq).getOrElse(NodeSeq.Empty)}
         {netPresentValue.map(v => <NetPresentValue>{v}</NetPresentValue>: NodeSeq).getOrElse(NodeSeq.Empty)}
         <TotalPremiumTax>{totalPremiumTax}</TotalPremiumTax>
@@ -195,14 +197,14 @@ object SdltReturnMapper:
       </LeaseDetails>: NodeSeq
     }.getOrElse(NodeSeq.Empty)
 
-  private def startingRent(lease: Lease, zeroAmounts: Boolean): NodeSeq =
+  private def startingRent(lease: Lease, zeroRent: Boolean, zeroVat: Boolean): NodeSeq =
     val rent  =
-      if zeroAmounts then <RentPayable>{ZeroMoney}</RentPayable>: NodeSeq
+      if zeroRent then <RentPayable>{ZeroMoney}</RentPayable>: NodeSeq
       else moneyFromString(lease.startingRent).map(v => <RentPayable>{v}</RentPayable>: NodeSeq).getOrElse(NodeSeq.Empty)
     val end   = isoDate(lease.startingRentEndDate).map(d => <EndDate>{d}</EndDate>: NodeSeq).getOrElse(NodeSeq.Empty)
     val later = yesNo(lease.laterRentKnown).map(v => <LaterRentKnown>{v}</LaterRentKnown>: NodeSeq).getOrElse(NodeSeq.Empty)
     val vat   =
-      if zeroAmounts then <VATamount>{ZeroMoney}</VATamount>: NodeSeq
+      if zeroVat then <VATamount>{ZeroMoney}</VATamount>: NodeSeq
       else moneyFromString(lease.VATAmount).map(v => <VATamount>{v}</VATamount>: NodeSeq).getOrElse(NodeSeq.Empty)
     if rent.isEmpty && end.isEmpty && later.isEmpty && vat.isEmpty then NodeSeq.Empty
     else <StartingRent>{rent ++ end ++ later ++ vat}</StartingRent>
@@ -253,12 +255,14 @@ object SdltReturnMapper:
   private def orderedVendors(fr: FullReturn): Seq[Vendor] =
     mainFirst(fr.vendor.getOrElse(Nil), fr.returnInfo.flatMap(_.mainVendorID), _.vendorID)
 
+  // Rule 400: the main purchaser's ID (NINO / DOB / registration number + place) must be the one sent.
   private def orderedPurchasers(fr: FullReturn): Seq[Purchaser] =
     mainFirst(fr.purchaser.getOrElse(Nil), fr.returnInfo.flatMap(_.mainPurchaserID), _.purchaserID)
 
   private def mainPurchaser(fr: FullReturn): Option[Purchaser] =
     orderedPurchasers(fr).headOption
 
+  // SDLT1 box 28 must be the main land; the rest go to AdditionalProperty (freehold) or SDLT4 (lease).
   private def orderedLands(fr: FullReturn): Seq[Land] =
     mainFirst(fr.land.getOrElse(Nil), fr.returnInfo.flatMap(_.mainLandID), _.landID)
 

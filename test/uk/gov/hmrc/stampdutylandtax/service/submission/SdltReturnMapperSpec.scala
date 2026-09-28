@@ -575,7 +575,12 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
     val base = leaseReturn(vendors = 1, purchasers = 1, lands = 2)
     val sdlt = SdltReturnMapper.toSdltElement(
       base.copy(
-        lease = base.lease.map(_.copy(totalPremiumPayable = Some("2000000.00"), netPresentValue = Some("1897.00"))),
+        lease = base.lease.map(_.copy(
+          totalPremiumPayable = Some("2000000.00"),
+          netPresentValue     = Some("1897.00"),
+          startingRent        = Some("450.00"),
+          VATAmount           = Some("75.00")
+        )),
         taxCalculation = Some(
           base.taxCalculation.getOrElse(TaxCalculation()).copy(taxDuePremium = Some("191250"), taxDueNPV = Some("37"))
         )
@@ -612,10 +617,48 @@ class SdltReturnMapperSpec extends AnyWordSpec with Matchers:
       (ld \ "NetPresentValue").map(_.text.trim) shouldBe Seq("0.00")
     }
 
-    "keep the SDLT4 rent details from the lease" in {
+    "keep the real RentPayable and VATamount on SDLT1 for the main land" in {
+      val rent = sdlt \\ "LandDetail" \ "LeaseDetails" \ "StartingRent"
+      (rent \ "RentPayable").text.trim shouldBe "450.00"
+      (rent \ "VATamount").text.trim   shouldBe "75.00"
+    }
+
+    "send RentPayable and VATamount as 0.00 on SDLT4 for a grant of lease (L)" in {
+      val rent = sdlt \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (rent \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
+      (rent \ "VATamount").map(_.text.trim)   shouldBe Seq("0.00")
+    }
+
+    "keep the other SDLT4 StartingRent details (end date, later rent known) from the lease" in {
       val sdlt1Rent = sdlt \\ "LandDetail" \ "LeaseDetails" \ "StartingRent"
       val sdlt4Rent = sdlt \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
-      sdlt4Rent.text.trim shouldBe sdlt1Rent.text.trim
+      (sdlt4Rent \ "EndDate").text.trim        shouldBe (sdlt1Rent \ "EndDate").text.trim
+      (sdlt4Rent \ "LaterRentKnown").text.trim shouldBe (sdlt1Rent \ "LaterRentKnown").text.trim
+    }
+
+    "send RentPayable as 0.00 on SDLT4 when the lease has no starting rent at all" in {
+      val bare = SdltReturnMapper.toSdltElement(
+        base.copy(lease = base.lease.map(_.copy(startingRent = None, VATAmount = None)))
+      )
+      val rent = bare \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (rent \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
+      (rent \ "VATamount").map(_.text.trim)   shouldBe Seq("0.00")
+    }
+
+    "zero RentPayable but keep the real VATamount on SDLT4 for an assignment of lease (A)" in {
+      val assignment = SdltReturnMapper.toSdltElement(
+        base.copy(
+          lease       = base.lease.map(_.copy(startingRent = Some("450.00"), VATAmount = Some("75.00"))),
+          transaction = Some(base.transaction.getOrElse(Transaction()).copy(
+            transactionDescription    = Some("A"),
+            newTransactionDescription = Some("A")
+          ))
+        )
+      )
+      val rent = assignment \\ "SDLT4" \ "AboutTheLease" \ "LeaseDetails" \ "StartingRent"
+      (rent \ "RentPayable").map(_.text.trim) shouldBe Seq("0.00")
+      (rent \ "VATamount").map(_.text.trim)   shouldBe Seq("75.00")
+      (assignment \\ "LandDetail" \ "LeaseDetails" \ "StartingRent" \ "RentPayable").text.trim shouldBe "450.00"
     }
 
     "end every LeaseDetails with TotalPremiumTax then TotalNPVtax" in {
