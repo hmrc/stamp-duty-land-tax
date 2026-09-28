@@ -21,14 +21,14 @@ import java.time.format.DateTimeFormatter
 import scala.util.Try
 
 object Normalise:
-  
+
   def isBlank(s: Option[String]): Boolean = s.forall(_.trim.isEmpty)
   def nonBlank(s: Option[String]): Option[String] = s.map(_.trim).filter(_.nonEmpty)
   def nonBlank(s: String): Option[String] = nonBlank(Option(s))
 
   def anyNonBlank(values: Seq[Option[String]]): Boolean =
     values.exists(nonBlank(_).isDefined)
-  
+
   def isYes(s: Option[String]): Boolean = s.exists(v => v.trim.equalsIgnoreCase("yes") || v.trim.equalsIgnoreCase("y"))
   def yesNo(s: Option[String]): Option[String] = nonBlank(s).map { v =>
     if v.equalsIgnoreCase("yes") || v.equalsIgnoreCase("y") then "yes"
@@ -37,20 +37,19 @@ object Normalise:
   }
 
   def yesNo(b: Boolean): String = if b then "yes" else "no"
-
   def money(value: BigDecimal): String =
-    value.setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
-  
+    value.setScale(0, BigDecimal.RoundingMode.DOWN).setScale(2).bigDecimal.toPlainString
+    
   def toMoney(s: String): Option[BigDecimal] =
-      scala.util.Try(BigDecimal(s.trim)).toOption
+    Try(BigDecimal(s.trim.replace(",", ""))).toOption
 
   def money(value: Option[BigDecimal]): Option[String] = value.map(money)
 
   def moneyOrZero(value: Option[BigDecimal]): String = money(value.getOrElse(BigDecimal(0)))
 
   def moneyFromString(value: Option[String]): Option[String] =
-    nonBlank(value).flatMap(s => Try(BigDecimal(s)).toOption).map(money)
-  
+    nonBlank(value).flatMap(toMoney).map(money)
+
   private val UkDateFormat  = DateTimeFormatter.ofPattern("dd/MM/yyyy")
   private val IsoDateFormat = DateTimeFormatter.ISO_LOCAL_DATE
 
