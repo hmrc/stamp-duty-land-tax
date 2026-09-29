@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import base.SpecBase
-import models.filing.*
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
 import play.api.libs.json.{JsObject, Json}
-import service.submission.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent

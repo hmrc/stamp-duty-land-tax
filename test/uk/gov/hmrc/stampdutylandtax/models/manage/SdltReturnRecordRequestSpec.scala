@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.stampdutylandtax.models.manage
 
-import models.manage.SdltReturnRecordRequest
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.Json

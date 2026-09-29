@@ -18,7 +18,7 @@ package uk.gov.hmrc.stampdutylandtax.service.submission
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import service.submission.Normalise.*
+import uk.gov.hmrc.stampdutylandtax.service.submission.Normalise.*
 
 class NormaliseSpec extends AnyWordSpec with Matchers:
 

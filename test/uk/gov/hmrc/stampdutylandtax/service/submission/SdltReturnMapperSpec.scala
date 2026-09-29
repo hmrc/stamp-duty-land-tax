@@ -19,8 +19,7 @@ package uk.gov.hmrc.stampdutylandtax.service.submission
 import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import service.submission.*
-import models.filing.*
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
 import SdltReturnFixtures.*
 
 import java.nio.file.{Files, Paths}

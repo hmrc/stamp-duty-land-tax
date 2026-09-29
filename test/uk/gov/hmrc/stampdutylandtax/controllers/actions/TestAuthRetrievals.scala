@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.actions
 
-package controllers.actions
-
 import uk.gov.hmrc.auth.core.retrieve.~
 
 object TestAuthRetrievals {

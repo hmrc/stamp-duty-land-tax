@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import base.SpecBase
-import connectors.EmailServiceConnector
-import models.filing.{FullReturn, Purchaser, Submission}
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.connectors.EmailServiceConnector
+import uk.gov.hmrc.stampdutylandtax.models.filing.{FullReturn, Purchaser, Submission}
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
-import service.submission.EmailService
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.Future

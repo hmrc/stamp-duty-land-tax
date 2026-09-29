@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import base.SpecBase
-import models.filing.*
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
 import play.api.http.Status.{BAD_REQUEST, CREATED, INTERNAL_SERVER_ERROR, OK}
 import play.api.libs.json.{JsObject, Json}
 import play.api.mvc.Result
 import play.api.test.Helpers.{contentAsJson, status}
-import service.filing.ResidencyReturnsService
+import uk.gov.hmrc.stampdutylandtax.service.filing.ResidencyReturnsService
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}

@@ -16,9 +16,8 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
 import org.apache.commons.codec.binary.Base32
-import service.submission.*
 
 import java.util.Base64
 import scala.xml.{Comment, Elem, NodeSeq}

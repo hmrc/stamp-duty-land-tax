@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import models.filing.*
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
 
 object SdltReturnFixtures:
 
