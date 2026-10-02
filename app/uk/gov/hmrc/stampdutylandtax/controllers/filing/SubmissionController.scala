@@ -23,11 +23,11 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
-import models.filing.FullReturn
-import models.filing.*
-import service.submission.*
+import uk.gov.hmrc.stampdutylandtax.models.filing.FullReturn
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
+import uk.gov.hmrc.stampdutylandtax.service.submission.*
 import uk.gov.hmrc.auth.core.AffinityGroup
-import utils.LoggingUtil
+import uk.gov.hmrc.stampdutylandtax.utils.LoggingUtil
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}

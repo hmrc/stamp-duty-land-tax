@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.filing
 
-import base.SpecBase
-import connectors.{FilingFormpProxyConnector, FormpProxyConnector}
-import models.filing.*
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.connectors.{FilingFormpProxyConnector, FormpProxyConnector}
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
-import service.filing.FilingReturnsService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
-import models.purge._
+import uk.gov.hmrc.stampdutylandtax.models.purge._
 
 import scala.concurrent.Future
 

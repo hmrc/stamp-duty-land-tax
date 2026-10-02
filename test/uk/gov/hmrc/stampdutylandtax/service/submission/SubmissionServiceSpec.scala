@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import base.SpecBase
-import connectors.{ChrisConnector, FilingFormpProxyConnector}
-import models.filing.*
-import models.polling.SubmissionForPolling
-import models.submission.*
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.connectors.{ChrisConnector, FilingFormpProxyConnector}
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
+import uk.gov.hmrc.stampdutylandtax.models.polling.SubmissionForPolling
+import uk.gov.hmrc.stampdutylandtax.models.submission.*
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.*
 import org.mockito.{ArgumentCaptor, Mockito}
-import service.filing.ChrisService
-import service.submission.*
+import uk.gov.hmrc.stampdutylandtax.service.filing.ChrisService
 import uk.gov.hmrc.http.{HeaderCarrier, UpstreamErrorResponse}
 
 import java.time.{Clock, Instant, LocalDate, ZoneOffset}

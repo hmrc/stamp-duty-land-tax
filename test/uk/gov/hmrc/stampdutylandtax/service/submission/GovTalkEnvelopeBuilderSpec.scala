@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
-import service.submission.*
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.time.{Clock, Instant, LocalDate, ZoneId}

@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import models.filing.{CreateLandRequest, DeleteLandRequest, UpdateLandRequest}
+import uk.gov.hmrc.stampdutylandtax.models.filing.{CreateLandRequest, DeleteLandRequest, UpdateLandRequest}
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
-import service.filing.FilingLandService
+import uk.gov.hmrc.stampdutylandtax.service.filing.FilingLandService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
-import utils.LoggingUtil
+import uk.gov.hmrc.stampdutylandtax.utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}

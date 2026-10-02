@@ -17,7 +17,7 @@
 package uk.gov.hmrc.stampdutylandtax.controllers.actions
 
 import com.google.inject.Inject
-import models.auth.IdentifierRequest
+import uk.gov.hmrc.stampdutylandtax.models.auth.IdentifierRequest
 import play.api.mvc.*
 import play.api.mvc.Results.Forbidden
 import uk.gov.hmrc.auth.core.*
@@ -26,7 +26,7 @@ import uk.gov.hmrc.auth.core.retrieve.{Credentials, ~}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import utils.LoggingUtil
+import uk.gov.hmrc.stampdutylandtax.utils.LoggingUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 

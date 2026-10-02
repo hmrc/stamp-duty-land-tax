@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.agents
 
-import models.agent.*
+import uk.gov.hmrc.stampdutylandtax.models.agent.*
 import play.api.libs.json.{JsError, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import service.ManageAgentsService
+import uk.gov.hmrc.stampdutylandtax.service.ManageAgentsService
 import uk.gov.hmrc.http.UpstreamErrorResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
-import utils.LoggingUtil
+import uk.gov.hmrc.stampdutylandtax.utils.LoggingUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}

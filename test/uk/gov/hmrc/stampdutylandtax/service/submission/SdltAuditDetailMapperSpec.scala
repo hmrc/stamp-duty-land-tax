@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import models.filing.*
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import play.api.libs.json.*
-import service.submission.*
 import SdltReturnFixtures.*
 
 class SdltAuditDetailMapperSpec extends AnyWordSpec with Matchers:

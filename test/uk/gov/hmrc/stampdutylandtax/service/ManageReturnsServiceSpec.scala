@@ -16,14 +16,13 @@
 
 package uk.gov.hmrc.stampdutylandtax.service
 
-import base.SpecBase
-import connectors.FormpProxyConnector
-import models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.connectors.FormpProxyConnector
+import uk.gov.hmrc.stampdutylandtax.models.manage.{ReturnSummary, SdltReturnRecordRequest, SdltReturnRecordResponse}
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{times, verify, when}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.must.Matchers
-import service.ManageReturnsService
 import uk.gov.hmrc.http.HeaderCarrier
 
 import java.time.LocalDate

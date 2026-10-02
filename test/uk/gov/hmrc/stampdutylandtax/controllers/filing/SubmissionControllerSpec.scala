@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.filing
 
-import base.SpecBase
-import models.filing.*
-import models.auth.IdentifierRequest
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
+import uk.gov.hmrc.stampdutylandtax.models.filing.*
+import uk.gov.hmrc.stampdutylandtax.models.auth.IdentifierRequest
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{verify, when}
 import play.api.http.Status.{ACCEPTED, BAD_GATEWAY, BAD_REQUEST, CONFLICT, INTERNAL_SERVER_ERROR, OK, SERVICE_UNAVAILABLE}
@@ -29,7 +29,7 @@ import uk.gov.hmrc.stampdutylandtax.controllers.actions.IdentifierAction
 
 import java.time.LocalDate
 import play.api.test.Helpers.{contentAsJson, status}
-import service.submission.*
+import uk.gov.hmrc.stampdutylandtax.service.submission.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.stampdutylandtax.service.submission.SdltReturnFixtures.*
 

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.controllers.actions
 
-import models.auth.IdentifierRequest
+import uk.gov.hmrc.stampdutylandtax.models.auth.IdentifierRequest
 import play.api.mvc.*
 import uk.gov.hmrc.auth.core.AffinityGroup
 import uk.gov.hmrc.auth.core.AffinityGroup.Organisation

@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.stampdutylandtax.service.submission
 
-import base.SpecBase
-import service.submission.SchemaValidator
+import uk.gov.hmrc.stampdutylandtax.base.SpecBase
 
 import scala.xml.Elem
 
